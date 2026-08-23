@@ -65,6 +65,10 @@ class AkasaScraper(BaseScraper):
         if not self.compliance.can_fetch(url):
             raise PermissionError(f"robots.txt disallows fetching {url}")
 
+        # ponytail: a malformed/unexpected response (bad JSON, missing keys,
+        # non-200 status) raises uncaught here and aborts the whole run --
+        # acceptable while Akasa is the only live source; add per-source
+        # error isolation if a second live source lands.
         self.compliance.wait_for_slot(CALENDAR_DOMAIN)
         request = urllib.request.Request(
             url, headers={"Accept": "application/json", "User-Agent": self.compliance.user_agent}
