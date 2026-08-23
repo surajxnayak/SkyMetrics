@@ -1,0 +1,81 @@
+{
+  "sources": [
+    {
+      "name": "akasaair",
+      "type": "airline",
+      "status": "active",
+      "checked_at": "2026-08-23",
+      "reason": "robots.txt fully open on www.akasaair.com; booking backend prod-bl.qp.akasaair.com has no robots.txt (default allow)"
+    },
+    {
+      "name": "spicejet",
+      "type": "airline",
+      "status": "blocked_by_robots",
+      "checked_at": "2026-08-23",
+      "reason": "real search API lives under /api/v1/..., explicitly disallowed by robots.txt"
+    },
+    {
+      "name": "air_india_express",
+      "type": "airline",
+      "status": "blocked_by_robots",
+      "checked_at": "2026-08-23",
+      "reason": "robots.txt disallows /flight-availability"
+    },
+    {
+      "name": "indigo",
+      "type": "airline",
+      "status": "blocked_by_waf",
+      "checked_at": "2026-08-23",
+      "reason": "TLS/edge connection blocked before robots.txt loads"
+    },
+    {
+      "name": "air_india",
+      "type": "airline",
+      "status": "blocked_by_waf",
+      "checked_at": "2026-08-23",
+      "reason": "TLS/edge connection blocked before robots.txt loads"
+    },
+    {
+      "name": "cleartrip",
+      "type": "ota",
+      "status": "blocked_by_robots",
+      "checked_at": "2026-08-23",
+      "reason": "robots.txt disallows /flights/search*"
+    },
+    {
+      "name": "easemytrip",
+      "type": "ota",
+      "status": "blocked_by_robots",
+      "checked_at": "2026-08-23",
+      "reason": "robots.txt disallows /flight-search/listing*"
+    },
+    {
+      "name": "ixigo",
+      "type": "ota",
+      "status": "blocked_by_robots",
+      "checked_at": "2026-08-23",
+      "reason": "robots.txt disallows /flights/search, /flights/review"
+    },
+    {
+      "name": "makemytrip",
+      "type": "ota",
+      "status": "blocked_by_waf",
+      "checked_at": "2026-08-23",
+      "reason": "TLS/edge connection blocked"
+    },
+    {
+      "name": "goibibo",
+      "type": "ota",
+      "status": "blocked_by_waf",
+      "checked_at": "2026-08-23",
+      "reason": "TLS/edge connection blocked"
+    },
+    {
+      "name": "yatra",
+      "type": "ota",
+      "status": "blocked_by_waf",
+      "checked_at": "2026-08-23",
+      "reason": "TLS/edge connection blocked"
+    }
+  ]
+}

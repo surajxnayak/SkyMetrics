@@ -1,0 +1,7 @@
+{
+  "city_pairs": [
+    {"origin": "DEL", "destination": "BOM"},
+    {"origin": "DEL", "destination": "BLR"},
+    {"origin": "BOM", "destination": "BLR"}
+  ]
+}
