@@ -134,6 +134,16 @@ def test_get_fares_filters_by_origin_and_destination(tmp_path):
     assert body[0]["destination"] == "BOM"
 
 
+def test_get_fares_rejects_a_malformed_date(tmp_path):
+    cleaned_dir = tmp_path / "cleaned"
+    cleaned_dir.mkdir()
+    app.dependency_overrides[get_cleaned_base_dir] = lambda: cleaned_dir
+
+    response = client.get("/api/v1/fares", params={"start": "not-a-date"}, headers=HEADERS)
+
+    assert response.status_code == 422
+
+
 def test_get_metadata_returns_weights_and_snapshots(tmp_path):
     index_dir = tmp_path / "index"
     index_dir.mkdir()

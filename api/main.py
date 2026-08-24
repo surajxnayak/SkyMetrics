@@ -7,7 +7,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Literal
 
-from fastapi import APIRouter, Depends, FastAPI, Request
+from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
 from fastapi.responses import JSONResponse
 
 from api.auth import require_api_key
@@ -71,9 +71,12 @@ def get_fares(
     cleaned_base_dir: Path = Depends(get_cleaned_base_dir),
 ) -> list[dict]:
     records = load_fare_records(cleaned_base_dir=cleaned_base_dir)
-    return filter_fare_records(
-        records, origin=origin, destination=destination, start=start, end=end
-    )
+    try:
+        return filter_fare_records(
+            records, origin=origin, destination=destination, start=start, end=end
+        )
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/metadata")
