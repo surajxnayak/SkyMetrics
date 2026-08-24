@@ -83,6 +83,22 @@ def test_build_series_returns_empty_list_for_no_data():
     assert build_series([], "daily", WEIGHTS) == []
 
 
+def test_build_series_skips_periods_with_no_common_routes_with_base():
+    records = [
+        _record("DEL", "BOM", 6000.0, DAY1),
+        _record("XXX", "YYY", 1000.0, DAY2),
+    ]
+
+    series = build_series(records, "daily", WEIGHTS)
+
+    assert [point["period"] for point in series] == ["2026-08-24"]
+
+
+def test_build_series_rejects_unknown_frequency_even_with_no_data():
+    with pytest.raises(ValueError):
+        build_series([], "yearly", WEIGHTS)
+
+
 def test_load_all_cleaned_records_reads_every_file(tmp_path):
     file1 = tmp_path / "run1.jsonl"
     file2 = tmp_path / "run2.jsonl"

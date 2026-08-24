@@ -10,7 +10,7 @@ import json
 import uuid
 from pathlib import Path
 
-from index.aggregate import representative_prices
+from index.aggregate import VALID_FREQUENCIES, representative_prices
 from index.formulas import fisher, laspeyres, paasche, simple_relative
 from index.weights import load_weights
 
@@ -28,6 +28,8 @@ def load_all_cleaned_records(cleaned_base_dir: Path = CLEANED_BASE_DIR) -> list[
 
 
 def build_series(records: list[dict], frequency: str, weights: dict[str, float]) -> list[dict]:
+    if frequency not in VALID_FREQUENCIES:
+        raise ValueError(f"unknown frequency: {frequency!r}")
     prices_by_period = representative_prices(records, frequency)
     periods = sorted({period for (_route, period) in prices_by_period})
     if not periods:
