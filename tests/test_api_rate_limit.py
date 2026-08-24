@@ -34,7 +34,12 @@ def test_resets_after_the_window_elapses():
 
     assert limiter.check("key-a", now=1000.0) is True
     assert limiter.check("key-a", now=1005.0) is False
-    assert limiter.check("key-a", now=1011.0) is True
+    assert limiter.check("key-a", now=1010.0) is True
+
+
+def test_rejects_a_non_positive_window():
+    with pytest.raises(ValueError):
+        RateLimiter(max_requests=5, window_seconds=0)
 
 
 def test_enforce_rate_limit_raises_429_when_over_limit(monkeypatch):

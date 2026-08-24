@@ -18,11 +18,17 @@ class RateLimiter:
         max_requests: int = MAX_REQUESTS_PER_WINDOW,
         window_seconds: float = WINDOW_SECONDS,
     ):
+        if window_seconds <= 0:
+            raise ValueError(f"window_seconds must be positive, got {window_seconds!r}")
         self.max_requests = max_requests
         self.window_seconds = window_seconds
         self._windows: dict[str, tuple[float, int]] = {}
 
     def check(self, key: str, now: float | None = None) -> bool:
+        # ponytail: no lock around the read-modify-write of self._windows --
+        # concurrent requests for the same key can race and undercount by
+        # more than one (a lost update, not corruption/a crash). Acceptable
+        # at demo scale; add a threading.Lock if concurrent load ever matters.
         if now is None:
             now = time.monotonic()
         window_start, count = self._windows.get(key, (now, 0))
