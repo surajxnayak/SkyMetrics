@@ -17,4 +17,14 @@ if __name__ == "__main__":
     scraper = AkasaScraper(guard)
     quotes = scraper.fetch_quotes("DEL", "BOM", run_id="verify-live")
     for q in quotes:
-        print(q.advance_window, q.travel_date, q.status, q.total_fare)
+        print(
+            q.advance_window,
+            q.travel_date,
+            q.status,
+            q.fare_class,
+            "total=", q.total_fare,
+            "base=", q.base_fare,
+            "tax=", q.taxes,
+            "udf=", q.udf,
+            "conv=", q.convenience_fee,
+        )
