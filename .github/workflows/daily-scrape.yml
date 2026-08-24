@@ -1,0 +1,20 @@
+name: Daily fare scrape
+
+on:
+  schedule:
+    - cron: "30 2 * * *"
+  workflow_dispatch: {}
+
+jobs:
+  scrape:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - run: python -m scraper.run
+      - uses: actions/upload-artifact@v4
+        with:
+          name: raw-fares-${{ github.run_id }}
+          path: data/raw/
