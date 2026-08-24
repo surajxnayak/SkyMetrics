@@ -98,3 +98,9 @@ data/
 ## Testing
 
 Same convention as `scraper/`: `pytest`, no live network (this phase never touches the network at all — pure transformation over already-collected JSONL), fixtures built from real `FareQuote` construction rather than raw dicts. `pipeline/clean.py`'s file-discovery logic gets a test using `tmp_path` fixtures mimicking `data/raw/<source>/<run_id>.jsonl`, same pattern Phase 1 used for `scraper/storage.py` and `scraper/run.py`.
+
+## Known limitation (flagged during Task 2 review, not fixed here)
+
+`FareQuote` has no flight-number or departure-time field, so the dedup key (carrier/origin/destination/travel_date/advance_window/fare_class/routing/total_fare) cannot distinguish two genuinely different nonstop flights on the same route/date that happen to share a fare bucket and price — they would collapse into one record. Confirmed not a defect *introduced* by dedup: it's a pre-existing schema granularity limit, and not confirmed to actually occur in this basket's real data (unlike the earlier `fee_breakdown` bug, which had measured, concrete real-data impact).
+
+Confirmed this is fixable later: Akasa's search response has a separate `data.results[].trips[].journeysAvailableByMarket[].value[].fares[]` tree carrying real flight-level detail (flight number via `segments[].identifier.identifier`, e.g. `"2018"`; departure/arrival times; `flightType`), cross-referenceable back to `data.faresAvailable[]` via the shared `fareAvailabilityKey`. Adding `flight_number`/`departure_time` to `FareQuote` and the dedup key would close this gap — deferred as a follow-up to the Akasa scraper (not this cleaning-pipeline phase), since it requires parsing a second, independent part of the response.
