@@ -6,5 +6,6 @@ venv/
 .pytest_cache/
 .ruff_cache/
 data/raw/
+data/cleaned/
 .env
 .DS_Store
