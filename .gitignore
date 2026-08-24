@@ -7,5 +7,6 @@ venv/
 .ruff_cache/
 data/raw/
 data/cleaned/
+data/index/
 .env
 .DS_Store

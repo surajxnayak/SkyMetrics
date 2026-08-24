@@ -1,0 +1,10 @@
+{
+  "source": "DGCA Monthly Statistics (Domestic Air Transport), via https://github.com/Vonter/india-aviation-traffic (ODbL license)",
+  "period": "2025 full calendar year, both directions combined",
+  "computed_at": "2026-08-24",
+  "weights": {
+    "DEL-BOM": 0.4331,
+    "DEL-BLR": 0.3061,
+    "BOM-BLR": 0.2608
+  }
+}
