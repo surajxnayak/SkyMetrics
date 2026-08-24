@@ -25,15 +25,15 @@
       "name": "indigo",
       "type": "airline",
       "status": "blocked_by_waf",
-      "checked_at": "2026-08-23",
-      "reason": "TLS/edge connection blocked before robots.txt loads"
+      "checked_at": "2026-08-24",
+      "reason": "Re-checked with a real browser (Playwright, not just curl): robots.txt now returns HTTP 200 but an app-level 'Something went wrong / contact customer support' error page instead of real content, while unrelated pages (e.g. conditions-of-carriage) load normally -- selective blocking of the specific path, not a blanket connection failure."
     },
     {
       "name": "air_india",
       "type": "airline",
       "status": "blocked_by_waf",
-      "checked_at": "2026-08-23",
-      "reason": "TLS/edge connection blocked before robots.txt loads"
+      "checked_at": "2026-08-24",
+      "reason": "Re-checked with a real browser (Playwright): robots.txt fetch fails with net::ERR_HTTP2_PROTOCOL_ERROR -- a real, unmodified Chromium browser is blocked at the connection level, not just curl."
     },
     {
       "name": "cleartrip",
@@ -60,22 +60,22 @@
       "name": "makemytrip",
       "type": "ota",
       "status": "blocked_by_waf",
-      "checked_at": "2026-08-23",
-      "reason": "TLS/edge connection blocked"
+      "checked_at": "2026-08-24",
+      "reason": "Re-checked with a real browser (Playwright): both robots.txt and an unrelated static legal page (terms_of_use.html) fail with net::ERR_HTTP2_PROTOCOL_ERROR -- a domain-wide connection-level block, not specific to fare-search paths."
     },
     {
       "name": "goibibo",
       "type": "ota",
       "status": "blocked_by_waf",
-      "checked_at": "2026-08-23",
-      "reason": "TLS/edge connection blocked"
+      "checked_at": "2026-08-24",
+      "reason": "Re-checked with a real browser (Playwright): robots.txt fetch fails with net::ERR_HTTP2_PROTOCOL_ERROR -- a real, unmodified Chromium browser is blocked at the connection level, not just curl."
     },
     {
       "name": "yatra",
       "type": "ota",
       "status": "blocked_by_waf",
-      "checked_at": "2026-08-23",
-      "reason": "TLS/edge connection blocked"
+      "checked_at": "2026-08-24",
+      "reason": "Re-checked with a real browser (Playwright): robots.txt fetch fails with net::ERR_HTTP2_PROTOCOL_ERROR -- a real, unmodified Chromium browser is blocked at the connection level, not just curl."
     }
   ]
 }
