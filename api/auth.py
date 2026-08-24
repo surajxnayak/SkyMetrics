@@ -23,7 +23,7 @@ def load_valid_keys() -> set[str]:
     return keys
 
 
-def require_api_key(x_api_key: str = Header(...)) -> str:
+def require_api_key(x_api_key: str | None = Header(None)) -> str:
     if x_api_key not in load_valid_keys():
         raise HTTPException(status_code=401, detail="invalid or missing API key")
     return x_api_key
