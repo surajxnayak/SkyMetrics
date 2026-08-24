@@ -5,9 +5,17 @@ submission (problem statement SIH26056, MoSPI/DIID).
 
 ## Status
 
-**Phase 1** (of 5 — see `docs/superpowers/specs/`): a working, robots.txt-compliant
-scraper for Akasa Air across 3 city-pairs and 5 advance-purchase windows.
-Cleaning, index construction, dashboard, and API are later phases.
+**Phases 1-3** (of 5 — see `docs/superpowers/specs/`) are complete:
+
+- **Phase 1** — a working, robots.txt-compliant scraper for Akasa Air across
+  3 city-pairs and 5 advance-purchase windows.
+- **Phase 2** — a cleaning pipeline: de-duplication and IQR-based outlier
+  flagging on raw fare quotes.
+- **Phase 3** — index construction: simple relative, Laspeyres, Paasche, and
+  Fisher formulas over real DGCA-weighted routes, with daily/weekly/monthly
+  aggregation and versioned snapshots (`index/build.py`).
+
+Dashboard and API are later phases.
 
 ## Why only one live source right now
 
@@ -35,6 +43,17 @@ python -m scraper.run
 ```
 
 Writes raw fare quotes to `data/raw/<source>/<run_id>.jsonl`.
+
+## Cleaning and index construction
+
+```bash
+python3 -c "from pipeline.clean import clean_run; clean_run('<run_id>')"
+python -m index.build
+```
+
+Cleans a raw run into `data/cleaned/<run_id>.jsonl`, then builds a versioned
+APIx snapshot at `data/index/<comparison_id>.json` from every cleaned run on
+disk.
 
 ## Testing
 
