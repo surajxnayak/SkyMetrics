@@ -253,12 +253,13 @@ def fisher(laspeyres_value: float, paasche_value: float) -> float:
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `pytest tests/test_index_formulas.py -v`
-Expected: PASS (6 tests)
+Expected: PASS (7 tests -- corrected mid-task: the Paasche formula was fixed to use a
+harmonic rather than arithmetic mean during code review, which replaced 1 test with 2)
 
 - [ ] **Step 5: Run the full suite and linter**
 
 Run: `pytest -v`
-Expected: PASS (60 tests: 54 from Task 1 + 6 new)
+Expected: PASS (61 tests: 54 from Task 1 + 7 new)
 
 Run: `ruff check .`
 Expected: no errors
@@ -434,7 +435,7 @@ Expected: PASS (8 tests)
 - [ ] **Step 5: Run the full suite and linter**
 
 Run: `pytest -v`
-Expected: PASS (68 tests: 60 from Task 2 + 8 new)
+Expected: PASS (69 tests: 61 from Task 2 + 8 new)
 
 Run: `ruff check .`
 Expected: no errors
@@ -495,6 +496,7 @@ def test_build_series_first_period_is_its_own_base():
     assert series[0]["base_period"] == "2026-08-24"
     assert series[0]["simple_relative"] == pytest.approx(100.0)
     assert series[0]["laspeyres"] == pytest.approx(100.0)
+    assert series[0]["paasche"] == pytest.approx(100.0)
 
 
 def test_build_series_computes_a_real_second_point():
@@ -513,9 +515,15 @@ def test_build_series_computes_a_real_second_point():
     day2_point = series[1]
     assert day2_point["base_period"] == "2026-08-24"
     assert day2_point["simple_relative"] == pytest.approx(106.66666666666667)
+    # Laspeyres (arithmetic mean of relatives) and Paasche (harmonic mean)
+    # genuinely differ here even with identical weights, because the price
+    # relatives (1.1, 1.0, 1.1) aren't all equal -- see index/formulas.py's
+    # docstring. Laspeyres > Paasche always holds except in that degenerate
+    # equal-relatives case (AM >= HM).
     assert day2_point["laspeyres"] == pytest.approx(106.939)
-    assert day2_point["laspeyres"] == day2_point["paasche"]
-    assert day2_point["fisher"] == pytest.approx(day2_point["laspeyres"])
+    assert day2_point["paasche"] == pytest.approx(106.73290575484423)
+    assert day2_point["laspeyres"] > day2_point["paasche"]
+    assert day2_point["fisher"] == pytest.approx(106.83590318108087)
 
 
 def test_build_series_falls_back_to_simple_relative_when_a_route_has_no_weight():
@@ -683,7 +691,7 @@ Expected: PASS (6 tests)
 - [ ] **Step 5: Run the full suite and linter**
 
 Run: `pytest -v`
-Expected: PASS (74 tests: 68 from Task 3 + 6 new)
+Expected: PASS (75 tests: 69 from Task 3 + 6 new)
 
 Run: `ruff check .`
 Expected: no errors
@@ -803,7 +811,7 @@ Expected: PASS (8 tests)
 - [ ] **Step 5: Run the full suite and linter**
 
 Run: `pytest -v`
-Expected: PASS (82 tests: 74 from Task 4 + 8 new)
+Expected: PASS (83 tests: 75 from Task 4 + 8 new)
 
 Run: `ruff check .`
 Expected: no errors
@@ -874,7 +882,7 @@ That's expected and fine — `period_of` buckets by calendar day, and two runs m
 
 ## Definition of done
 
-- `pytest -v` passes with 82 tests, zero live network calls (this phase never touches the network — pure computation over already-collected/cleaned data; the network call in Task 6 Step 1 goes through the existing, already-reviewed `scraper.run`, not new code in this plan).
+- `pytest -v` passes with 83 tests, zero live network calls (this phase never touches the network — pure computation over already-collected/cleaned data; the network call in Task 6 Step 1 goes through the existing, already-reviewed `scraper.run`, not new code in this plan).
 - `ruff check .` passes clean.
 - `config/weights.json` holds real, attributed DGCA data, not placeholders.
 - `python -m index.build` runs against real data on disk and writes a versioned `data/index/<comparison_id>.json`.
