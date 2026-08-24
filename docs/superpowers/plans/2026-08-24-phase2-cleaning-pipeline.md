@@ -681,7 +681,7 @@ git commit -m "feat: cleaning orchestrator (load, dedup, flag, write)"
 
 ## Definition of done
 
-- `pytest -v` passes with 47 tests, zero live network calls (this phase never touches the network — pure transformation over already-collected JSONL).
+- `pytest -v` passes with 51 tests (47 planned + 4 added during review fix-rounds: a threshold-boundary test, a constant-guard test, and two empty-raw-directory tests), zero live network calls (this phase never touches the network — pure transformation over already-collected JSONL).
 - `ruff check .` passes clean.
 - Running `pipeline.clean.clean_run(run_id)` against a real raw run (already on disk from earlier scraper runs) produces `data/cleaned/<run_id>.jsonl` with sane dedup and outlier-flag counts, inspected by hand.
 - `config/sources.json`, `scraper/`, and everything else from Phase 1 remain untouched — this phase only reads `scraper/schema.py`'s `FareQuote` and `scraper/storage.py`'s `write_quotes` (in tests only).
