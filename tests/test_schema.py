@@ -48,3 +48,19 @@ def test_to_json_dict_serialises_dates():
     d = quote.to_json_dict()
     assert d["travel_date"] == "2026-09-01"
     assert d["collected_at"] == "2026-08-23T12:00:00+00:00"
+
+
+def test_fee_breakdown_defaults_to_none():
+    quote = make_quote()
+    assert quote.fee_breakdown is None
+
+
+def test_fee_breakdown_can_be_set():
+    quote = make_quote(fee_breakdown={"CUTE": 75.0, "UDF": 152.0})
+    assert quote.fee_breakdown == {"CUTE": 75.0, "UDF": 152.0}
+
+
+def test_to_json_dict_includes_fee_breakdown():
+    quote = make_quote(fee_breakdown={"UDF": 152.0})
+    d = quote.to_json_dict()
+    assert d["fee_breakdown"] == {"UDF": 152.0}
