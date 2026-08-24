@@ -50,6 +50,21 @@ def test_load_run_quotes_ignores_other_run_ids(tmp_path):
     assert len(quotes) == 1
 
 
+def test_load_run_quotes_returns_empty_list_for_missing_raw_dir(tmp_path):
+    quotes = load_run_quotes("run-1", raw_base_dir=tmp_path / "does-not-exist")
+    assert quotes == []
+
+
+def test_clean_run_writes_empty_file_when_no_raw_data_exists(tmp_path):
+    raw_dir = tmp_path / "raw"
+    cleaned_dir = tmp_path / "cleaned"
+
+    out_path = clean_run("run-1", raw_base_dir=raw_dir, cleaned_base_dir=cleaned_dir)
+
+    assert out_path == cleaned_dir / "run-1.jsonl"
+    assert out_path.read_text(encoding="utf-8") == ""
+
+
 def test_clean_run_writes_deduped_flagged_output(tmp_path):
     raw_dir = tmp_path / "raw"
     cleaned_dir = tmp_path / "cleaned"

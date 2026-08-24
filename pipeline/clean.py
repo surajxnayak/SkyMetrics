@@ -15,6 +15,11 @@ RAW_BASE_DIR = Path("data/raw")
 CLEANED_BASE_DIR = Path("data/cleaned")
 
 
+# ponytail: a malformed raw record (bad JSON, missing/renamed field) raises
+# uncaught here and aborts the whole load -- acceptable since raw JSONL is
+# only ever produced by scraper/storage.py's write_quotes from a validated
+# FareQuote, not external/untrusted input; revisit if that assumption stops
+# holding (e.g. raw files ever get hand-edited or come from another tool).
 def _quote_from_dict(record: dict) -> FareQuote:
     record = dict(record)
     record["travel_date"] = date.fromisoformat(record["travel_date"])
