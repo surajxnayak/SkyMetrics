@@ -20,13 +20,29 @@ def test_laspeyres_uses_base_weights():
 
 
 def test_paasche_uses_current_weights():
-    assert paasche(BASE, CURRENT, WEIGHTS) == pytest.approx(106.939)
+    # correct Paasche = harmonic mean of relatives using current weights;
+    # hand-computed: 100 * sum(W) / sum(W[r] * BASE[r]/CURRENT[r] for r in BASE)
+    assert paasche(BASE, CURRENT, WEIGHTS) == pytest.approx(106.73290575484423)
 
 
-def test_laspeyres_and_paasche_coincide_with_the_same_static_weights():
-    # Documents the design spec's known limitation directly: with only one
-    # weight source, current-period weights equal base-period weights.
-    assert laspeyres(BASE, CURRENT, WEIGHTS) == paasche(BASE, CURRENT, WEIGHTS)
+def test_laspeyres_and_paasche_differ_because_one_is_arithmetic_and_the_other_harmonic():
+    # Laspeyres (arithmetic mean) >= Paasche (harmonic mean) whenever price
+    # relatives aren't all identical -- true here (relatives are 1.1, 1.0, 1.1)
+    # even though both formulas are handed the exact same weights dict.
+    las = laspeyres(BASE, CURRENT, WEIGHTS)
+    paa = paasche(BASE, CURRENT, WEIGHTS)
+    assert las > paa
+    assert las == pytest.approx(106.939)
+    assert paa == pytest.approx(106.73290575484423)
+
+
+def test_laspeyres_and_paasche_coincide_when_all_relatives_are_equal():
+    # The AM/HM equivalence case: when every route's price relative is the
+    # same, arithmetic mean == harmonic mean == that shared relative value.
+    uniform_current = {route: price * 1.1 for route, price in BASE.items()}
+    assert laspeyres(BASE, uniform_current, WEIGHTS) == pytest.approx(
+        paasche(BASE, uniform_current, WEIGHTS)
+    )
 
 
 def test_fisher_is_geometric_mean_of_laspeyres_and_paasche():

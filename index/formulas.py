@@ -1,11 +1,16 @@
 """Index formulas (PRD F-3.2): simple relative, Laspeyres, Paasche, Fisher.
 
-All four are implemented and distinct in code, but with only one static
-weight source (see weights.py), Paasche's current-period weights equal
-Laspeyres' base-period weights for every period we can currently compute --
-so Laspeyres, Paasche, and Fisher will numerically coincide until a second,
-differently-dated weight snapshot exists. Not a bug; see the design spec's
-"Formulas" section.
+Laspeyres is the weighted ARITHMETIC mean of price relatives using base-
+period weights. Paasche is the weighted HARMONIC mean of price relatives
+using current-period weights -- this is not a stylistic choice, it's the
+standard index-number-theory result (see any CPI methodology manual).
+Because arithmetic mean >= harmonic mean always (equality only when every
+price relative is identical), Laspeyres and Paasche will only coincide in
+that degenerate case -- not simply because they're given the same weights
+dict. With only one static weight source right now (see weights.py),
+Paasche's current-period weights are numerically identical to Laspeyres'
+base-period weights, but the two formulas still diverge because they're
+different kinds of mean over the same relatives.
 """
 from __future__ import annotations
 
@@ -34,9 +39,9 @@ def paasche(
     current_weights: dict[str, float],
 ) -> float:
     weighted_sum = sum(
-        current_weights[route] * current_prices[route] / base_prices[route] for route in base_prices
+        current_weights[route] * base_prices[route] / current_prices[route] for route in base_prices
     )
-    return 100.0 * weighted_sum / sum(current_weights.values())
+    return 100.0 * sum(current_weights.values()) / weighted_sum
 
 
 def fisher(laspeyres_value: float, paasche_value: float) -> float:
