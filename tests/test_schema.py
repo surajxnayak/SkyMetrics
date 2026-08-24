@@ -64,3 +64,13 @@ def test_to_json_dict_includes_fee_breakdown():
     quote = make_quote(fee_breakdown={"UDF": 152.0})
     d = quote.to_json_dict()
     assert d["fee_breakdown"] == {"UDF": 152.0}
+
+
+def test_routing_defaults_to_none():
+    quote = make_quote()
+    assert quote.routing is None
+
+
+def test_routing_can_be_set():
+    quote = make_quote(routing="DXN-BLR|BLR-BOM")
+    assert quote.routing == "DXN-BLR|BLR-BOM"

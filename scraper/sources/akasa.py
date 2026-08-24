@@ -15,6 +15,18 @@ Fee mapping (verified by hand against a live response -- see design spec
   udf = the entry coded "UDF"
   convenience_fee = sum of every remaining fee (CUTE, RCS, WFE, ASF, DUDF, ...)
   total_fare (the source's own fareAmount) == base_fare + taxes + udf + convenience_fee
+  fee_breakdown sums amounts by code (or type, if code is absent) rather than
+    overwriting -- a real fee code (e.g. RCS) can appear once per connecting
+    leg, and each occurrence must be counted, not the last one only.
+
+searchOriginMacs/searchDestinationMacs (both left True above) let a metro
+area's alternate airports satisfy the search, so a "DEL-BOM" search can
+return a real fare actually flown DXN-BLR + BLR-BOM. Each serviceCharges[]
+entry's "detail" field names the real leg it was charged on (e.g. "DXN-BLR");
+routing joins the distinct, ordered legs with "|" (None when no charge
+carries a detail). This is how a connecting/alternate-airport itinerary is
+told apart from a genuine nonstop, instead of being blended into the same
+route's price series.
 
 A date with no fare options is recorded as status="no_flight" -- this
 endpoint has no verified sold-out-vs-no-flight distinction (unlike the
@@ -167,12 +179,16 @@ class AkasaScraper(BaseScraper):
         taxes = 0.0
         udf = 0.0
         convenience_fee = 0.0
+        legs: list[str] = []
         for charge in service_charges:
             code = charge.get("code")
             charge_type = charge.get("type")
+            detail = charge.get("detail")
             amount = charge.get("amount", 0.0)
             key = code if code else charge_type
-            fee_breakdown[key] = amount
+            fee_breakdown[key] = fee_breakdown.get(key, 0.0) + amount
+            if detail and detail != "TaxSum" and detail not in legs:
+                legs.append(detail)
             if charge_type == "FarePrice":
                 base_fare += amount
             elif charge_type == "Tax":
@@ -181,7 +197,8 @@ class AkasaScraper(BaseScraper):
                 udf += amount
             else:
                 convenience_fee += amount
-        return fee_breakdown, base_fare, taxes, udf, convenience_fee
+        routing = "|".join(legs) if legs else None
+        return fee_breakdown, base_fare, taxes, udf, convenience_fee, routing
 
     def _to_quote(
         self,
@@ -194,7 +211,7 @@ class AkasaScraper(BaseScraper):
         collected_at,
         run_id,
     ):
-        fee_breakdown, base_fare, taxes, udf, convenience_fee = self._compute_fees(
+        fee_breakdown, base_fare, taxes, udf, convenience_fee, routing = self._compute_fees(
             passenger_fare.get("serviceCharges", [])
         )
         return FareQuote(
@@ -215,6 +232,7 @@ class AkasaScraper(BaseScraper):
             status="available",
             run_id=run_id,
             fee_breakdown=fee_breakdown,
+            routing=routing,
         )
 
     def _no_flight_quote(self, origin, destination, travel_date, window, collected_at, run_id):
@@ -236,4 +254,5 @@ class AkasaScraper(BaseScraper):
             status="no_flight",
             run_id=run_id,
             fee_breakdown=None,
+            routing=None,
         )

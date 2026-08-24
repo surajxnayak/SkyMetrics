@@ -154,3 +154,60 @@ def test_fetch_quotes_raises_when_robots_disallows(monkeypatch):
     scraper = AkasaScraper(guard)
     with pytest.raises(PermissionError):
         scraper.fetch_quotes("DEL", "BOM", run_id="run-1")
+
+
+def test_fetch_quotes_sums_duplicate_fee_codes_and_captures_routing(monkeypatch):
+    monkeypatch.setattr(akasa_module, "date", _FrozenDate)
+
+    connecting_service_charges = [
+        {"amount": 8500.0, "code": None, "detail": None, "type": "FarePrice"},
+        {"amount": 75.0, "code": "CUTE", "detail": "DXN-BLR", "type": "TravelFee"},
+        {"amount": 50.0, "code": "RCS", "detail": "DXN-BLR", "type": "TravelFee"},
+        {"amount": 50.0, "code": "RCS", "detail": "BLR-BOM", "type": "TravelFee"},
+        {"amount": 350.0, "code": "WFE", "detail": "DXN-BLR", "type": "TravelFee"},
+        {"amount": 236.0, "code": "ASF", "detail": "DXN-BLR", "type": "TravelFee"},
+        {"amount": 578.0, "code": "UDF", "detail": "DXN-BLR", "type": "TravelFee"},
+        {"amount": 89.0, "code": "DUDF", "detail": "DXN-BLR", "type": "TravelFee"},
+        {"amount": 680.0, "code": None, "detail": "TaxSum", "type": "Tax"},
+    ]
+    connecting_response = _search_response(
+        [
+            {
+                "value": {
+                    "fares": [
+                        {
+                            "classOfService": "R0",
+                            "passengerFares": [
+                                {
+                                    "fareAmount": 10608.0,
+                                    "discountedFare": 8500.0,
+                                    "serviceCharges": connecting_service_charges,
+                                }
+                            ],
+                        }
+                    ]
+                }
+            }
+        ]
+    )
+
+    def fake_urlopen(request, timeout=15):
+        if "generateToken" in request.full_url:
+            return _fake_response(TOKEN_RESPONSE)
+        return _fake_response(connecting_response)
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    scraper = AkasaScraper(_guard_allowing_everything())
+    quotes = scraper.fetch_quotes("DEL", "BOM", run_id="run-1")
+
+    r0_quote = next(q for q in quotes if q.advance_window == "T+1")
+    # RCS appears twice (50.0 on each leg) -- must be summed, not overwritten.
+    assert r0_quote.fee_breakdown["RCS"] == 100.0
+    assert sum(r0_quote.fee_breakdown.values()) == pytest.approx(r0_quote.total_fare)
+    assert r0_quote.convenience_fee == 75.0 + 100.0 + 350.0 + 236.0 + 89.0
+    assert r0_quote.total_fare == pytest.approx(
+        r0_quote.base_fare + r0_quote.taxes + r0_quote.udf + r0_quote.convenience_fee
+    )
+    # Routing captures both real legs actually flown, distinct from the searched DEL/BOM.
+    assert r0_quote.routing == "DXN-BLR|BLR-BOM"

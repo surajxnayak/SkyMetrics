@@ -36,6 +36,7 @@ class FareQuote:
     status: str
     run_id: str
     fee_breakdown: Optional[dict[str, float]] = None
+    routing: Optional[str] = None
 
     def __post_init__(self):
         if self.advance_window not in ADVANCE_WINDOWS:
