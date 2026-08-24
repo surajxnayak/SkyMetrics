@@ -74,6 +74,11 @@ class AkasaScraper(BaseScraper):
         return quotes
 
     def _get_token(self) -> str:
+        # ponytail: a malformed/unexpected response from either endpoint (bad
+        # JSON, missing keys, non-200 status) raises uncaught here and in
+        # _search, aborting the whole run -- acceptable while Akasa is the
+        # only live source; add per-source error isolation if a second live
+        # source lands.
         if self._token is not None:
             return self._token
 
@@ -206,7 +211,7 @@ class AkasaScraper(BaseScraper):
             taxes=taxes,
             udf=udf,
             convenience_fee=convenience_fee,
-            total_fare=passenger_fare.get("fareAmount"),
+            total_fare=passenger_fare["fareAmount"],
             status="available",
             run_id=run_id,
             fee_breakdown=fee_breakdown,
