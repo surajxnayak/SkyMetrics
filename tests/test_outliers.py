@@ -1,6 +1,6 @@
 from datetime import date, datetime, timezone
 
-from pipeline.outliers import flag_outliers
+from pipeline.outliers import MIN_GROUP_SIZE_FOR_QUARTILES, flag_outliers
 from scraper.schema import FareQuote, new_quote_id
 
 
@@ -99,6 +99,17 @@ def test_five_point_groups_can_never_flag_even_a_clear_outlier():
     # Documents a real, verified mathematical property of this method (see
     # module docstring) -- not the desired behavior, just the honest one.
     assert all(flags[q.quote_id] is False for q in quotes)
+
+
+def test_min_group_size_is_six_not_a_smaller_value():
+    # No behavioral (flags-dict) test can distinguish threshold=4/5 from
+    # threshold=6: groups of 4-5 are mathematically unable to produce a flag
+    # either way (see test_five_point_groups_can_never_flag_even_a_clear_outlier
+    # and the module docstring), so a black-box test can't catch someone
+    # lowering this constant. This direct assertion is the only thing that
+    # would catch that regression -- the "why 6" derivation lives in the
+    # module docstring, not repeated here.
+    assert MIN_GROUP_SIZE_FOR_QUARTILES == 6
 
 
 def test_no_flight_quotes_are_never_flagged():
