@@ -99,6 +99,14 @@ def test_filter_series_with_no_bounds_returns_everything():
     assert filter_series(series, start=None, end=None) == series
 
 
+def test_filter_series_boundaries_are_inclusive():
+    series = [{"period": "2026-08-10"}, {"period": "2026-08-15"}, {"period": "2026-08-20"}]
+
+    result = filter_series(series, start="2026-08-10", end="2026-08-20")
+
+    assert [p["period"] for p in result] == ["2026-08-10", "2026-08-15", "2026-08-20"]
+
+
 def test_filter_fare_records_by_origin_and_destination():
     records = [
         {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-24T10:00:00+00:00"},
@@ -123,6 +131,20 @@ def test_filter_fare_records_by_date_range_is_inclusive():
         destination=None,
         start="2026-08-24T10:00:00+00:00",
         end="2026-08-24T10:00:00+00:00",
+    )
+
+    assert len(result) == 1
+    assert result[0]["collected_at"] == "2026-08-24T10:00:00+00:00"
+
+
+def test_filter_fare_records_accepts_a_naive_date_bound():
+    records = [
+        {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-24T10:00:00+00:00"},
+        {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-25T10:00:00+00:00"},
+    ]
+
+    result = filter_fare_records(
+        records, origin=None, destination=None, start="2026-08-24", end="2026-08-24"
     )
 
     assert len(result) == 1

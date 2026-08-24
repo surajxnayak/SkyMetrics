@@ -7,7 +7,7 @@ is simpler and avoids invalidation bugs entirely).
 from __future__ import annotations
 
 import json
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from index.build import INDEX_BASE_DIR, load_all_cleaned_records
@@ -28,7 +28,9 @@ def list_snapshots(index_base_dir: Path = INDEX_BASE_DIR) -> list[dict]:
             {
                 "comparison_id": payload["comparison_id"],
                 "frequency": payload["frequency"],
-                "written_at": datetime.fromtimestamp(path.stat().st_mtime).isoformat(),
+                "written_at": datetime.fromtimestamp(
+                    path.stat().st_mtime, tz=timezone.utc
+                ).isoformat(),
             }
         )
     snapshots.sort(key=lambda s: s["written_at"], reverse=True)
@@ -67,6 +69,17 @@ def filter_series(series: list[dict], start: str | None, end: str | None) -> lis
     return result
 
 
+def _parse_datetime(value: str, *, end_of_day: bool = False) -> datetime:
+    parsed = datetime.fromisoformat(value)
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=timezone.utc)
+    if end_of_day and len(value) == len("YYYY-MM-DD"):
+        # ponytail: bare date given as an upper bound means "through this whole
+        # day", not "through its first instant" -- widen to the last microsecond.
+        parsed += timedelta(days=1) - timedelta(microseconds=1)
+    return parsed
+
+
 def filter_fare_records(
     records: list[dict],
     origin: str | None,
@@ -80,10 +93,10 @@ def filter_fare_records(
     if destination is not None:
         result = [r for r in result if r["destination"] == destination]
     if start is not None:
-        start_dt = datetime.fromisoformat(start)
+        start_dt = _parse_datetime(start)
         result = [r for r in result if datetime.fromisoformat(r["collected_at"]) >= start_dt]
     if end is not None:
-        end_dt = datetime.fromisoformat(end)
+        end_dt = _parse_datetime(end, end_of_day=True)
         result = [r for r in result if datetime.fromisoformat(r["collected_at"]) <= end_dt]
     return result
 
