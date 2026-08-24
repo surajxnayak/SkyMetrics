@@ -1,7 +1,7 @@
+"""Tests for the Akasa Air scraper (per-flight search endpoint)."""
 import json
-from datetime import date, timedelta
+from datetime import date
 from unittest.mock import MagicMock
-from urllib.parse import parse_qs, urlparse
 
 import pytest
 
@@ -16,30 +16,50 @@ class _FrozenDate(date):
         return date(2026, 8, 23)
 
 
-def _fake_urlopen_factory(sold_out=False):
-    def fake_urlopen(request, timeout=15):
-        query = parse_qs(urlparse(request.full_url).query)
-        start = date.fromisoformat(query["startDate"][0][:10])
-        entries = []
-        for i in range(31):
-            d = start + timedelta(days=i)
-            entries.append(
-                {
-                    "date": f"{d.isoformat()}T00:00:00",
-                    "isLowest": False,
-                    "noFlights": False,
-                    "price": 5000.0 + i,
-                    "soldOut": sold_out,
-                }
-            )
-        payload = json.dumps({"data": entries}).encode()
-        response = MagicMock()
-        response.read.return_value = payload
-        response.__enter__.return_value = response
-        response.__exit__.return_value = False
-        return response
+def _fake_response(payload: dict) -> MagicMock:
+    response = MagicMock()
+    response.read.return_value = json.dumps(payload).encode()
+    response.__enter__.return_value = response
+    response.__exit__.return_value = False
+    return response
 
-    return fake_urlopen
+
+def _service_charges(discounted_fare, tax, udf, other_fees):
+    charges = [{"amount": discounted_fare, "code": None, "type": "FarePrice"}]
+    for code, amount in other_fees.items():
+        charges.append({"amount": amount, "code": code, "type": "TravelFee"})
+    charges.append({"amount": udf, "code": "UDF", "type": "TravelFee"})
+    charges.append({"amount": tax, "code": None, "type": "Tax"})
+    return charges
+
+
+def _fare_option(class_of_service, discounted_fare, tax, udf, other_fees):
+    charges = _service_charges(discounted_fare, tax, udf, other_fees)
+    fare_amount = sum(c["amount"] for c in charges)
+    return {
+        "value": {
+            "fares": [
+                {
+                    "classOfService": class_of_service,
+                    "passengerFares": [
+                        {
+                            "fareAmount": fare_amount,
+                            "discountedFare": discounted_fare,
+                            "serviceCharges": charges,
+                        }
+                    ],
+                }
+            ]
+        }
+    }
+
+
+def _search_response(fare_options):
+    return {"data": {"faresAvailable": fare_options}}
+
+
+TOKEN_RESPONSE = {"data": {"idleTimeoutInMinutes": 15, "token": "test-token-123"}}
+OTHER_FEES = {"CUTE": 75.0, "RCS": 50.0, "WFE": 350.0, "ASF": 236.0, "DUDF": 89.0}
 
 
 def _guard_allowing_everything():
@@ -49,32 +69,81 @@ def _guard_allowing_everything():
     return guard
 
 
-def test_fetch_quotes_returns_one_per_advance_window(monkeypatch):
+def test_fetch_quotes_maps_fee_breakdown_and_multiple_fare_classes(monkeypatch):
     monkeypatch.setattr(akasa_module, "date", _FrozenDate)
-    monkeypatch.setattr("urllib.request.urlopen", _fake_urlopen_factory())
+
+    two_fare_response = _search_response(
+        [
+            _fare_option("T0", 5985.0, 306.0, 152.0, OTHER_FEES),
+            _fare_option("U1", 6200.0, 310.0, 152.0, OTHER_FEES),
+        ]
+    )
+    token_calls = []
+    search_calls = []
+
+    def fake_urlopen(request, timeout=15):
+        if "generateToken" in request.full_url:
+            token_calls.append(request)
+            return _fake_response(TOKEN_RESPONSE)
+        search_calls.append(request)
+        return _fake_response(two_fare_response)
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
+
+    scraper = AkasaScraper(_guard_allowing_everything())
+    quotes = scraper.fetch_quotes("DEL", "BOM", run_id="run-1")
+    # Same scraper instance handling a second route, as scraper/run.py does per source.
+    quotes += scraper.fetch_quotes("DEL", "BLR", run_id="run-1")
+
+    # 5 advance windows x 2 fare classes per window x 2 routes = 20 quotes
+    assert len(quotes) == 20
+    # Token is fetched once and reused across every subsequent call, including the second route.
+    assert len(token_calls) == 1
+    assert len(search_calls) == 10
+
+    t0_quote = next(
+        q
+        for q in quotes
+        if q.fare_class == "T0" and q.advance_window == "T+1" and q.destination == "BOM"
+    )
+    assert t0_quote.base_fare == 5985.0
+    assert t0_quote.taxes == 306.0
+    assert t0_quote.udf == 152.0
+    assert t0_quote.convenience_fee == sum(OTHER_FEES.values())
+    assert t0_quote.total_fare == pytest.approx(
+        t0_quote.base_fare + t0_quote.taxes + t0_quote.udf + t0_quote.convenience_fee
+    )
+    assert t0_quote.fee_breakdown == {
+        "FarePrice": 5985.0,
+        "CUTE": 75.0,
+        "RCS": 50.0,
+        "WFE": 350.0,
+        "ASF": 236.0,
+        "UDF": 152.0,
+        "DUDF": 89.0,
+        "Tax": 306.0,
+    }
+    assert t0_quote.status == "available"
+    assert t0_quote.carrier == "QP"
+    assert t0_quote.source == "akasaair"
+
+
+def test_fetch_quotes_marks_no_flight_when_no_fares_available(monkeypatch):
+    monkeypatch.setattr(akasa_module, "date", _FrozenDate)
+
+    def fake_urlopen(request, timeout=15):
+        if "generateToken" in request.full_url:
+            return _fake_response(TOKEN_RESPONSE)
+        return _fake_response(_search_response([]))
+
+    monkeypatch.setattr("urllib.request.urlopen", fake_urlopen)
 
     scraper = AkasaScraper(_guard_allowing_everything())
     quotes = scraper.fetch_quotes("DEL", "BOM", run_id="run-1")
 
     assert len(quotes) == 5
-    assert {q.advance_window for q in quotes} == {"T+1", "T+7", "T+15", "T+30", "T+45"}
-    for q in quotes:
-        assert q.origin == "DEL"
-        assert q.destination == "BOM"
-        assert q.carrier == "QP"
-        assert q.source == "akasaair"
-        assert q.status == "available"
-        assert q.total_fare is not None
-
-
-def test_fetch_quotes_marks_sold_out_dates(monkeypatch):
-    monkeypatch.setattr(akasa_module, "date", _FrozenDate)
-    monkeypatch.setattr("urllib.request.urlopen", _fake_urlopen_factory(sold_out=True))
-
-    scraper = AkasaScraper(_guard_allowing_everything())
-    quotes = scraper.fetch_quotes("DEL", "BOM", run_id="run-1")
-
-    assert all(q.status == "sold_out" and q.total_fare is None for q in quotes)
+    assert all(q.status == "no_flight" and q.total_fare is None for q in quotes)
+    assert all(q.fare_class is None and q.fee_breakdown is None for q in quotes)
 
 
 def test_fetch_quotes_raises_when_robots_disallows(monkeypatch):
