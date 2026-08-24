@@ -13,13 +13,14 @@ from fastapi import Header, HTTPException
 
 
 def load_valid_keys() -> set[str]:
-    raw = os.environ.get("SKYMETRICS_API_KEYS")
-    if not raw:
+    raw = os.environ.get("SKYMETRICS_API_KEYS", "")
+    keys = {key.strip() for key in raw.split(",") if key.strip()}
+    if not keys:
         raise RuntimeError(
             "SKYMETRICS_API_KEYS environment variable is not set. "
             "Set it to a comma-separated list of valid API keys before starting the API."
         )
-    return {key.strip() for key in raw.split(",") if key.strip()}
+    return keys
 
 
 def require_api_key(x_api_key: str = Header(...)) -> str:

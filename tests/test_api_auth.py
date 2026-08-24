@@ -17,6 +17,13 @@ def test_load_valid_keys_raises_when_unset(monkeypatch):
         load_valid_keys()
 
 
+def test_load_valid_keys_raises_when_it_parses_to_zero_keys(monkeypatch):
+    monkeypatch.setenv("SKYMETRICS_API_KEYS", " , ")
+
+    with pytest.raises(RuntimeError):
+        load_valid_keys()
+
+
 def test_require_api_key_accepts_a_valid_key(monkeypatch):
     monkeypatch.setenv("SKYMETRICS_API_KEYS", "good-key")
 
