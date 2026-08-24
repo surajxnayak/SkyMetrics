@@ -54,13 +54,33 @@ def test_does_not_flag_a_tight_cluster():
 
 
 def test_groups_are_independent_by_route_and_window():
-    cheap_route = [_quote(1000.0, destination="BLR") for _ in range(4)]
-    expensive_route = [_quote(50000.0, destination="HYD") for _ in range(4)]
+    route_with_an_outlier = [
+        _quote(6500.0, destination="BLR"),
+        _quote(6600.0, destination="BLR"),
+        _quote(6700.0, destination="BLR"),
+        _quote(6800.0, destination="BLR"),
+        _quote(6900.0, destination="BLR"),
+        _quote(50000.0, destination="BLR"),
+    ]
+    unrelated_wide_spread_route = [
+        _quote(100.0, destination="HYD"),
+        _quote(200.0, destination="HYD"),
+        _quote(100000.0, destination="HYD"),
+        _quote(200000.0, destination="HYD"),
+        _quote(300000.0, destination="HYD"),
+        _quote(400000.0, destination="HYD"),
+    ]
 
-    flags = flag_outliers(cheap_route + expensive_route)
+    flags = flag_outliers(route_with_an_outlier + unrelated_wide_spread_route)
 
-    assert all(flags[q.quote_id] is False for q in cheap_route)
-    assert all(flags[q.quote_id] is False for q in expensive_route)
+    # The 50000.0 fare is a real outlier within its own BLR group (verified
+    # in isolation: Q1=6575, Q3=17675, bounds=(-10075, 34325)). If grouping
+    # were broken and all 12 quotes merged into one bucket, the HYD route's
+    # huge spread would inflate the combined IQR enough to swallow 50000.0
+    # and this assertion would fail -- confirmed empirically before writing
+    # this test.
+    assert flags[route_with_an_outlier[-1].quote_id] is True
+    assert all(flags[q.quote_id] is False for q in unrelated_wide_spread_route)
 
 
 def test_small_groups_are_not_flagged():
@@ -68,6 +88,16 @@ def test_small_groups_are_not_flagged():
 
     flags = flag_outliers(quotes)
 
+    assert all(flags[q.quote_id] is False for q in quotes)
+
+
+def test_five_point_groups_can_never_flag_even_a_clear_outlier():
+    quotes = [_quote(900.0), _quote(920.0), _quote(940.0), _quote(960.0), _quote(50000.0)]
+
+    flags = flag_outliers(quotes)
+
+    # Documents a real, verified mathematical property of this method (see
+    # module docstring) -- not the desired behavior, just the honest one.
     assert all(flags[q.quote_id] is False for q in quotes)
 
 

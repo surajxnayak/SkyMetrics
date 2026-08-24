@@ -5,9 +5,13 @@ every routing/fare-class type together -- a connecting itinerary priced
 higher than a nonstop on the same route/date is part of the same real
 distribution a traveler sees, not a special case to exempt.
 
-# ponytail: small-sample IQR is statistically noisy with only a handful of
-# fares per group (this basket has 3 routes x 5 windows); acceptable for
-# this prototype's scope, revisit if a larger basket makes it matter.
+# ponytail: groups smaller than 6 are excluded because, with this exact
+# method (statistics.quantiles exclusive + 1.5*IQR), a 4- or 5-point group
+# can never produce a flag regardless of how extreme its values are -- this
+# isn't a "small samples are noisy" heuristic, it's a mathematical property
+# of this specific formula. Revisit the method (not just the threshold) if
+# a route/window group realistically lands at exactly 4-5 quotes and outlier
+# detection needs to actually fire there.
 """
 from __future__ import annotations
 
@@ -15,7 +19,7 @@ import statistics
 
 from scraper.schema import FareQuote
 
-MIN_GROUP_SIZE_FOR_QUARTILES = 4
+MIN_GROUP_SIZE_FOR_QUARTILES = 6
 
 
 def flag_outliers(quotes: list[FareQuote]) -> dict[str, bool]:
