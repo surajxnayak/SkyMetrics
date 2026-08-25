@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ExportButton from "../components/ExportButton";
+import ExportButton, { toCsv } from "../components/ExportButton";
 
 describe("ExportButton", () => {
   afterEach(() => {
@@ -26,6 +26,25 @@ describe("ExportButton", () => {
     const [blob] = createObjectURL.mock.calls[0];
     expect(blob).toBeInstanceOf(Blob);
     expect(clickSpy).toHaveBeenCalled();
-    expect(revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+    await vi.waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith("blob:mock-url"));
+  });
+});
+
+describe("toCsv", () => {
+  it("includes the union of keys across all rows as headers, even when the first row is missing some", () => {
+    const csv = toCsv([
+      { period: "2026-07", simple_relative: 1.05 },
+      { period: "2026-08", simple_relative: 1.08, laspeyres: 1.1 },
+    ]);
+
+    const lines = csv.split("\n");
+    expect(lines[0].split(",")).toEqual(["period", "simple_relative", "laspeyres"]);
+  });
+
+  it("correctly escapes values containing commas and double quotes", () => {
+    const csv = toCsv([{ note: 'Economy "Saver", nonstop' }]);
+
+    const dataLine = csv.split("\n")[1];
+    expect(dataLine).toBe('"Economy ""Saver"", nonstop"');
   });
 });
