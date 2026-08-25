@@ -5,7 +5,7 @@ submission (problem statement SIH26056, MoSPI/DIID).
 
 ## Status
 
-**Phases 1-3** (of 5 — see `docs/superpowers/specs/`) are complete:
+**Phases 1-4** (of 5 — see `docs/superpowers/specs/`) are complete:
 
 - **Phase 1** — a working, robots.txt-compliant scraper for Akasa Air across
   3 city-pairs and 5 advance-purchase windows.
@@ -14,8 +14,13 @@ submission (problem statement SIH26056, MoSPI/DIID).
 - **Phase 3** — index construction: simple relative, Laspeyres, Paasche, and
   Fisher formulas over real DGCA-weighted routes, with daily/weekly/monthly
   aggregation and versioned snapshots (`index/build.py`).
+- **Phase 4** — a REST API (`api/`) serving the computed index, cleaned
+  fares, and methodology metadata, and a React + TypeScript dashboard
+  (`dashboard/`) covering all six PRD dashboard features: trend view,
+  sector heatmap, lead-time elasticity, drill-down filtering, CSV export,
+  and a data-quality panel.
 
-Dashboard and API are later phases.
+Back-testing, documentation, and automated-test hardening (Phase 5) are next.
 
 ## Why only one live source right now
 
@@ -68,11 +73,34 @@ uvicorn api.main:app --reload
 Interactive docs at `http://127.0.0.1:8000/docs`. All `/api/v1/*` endpoints
 require an `X-API-Key` header matching one of the configured keys.
 
+## Running the dashboard
+
+```bash
+cd dashboard
+cp .env.example .env   # set VITE_API_KEY to match SKYMETRICS_API_KEYS below
+npm install
+npm run dev
+```
+
+Open `http://localhost:5173`. Requires the API (see above) running with a
+matching key, e.g.:
+
+```bash
+export SKYMETRICS_API_KEYS=dev-local-key
+uvicorn api.main:app --reload
+```
+
+The dashboard embeds its API key in the built JS bundle — acceptable for a
+demo of non-sensitive, already-computed fare statistics (see
+`docs/superpowers/specs/2026-08-25-phase4b-dashboard-design.md`'s non-goals
+for the reasoning), not something to do for a real secret.
+
 ## Testing
 
 ```bash
 pytest
 ruff check .
+cd dashboard && npm test && npm run build
 ```
 
 ## License
