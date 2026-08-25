@@ -9,6 +9,11 @@ function OriginProbe() {
   return <span data-testid="origin-value">{filters.origin}</span>;
 }
 
+function FrequencyProbe() {
+  const { filters } = useFilters();
+  return <span data-testid="frequency-value">{filters.frequency}</span>;
+}
+
 describe("Sidebar", () => {
   it("updates the shared filter state when the origin input changes", async () => {
     render(
@@ -21,6 +26,19 @@ describe("Sidebar", () => {
     await userEvent.type(screen.getByLabelText("Origin"), "DEL");
 
     expect(screen.getByTestId("origin-value").textContent).toBe("DEL");
+  });
+
+  it("updates the shared filter state when the frequency select changes", async () => {
+    render(
+      <FilterProvider>
+        <Sidebar />
+        <FrequencyProbe />
+      </FilterProvider>
+    );
+
+    await userEvent.selectOptions(screen.getByLabelText("Frequency"), "weekly");
+
+    expect(screen.getByTestId("frequency-value").textContent).toBe("weekly");
   });
 
   it("offers the five fixed advance-window options", () => {

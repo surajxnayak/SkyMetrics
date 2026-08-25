@@ -7,7 +7,7 @@ function Probe() {
   return (
     <div>
       <span data-testid="frequency">{filters.frequency}</span>
-      <button onClick={() => setFilters({ ...filters, origin: "DEL" })}>set origin</button>
+      <button onClick={() => setFilters((prev) => ({ ...prev, origin: "DEL" }))}>set origin</button>
       <span data-testid="origin">{filters.origin}</span>
     </div>
   );

@@ -1,4 +1,12 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import type { Frequency } from "../api/types";
 
 export interface Filters {
@@ -25,14 +33,15 @@ export const DEFAULT_FILTERS: Filters = {
 
 interface FilterContextValue {
   filters: Filters;
-  setFilters: (filters: Filters) => void;
+  setFilters: Dispatch<SetStateAction<Filters>>;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
 
 export function FilterProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  return <FilterContext.Provider value={{ filters, setFilters }}>{children}</FilterContext.Provider>;
+  const value = useMemo(() => ({ filters, setFilters }), [filters]);
+  return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }
 
 export function useFilters(): FilterContextValue {

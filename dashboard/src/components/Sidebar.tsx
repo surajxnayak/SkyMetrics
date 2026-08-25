@@ -11,7 +11,9 @@ export default function Sidebar() {
       <select
         id="frequency"
         value={filters.frequency}
-        onChange={(e) => setFilters({ ...filters, frequency: e.target.value as Filters["frequency"] })}
+        onChange={(e) =>
+          setFilters((prev) => ({ ...prev, frequency: e.target.value as Filters["frequency"] }))
+        }
       >
         <option value="daily">Daily</option>
         <option value="weekly">Weekly</option>
@@ -22,42 +24,45 @@ export default function Sidebar() {
       <input
         id="start-date"
         value={filters.startDate}
-        onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, startDate: e.target.value }))}
       />
 
       <label htmlFor="end-date">End</label>
       <input
         id="end-date"
         value={filters.endDate}
-        onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, endDate: e.target.value }))}
       />
 
       <label htmlFor="origin">Origin</label>
       <input
         id="origin"
         value={filters.origin}
-        onChange={(e) => setFilters({ ...filters, origin: e.target.value.toUpperCase() })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, origin: e.target.value }))}
+        onBlur={(e) => setFilters((prev) => ({ ...prev, origin: e.target.value.toUpperCase() }))}
       />
 
       <label htmlFor="destination">Destination</label>
       <input
         id="destination"
         value={filters.destination}
-        onChange={(e) => setFilters({ ...filters, destination: e.target.value.toUpperCase() })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, destination: e.target.value }))}
+        onBlur={(e) => setFilters((prev) => ({ ...prev, destination: e.target.value.toUpperCase() }))}
       />
 
       <label htmlFor="carrier">Carrier</label>
       <input
         id="carrier"
         value={filters.carrier}
-        onChange={(e) => setFilters({ ...filters, carrier: e.target.value.toUpperCase() })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, carrier: e.target.value }))}
+        onBlur={(e) => setFilters((prev) => ({ ...prev, carrier: e.target.value.toUpperCase() }))}
       />
 
       <label htmlFor="advance-window">Advance window</label>
       <select
         id="advance-window"
         value={filters.advanceWindow}
-        onChange={(e) => setFilters({ ...filters, advanceWindow: e.target.value })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, advanceWindow: e.target.value }))}
       >
         <option value="">All</option>
         {ADVANCE_WINDOWS.map((window) => (
@@ -71,7 +76,8 @@ export default function Sidebar() {
       <input
         id="fare-class"
         value={filters.fareClass}
-        onChange={(e) => setFilters({ ...filters, fareClass: e.target.value.toUpperCase() })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, fareClass: e.target.value }))}
+        onBlur={(e) => setFilters((prev) => ({ ...prev, fareClass: e.target.value.toUpperCase() }))}
       />
     </aside>
   );
