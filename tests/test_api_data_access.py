@@ -52,11 +52,12 @@ def test_load_snapshot_returns_newest_matching_frequency(tmp_path):
 def test_load_snapshot_by_comparison_id(tmp_path):
     index_dir = tmp_path / "index"
     index_dir.mkdir()
-    _write_snapshot(index_dir, "target", "weekly", [{"period": "2026-W34"}])
+    comparison_id = "deadbeefdeadbeefdeadbeefdeadbeef"
+    _write_snapshot(index_dir, comparison_id, "weekly", [{"period": "2026-W34"}])
 
-    result = load_snapshot("weekly", comparison_id="target", index_base_dir=index_dir)
+    result = load_snapshot("weekly", comparison_id=comparison_id, index_base_dir=index_dir)
 
-    assert result["comparison_id"] == "target"
+    assert result["comparison_id"] == comparison_id
 
 
 def test_load_snapshot_raises_when_comparison_id_missing(tmp_path):
@@ -83,6 +84,26 @@ def test_load_snapshot_raises_when_no_snapshot_for_frequency(tmp_path):
 
     with pytest.raises(SnapshotNotFoundError):
         load_snapshot("daily", comparison_id=None, index_base_dir=index_dir)
+
+
+def test_load_snapshot_rejects_a_comparison_id_with_path_separators(tmp_path):
+    index_dir = tmp_path / "index"
+    index_dir.mkdir()
+    outside_file = tmp_path / "secret.json"
+    outside_file.write_text(
+        json.dumps({"comparison_id": "whatever", "frequency": "daily", "series": []})
+    )
+
+    with pytest.raises(SnapshotNotFoundError):
+        load_snapshot("daily", comparison_id="../secret", index_base_dir=index_dir)
+
+
+def test_load_snapshot_rejects_a_comparison_id_that_is_not_32_hex_chars(tmp_path):
+    index_dir = tmp_path / "index"
+    index_dir.mkdir()
+
+    with pytest.raises(SnapshotNotFoundError):
+        load_snapshot("daily", comparison_id="not-a-real-id", index_base_dir=index_dir)
 
 
 def test_filter_series_by_start_and_end():

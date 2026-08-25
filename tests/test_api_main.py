@@ -51,15 +51,18 @@ def test_get_index_returns_latest_snapshot(tmp_path):
 def test_get_index_by_comparison_id(tmp_path):
     index_dir = tmp_path / "index"
     index_dir.mkdir()
-    _write_snapshot(index_dir, "target", "weekly", [{"period": "2026-W34"}])
+    comparison_id = "deadbeefdeadbeefdeadbeefdeadbeef"
+    _write_snapshot(index_dir, comparison_id, "weekly", [{"period": "2026-W34"}])
     app.dependency_overrides[get_index_base_dir] = lambda: index_dir
 
     response = client.get(
-        "/api/v1/index", params={"frequency": "weekly", "comparison_id": "target"}, headers=HEADERS
+        "/api/v1/index",
+        params={"frequency": "weekly", "comparison_id": comparison_id},
+        headers=HEADERS,
     )
 
     assert response.status_code == 200
-    assert response.json()["comparison_id"] == "target"
+    assert response.json()["comparison_id"] == comparison_id
 
 
 def test_get_index_filters_by_start_and_end(tmp_path):
@@ -99,6 +102,20 @@ def test_get_index_returns_404_for_unknown_comparison_id(tmp_path):
 
     response = client.get(
         "/api/v1/index", params={"frequency": "daily", "comparison_id": "nope"}, headers=HEADERS
+    )
+
+    assert response.status_code == 404
+
+
+def test_get_index_rejects_a_comparison_id_with_path_traversal(tmp_path):
+    index_dir = tmp_path / "index"
+    index_dir.mkdir()
+    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
+
+    response = client.get(
+        "/api/v1/index",
+        params={"frequency": "daily", "comparison_id": "../../config/weights"},
+        headers=HEADERS,
     )
 
     assert response.status_code == 404

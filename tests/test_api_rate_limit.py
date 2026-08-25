@@ -56,3 +56,9 @@ def test_enforce_rate_limit_allows_under_limit(monkeypatch):
     monkeypatch.setattr(rate_limit, "limiter", RateLimiter(max_requests=5, window_seconds=60.0))
 
     enforce_rate_limit(x_api_key="key-a")  # should not raise
+
+
+def test_enforce_rate_limit_accepts_a_missing_key(monkeypatch):
+    monkeypatch.setattr(rate_limit, "limiter", RateLimiter(max_requests=5, window_seconds=60.0))
+
+    enforce_rate_limit(x_api_key=None)  # should not raise

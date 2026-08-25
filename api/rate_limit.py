@@ -42,6 +42,6 @@ class RateLimiter:
 limiter = RateLimiter()
 
 
-def enforce_rate_limit(x_api_key: str = Header(...)) -> None:
+def enforce_rate_limit(x_api_key: str | None = Header(None)) -> None:
     if not limiter.check(x_api_key):
         raise HTTPException(status_code=429, detail="rate limit exceeded")
