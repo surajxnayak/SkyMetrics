@@ -50,4 +50,13 @@ describe("App", () => {
 
     await waitFor(() => expect(screen.getByText("Sector heatmap")).toBeInTheDocument());
   });
+
+  it("switches to the elasticity tab when clicked", async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+
+    await userEvent.click(screen.getByText("Elasticity"));
+
+    await waitFor(() => expect(screen.getByText("Lead-time elasticity")).toBeInTheDocument());
+  });
 });

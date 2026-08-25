@@ -20,20 +20,22 @@ export default function App() {
           <DataQualityPanel />
         </div>
         <main>
-          <nav>
-            <button onClick={() => setTab("trend")} aria-pressed={tab === "trend"}>
+          <div role="tablist">
+            <button role="tab" aria-selected={tab === "trend"} onClick={() => setTab("trend")}>
               Trend
             </button>
-            <button onClick={() => setTab("heatmap")} aria-pressed={tab === "heatmap"}>
+            <button role="tab" aria-selected={tab === "heatmap"} onClick={() => setTab("heatmap")}>
               Heatmap
             </button>
-            <button onClick={() => setTab("elasticity")} aria-pressed={tab === "elasticity"}>
+            <button role="tab" aria-selected={tab === "elasticity"} onClick={() => setTab("elasticity")}>
               Elasticity
             </button>
-          </nav>
-          {tab === "trend" && <TrendView />}
-          {tab === "heatmap" && <SectorHeatmap />}
-          {tab === "elasticity" && <LeadTimeElasticity />}
+          </div>
+          <div role="tabpanel">
+            {tab === "trend" && <TrendView />}
+            {tab === "heatmap" && <SectorHeatmap />}
+            {tab === "elasticity" && <LeadTimeElasticity />}
+          </div>
         </main>
       </div>
     </FilterProvider>
