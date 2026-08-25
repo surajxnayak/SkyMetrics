@@ -13,3 +13,6 @@ data/index/
 .superpowers/
 node_modules/
 dist/
+*.tsbuildinfo
+dashboard/vite.config.js
+dashboard/vite.config.d.ts
