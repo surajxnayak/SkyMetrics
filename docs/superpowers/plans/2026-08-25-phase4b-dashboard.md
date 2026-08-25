@@ -1497,7 +1497,9 @@ import { render, screen, waitFor } from "@testing-library/react";
 import { FilterProvider } from "../context/FilterContext";
 import LeadTimeElasticity, { aggregate } from "../components/LeadTimeElasticity";
 
-const RECORDS = [
+// vi.mock's factory is hoisted above this file's body, so RECORDS must be
+// defined via vi.hoisted() to be visible inside it (see Vitest docs).
+const RECORDS = vi.hoisted(() => [
   {
     origin: "DEL",
     destination: "BOM",
@@ -1520,7 +1522,7 @@ const RECORDS = [
     is_outlier: false,
     collected_at: "2026-08-24T10:00:00+00:00",
   },
-];
+]);
 
 vi.mock("../api/client", () => ({
   getFares: vi.fn().mockResolvedValue(RECORDS),
@@ -1554,8 +1556,29 @@ describe("LeadTimeElasticity", () => {
 
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
   });
+
+  it("plots a real curve for the mean fare line", async () => {
+    const { container } = render(
+      <FilterProvider>
+        <LeadTimeElasticity />
+      </FilterProvider>
+    );
+
+    await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
+
+    // The <Line> below sets an explicit `name`, so (unlike TrendView's
+    // legend-label check) a wrong dataKey wouldn't show up as wrong text --
+    // it shows up as Recharts being unable to compute a path from
+    // undefined values, so a real rendered curve is what actually proves
+    // the dataKey is wired correctly.
+    const curve = container.querySelector(".recharts-line-curve");
+    expect(curve).not.toBeNull();
+    expect(curve?.getAttribute("d")).toBeTruthy();
+  });
 });
 ```
+
+**Corrections found during code-quality review:** (1) `vi.mock`'s factory is hoisted above the rest of the module by Vitest, so the original plain `const RECORDS = [...]` threw `ReferenceError: Cannot access 'RECORDS' before initialization` when referenced inside `vi.mock(...)` — fixed with Vitest's documented `vi.hoisted()` wrapper. (2) The third test above (`"plots a real curve..."`) is a required addition: this component's `<Line>` sets an explicit `name="Mean fare"` (unlike `TrendView.tsx`'s lines, which fall back to using `dataKey` as the legend label), so a `dataKey` typo doesn't show up as wrong legend text the way it does in `TrendView.test.tsx` — it has to be caught by asserting the chart actually rendered a real curve.
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -1580,12 +1603,12 @@ export type ElasticityPoint = {
   meanFare: number;
 };
 
-export interface DrilldownFilters {
+export interface ElasticityDrilldownFilters {
   carrier: string;
   fareClass: string;
 }
 
-export function aggregate(records: FareRecord[], drilldown: DrilldownFilters): ElasticityPoint[] {
+export function aggregate(records: FareRecord[], drilldown: ElasticityDrilldownFilters): ElasticityPoint[] {
   const groups = new Map<string, { sum: number; count: number }>();
   for (const record of records) {
     if (record.status !== "available" || record.is_outlier || record.total_fare === null) continue;
@@ -1637,15 +1660,17 @@ export default function LeadTimeElasticity() {
 }
 ```
 
+**Correction found during code-quality review:** `DrilldownFilters` above is named `ElasticityDrilldownFilters`, not the plain `DrilldownFilters` used in Task 7's `SectorHeatmap.tsx`. Both files export an interface by that name with different shapes (`SectorHeatmap`'s adds `advanceWindow`); nothing imported both together yet, but Task 10 (app-shell wiring) does import from every view file into one module, where the identical name would either collide or — worse — let a lazy wrong-file import typecheck silently (one shape is a structural subset of the other). Renaming this file's version now, before Task 10, avoids that landmine.
+
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `cd dashboard && npx vitest run src/__tests__/LeadTimeElasticity.test.tsx`
-Expected: PASS (3 tests)
+Expected: PASS (4 tests)
 
 - [ ] **Step 5: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (23 tests: 20 from Task 7 + 3 new)
+Expected: PASS (24 tests: 20 from Task 7 + 4 new)
 
 - [ ] **Step 6: Commit**
 
@@ -1882,7 +1907,7 @@ Expected: PASS (4 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (27 tests: 23 from Task 8 + 4 new)
+Expected: PASS (28 tests: 24 from Task 8 + 4 new)
 
 - [ ] **Step 7: Commit**
 
@@ -2020,9 +2045,9 @@ Expected: PASS (2 tests)
 - [ ] **Step 5: Run the full frontend suite and build**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (28 tests)
+Expected: PASS (29 tests)
 
-Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 28 tests (27 from Task 9, +2 new in this file, -1 removed placeholder test).
+Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 29 tests (28 from Task 9, +2 new in this file, -1 removed placeholder test).
 
 Run: `cd dashboard && npm run build`
 Expected: builds with no TypeScript errors.
@@ -2115,7 +2140,7 @@ git commit -m "docs: document running the Phase 4b dashboard"
 
 ## Definition of done
 
-- `cd dashboard && npm test` passes with 28 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
+- `cd dashboard && npm test` passes with 29 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
 - `cd dashboard && npm run build` succeeds with no TypeScript errors.
 - `ruff check .` passes clean.
 - The dashboard, run locally against the real Phase 1-3 data already on disk, demonstrates all six PRD features (F-4.1 through F-4.6) in a real browser.
