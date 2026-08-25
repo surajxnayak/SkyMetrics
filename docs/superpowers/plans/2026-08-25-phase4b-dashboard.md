@@ -582,7 +582,15 @@ Expected: FAIL with `Error: Failed to resolve import "../context/FilterContext"`
 - [ ] **Step 3: Create `dashboard/src/context/FilterContext.tsx`**
 
 ```tsx
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type Dispatch,
+  type ReactNode,
+  type SetStateAction,
+} from "react";
 import type { Frequency } from "../api/types";
 
 export interface Filters {
@@ -609,14 +617,15 @@ export const DEFAULT_FILTERS: Filters = {
 
 interface FilterContextValue {
   filters: Filters;
-  setFilters: (filters: Filters) => void;
+  setFilters: Dispatch<SetStateAction<Filters>>;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
 
 export function FilterProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  return <FilterContext.Provider value={{ filters, setFilters }}>{children}</FilterContext.Provider>;
+  const value = useMemo(() => ({ filters, setFilters }), [filters]);
+  return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }
 
 export function useFilters(): FilterContextValue {
@@ -628,10 +637,14 @@ export function useFilters(): FilterContextValue {
 }
 ```
 
+**Correction found during code-quality review:** `setFilters` is typed as `Dispatch<SetStateAction<Filters>>` (accepting the functional-updater form), not a plain `(filters: Filters) => void` — a whole-object-replace signature is a stale-closure lost-update trap once more than one caller can update filters. The context value is also memoized with `useMemo`, so future view components don't re-render on every keystroke of fields they don't read.
+
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `cd dashboard && npx vitest run src/__tests__/FilterContext.test.tsx`
 Expected: PASS (2 tests)
+
+The `Probe` component in the test above uses `setFilters((prev) => ({ ...prev, origin: "DEL" }))` (the functional form), matching the corrected `setFilters` type.
 
 - [ ] **Step 5: Write the failing `Sidebar` test**
 
@@ -648,6 +661,11 @@ function OriginProbe() {
   return <span data-testid="origin-value">{filters.origin}</span>;
 }
 
+function FrequencyProbe() {
+  const { filters } = useFilters();
+  return <span data-testid="frequency-value">{filters.frequency}</span>;
+}
+
 describe("Sidebar", () => {
   it("updates the shared filter state when the origin input changes", async () => {
     render(
@@ -660,6 +678,19 @@ describe("Sidebar", () => {
     await userEvent.type(screen.getByLabelText("Origin"), "DEL");
 
     expect(screen.getByTestId("origin-value").textContent).toBe("DEL");
+  });
+
+  it("updates the shared filter state when the frequency select changes", async () => {
+    render(
+      <FilterProvider>
+        <Sidebar />
+        <FrequencyProbe />
+      </FilterProvider>
+    );
+
+    await userEvent.selectOptions(screen.getByLabelText("Frequency"), "weekly");
+
+    expect(screen.getByTestId("frequency-value").textContent).toBe("weekly");
   });
 
   it("offers the five fixed advance-window options", () => {
@@ -676,6 +707,8 @@ describe("Sidebar", () => {
 });
 ```
 
+**Correction found during code-quality review:** the "updates the shared filter state when the frequency select changes" test is a new addition — the original plan only tested the `origin` `<input>` end-to-end, leaving both `<select>` controls (`frequency`, `advance-window`) unverified as actually propagating to shared context.
+
 - [ ] **Step 6: Run tests to verify they fail**
 
 Run: `cd dashboard && npx vitest run src/__tests__/Sidebar.test.tsx`
@@ -684,7 +717,7 @@ Expected: FAIL with `Error: Failed to resolve import "../components/Sidebar"`
 - [ ] **Step 7: Create `dashboard/src/components/Sidebar.tsx`**
 
 ```tsx
-import { useFilters } from "../context/FilterContext";
+import { useFilters, type Filters } from "../context/FilterContext";
 
 const ADVANCE_WINDOWS = ["T+1", "T+7", "T+15", "T+30", "T+45"];
 
@@ -697,7 +730,9 @@ export default function Sidebar() {
       <select
         id="frequency"
         value={filters.frequency}
-        onChange={(e) => setFilters({ ...filters, frequency: e.target.value as Filters["frequency"] })}
+        onChange={(e) =>
+          setFilters((prev) => ({ ...prev, frequency: e.target.value as Filters["frequency"] }))
+        }
       >
         <option value="daily">Daily</option>
         <option value="weekly">Weekly</option>
@@ -708,42 +743,45 @@ export default function Sidebar() {
       <input
         id="start-date"
         value={filters.startDate}
-        onChange={(e) => setFilters({ ...filters, startDate: e.target.value })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, startDate: e.target.value }))}
       />
 
       <label htmlFor="end-date">End</label>
       <input
         id="end-date"
         value={filters.endDate}
-        onChange={(e) => setFilters({ ...filters, endDate: e.target.value })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, endDate: e.target.value }))}
       />
 
       <label htmlFor="origin">Origin</label>
       <input
         id="origin"
         value={filters.origin}
-        onChange={(e) => setFilters({ ...filters, origin: e.target.value.toUpperCase() })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, origin: e.target.value }))}
+        onBlur={(e) => setFilters((prev) => ({ ...prev, origin: e.target.value.toUpperCase() }))}
       />
 
       <label htmlFor="destination">Destination</label>
       <input
         id="destination"
         value={filters.destination}
-        onChange={(e) => setFilters({ ...filters, destination: e.target.value.toUpperCase() })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, destination: e.target.value }))}
+        onBlur={(e) => setFilters((prev) => ({ ...prev, destination: e.target.value.toUpperCase() }))}
       />
 
       <label htmlFor="carrier">Carrier</label>
       <input
         id="carrier"
         value={filters.carrier}
-        onChange={(e) => setFilters({ ...filters, carrier: e.target.value.toUpperCase() })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, carrier: e.target.value }))}
+        onBlur={(e) => setFilters((prev) => ({ ...prev, carrier: e.target.value.toUpperCase() }))}
       />
 
       <label htmlFor="advance-window">Advance window</label>
       <select
         id="advance-window"
         value={filters.advanceWindow}
-        onChange={(e) => setFilters({ ...filters, advanceWindow: e.target.value })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, advanceWindow: e.target.value }))}
       >
         <option value="">All</option>
         {ADVANCE_WINDOWS.map((window) => (
@@ -757,28 +795,25 @@ export default function Sidebar() {
       <input
         id="fare-class"
         value={filters.fareClass}
-        onChange={(e) => setFilters({ ...filters, fareClass: e.target.value.toUpperCase() })}
+        onChange={(e) => setFilters((prev) => ({ ...prev, fareClass: e.target.value }))}
+        onBlur={(e) => setFilters((prev) => ({ ...prev, fareClass: e.target.value.toUpperCase() }))}
       />
     </aside>
   );
 }
 ```
 
-This references `Filters["frequency"]` as a type — add the import for it: change the top import line to:
-
-```tsx
-import { useFilters, type Filters } from "../context/FilterContext";
-```
+**Correction found during code-quality review:** `origin`/`destination`/`carrier`/`fareClass` originally uppercased on every `onChange` keystroke, which reset the input's cursor to the end of the field on every character typed — a real, reproduced bug (typing a correction mid-string landed the next keystroke in the wrong place). Fixed by storing the raw typed value in `onChange` and uppercasing only `onBlur` (when the field loses focus), so the shared filter state ends up uppercase without ever fighting the browser's own cursor management mid-edit. Every `setFilters` call site also switched to the functional-updater form, matching the corrected `FilterContext` type above. `start-date`/`end-date` deliberately stayed plain text inputs (not `<input type="date">`) — a native date input would force `YYYY-MM-DD` universally, which is wrong for the Trend view's weekly (`YYYY-Www`) and monthly (`YYYY-MM`) period filtering, built in a later task.
 
 - [ ] **Step 8: Run tests to verify they pass**
 
 Run: `cd dashboard && npx vitest run src/__tests__/Sidebar.test.tsx`
-Expected: PASS (2 tests)
+Expected: PASS (3 tests)
 
 - [ ] **Step 9: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (10 tests: 6 from Task 3 + 4 new)
+Expected: PASS (11 tests: 6 from Task 3 + 5 new)
 
 - [ ] **Step 10: Commit**
 
@@ -887,7 +922,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 5: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (12 tests: 10 from Task 4 + 2 new)
+Expected: PASS (13 tests: 11 from Task 4 + 2 new)
 
 - [ ] **Step 6: Commit**
 
@@ -1051,7 +1086,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (14 tests: 12 from Task 5 + 2 new)
+Expected: PASS (15 tests: 13 from Task 5 + 2 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1342,7 +1377,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (16 tests: 14 from Task 6 + 2 new)
+Expected: PASS (17 tests: 15 from Task 6 + 2 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1517,7 +1552,7 @@ Expected: PASS (3 tests)
 - [ ] **Step 5: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (19 tests: 16 from Task 7 + 3 new)
+Expected: PASS (20 tests: 17 from Task 7 + 3 new)
 
 - [ ] **Step 6: Commit**
 
@@ -1754,7 +1789,7 @@ Expected: PASS (4 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (23 tests: 19 from Task 8 + 4 new)
+Expected: PASS (24 tests: 20 from Task 8 + 4 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1892,9 +1927,9 @@ Expected: PASS (2 tests)
 - [ ] **Step 5: Run the full frontend suite and build**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (24 tests)
+Expected: PASS (25 tests)
 
-Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 24 tests (23 from Task 9, +2 new in this file, -1 removed placeholder test).
+Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 25 tests (24 from Task 9, +2 new in this file, -1 removed placeholder test).
 
 Run: `cd dashboard && npm run build`
 Expected: builds with no TypeScript errors.
@@ -1987,7 +2022,7 @@ git commit -m "docs: document running the Phase 4b dashboard"
 
 ## Definition of done
 
-- `cd dashboard && npm test` passes with 24 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
+- `cd dashboard && npm test` passes with 25 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
 - `cd dashboard && npm run build` succeeds with no TypeScript errors.
 - `ruff check .` passes clean.
 - The dashboard, run locally against the real Phase 1-3 data already on disk, demonstrates all six PRD features (F-4.1 through F-4.6) in a real browser.
