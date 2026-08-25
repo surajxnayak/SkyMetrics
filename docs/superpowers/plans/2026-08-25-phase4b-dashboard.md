@@ -72,12 +72,14 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "types": ["vitest/globals", "@testing-library/jest-dom"]
+    "types": ["vite/client", "vitest/globals", "@testing-library/jest-dom"]
   },
   "include": ["src"],
   "references": [{ "path": "./tsconfig.node.json" }]
 }
 ```
+
+**Correction found during code-quality review:** `"vite/client"` is required in `types` — without it, `import.meta.env.VITE_API_BASE_URL`/`VITE_API_KEY` (used by Task 3's `client.ts`) fails `tsc -b` with `TS2339: Property 'env' does not exist on type 'ImportMeta'`. This wasn't caught by Task 1's own smoke test (which never reads `import.meta.env`) but would have broken Task 3 immediately.
 
 - [ ] **Step 3: Create `dashboard/tsconfig.node.json`**
 
@@ -96,8 +98,10 @@
 
 - [ ] **Step 4: Create `dashboard/vite.config.ts`**
 
+**Correction found during code-quality review:** importing `defineConfig` from plain `"vite"` fails `tsc -b`/`npm run build` with `TS2769` — Vite's own `defineConfig` doesn't carry Vitest's `test`-field type augmentation. Import from `"vitest/config"` instead (a re-export of the same function with that augmentation merged in).
+
 ```typescript
-import { defineConfig } from "vite";
+import { defineConfig } from "vitest/config";
 import react from "@vitejs/plugin-react";
 
 export default defineConfig({
@@ -203,6 +207,8 @@ cd /Users/surajnayak/Developer/SkyMetrics
 git add dashboard/
 git commit -m "chore: scaffold dashboard (Vite + React + TypeScript + Vitest)"
 ```
+
+**Additional corrections found during code-quality review, all committed as follow-ups:** the root `.gitignore` also needed `*.tsbuildinfo`, `dashboard/vite.config.js`, and `dashboard/vite.config.d.ts` — `npm run build` generates these directly under `dashboard/`, and none were covered by the original `node_modules/`/`dist/` lines. (An attempted fix of adding `"noEmit": true` to `dashboard/tsconfig.node.json` was tried and reverted: TypeScript hard-errors — `TS6310: Referenced project '...' may not disable emit` — when a config reached via another config's `"references"` array sets `noEmit`; the `.gitignore` additions close the same gap without hitting that error.) Separately, `.github/workflows/ci.yml` gained an independent `dashboard` job (`actions/setup-node@v4`, `npm ci && npm run build && npm test`, no `needs:` coupling to the existing Python job) — added now, at the start of this sub-phase, rather than discovered after all 11 tasks had stacked up on an unverified toolchain (as happened reactively with Phase 4a's own CI gap).
 
 ---
 
