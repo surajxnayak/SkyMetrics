@@ -55,6 +55,19 @@ Cleans a raw run into `data/cleaned/<run_id>.jsonl`, then builds a versioned
 APIx snapshot at `data/index/<comparison_id>.json` from every cleaned run on
 disk.
 
+## Running the API
+
+Requires `SKYMETRICS_API_KEYS` to be set to a comma-separated list of
+valid keys before starting.
+
+```bash
+export SKYMETRICS_API_KEYS=dev-local-key
+uvicorn api.main:app --reload
+```
+
+Interactive docs at `http://127.0.0.1:8000/docs`. All `/api/v1/*` endpoints
+require an `X-API-Key` header matching one of the configured keys.
+
 ## Testing
 
 ```bash
