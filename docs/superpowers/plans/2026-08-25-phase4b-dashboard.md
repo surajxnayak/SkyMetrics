@@ -308,7 +308,7 @@ git commit -m "feat: add CORS policy for the dashboard's origin"
 ```typescript
 export type Frequency = "daily" | "weekly" | "monthly";
 
-export interface IndexPoint {
+export type IndexPoint = {
   period: string;
   base_period: string;
   routes: string[];
@@ -316,7 +316,7 @@ export interface IndexPoint {
   laspeyres?: number;
   paasche?: number;
   fisher?: number;
-}
+};
 
 export interface IndexResponse {
   comparison_id: string;
@@ -355,6 +355,8 @@ export interface MetadataResponse {
   snapshots: SnapshotSummary[];
 }
 ```
+
+**Correction found during Task 6's code-quality review:** `IndexPoint` is declared with `type`, not `interface` — TypeScript doesn't grant `interface` declarations an implicit index signature (a deliberate guard against declaration merging), so `IndexPoint[]` failed `ExportButton`'s `T extends Record<string, unknown>` constraint when Task 6 tried to pass `data.series` straight through. A `type` alias for the same object shape satisfies the constraint with no workaround needed at any call site.
 
 - [ ] **Step 2: Write the failing tests**
 
@@ -974,6 +976,7 @@ git commit -m "feat: generic CSV export button"
 **Files:**
 - Create: `dashboard/src/hooks/useIndexSeries.ts`
 - Create: `dashboard/src/components/TrendView.tsx`
+- Modify: `dashboard/src/setupTests.ts` (see the correction note after Step 4 — this is the first task to actually render a Recharts chart, and jsdom needs two stubs it doesn't ship with)
 - Test: `dashboard/src/__tests__/TrendView.test.tsx`
 
 - [ ] **Step 1: Write the failing test**
@@ -1025,8 +1028,28 @@ describe("TrendView", () => {
 
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
   });
+
+  it("plots a line for each index series key", async () => {
+    const { container } = render(
+      <FilterProvider>
+        <TrendView />
+      </FilterProvider>
+    );
+
+    await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
+
+    // Recharts' Line uses its dataKey as the legend label when no `name` is
+    // given, so a mistyped dataKey (e.g. laspeyres -> laspeyeres) shows up
+    // here as a wrong label rather than passing silently.
+    for (const key of ["simple_relative", "laspeyres", "paasche", "fisher"]) {
+      expect(screen.getByText(key)).toBeInTheDocument();
+    }
+    expect(container.querySelectorAll(".recharts-line")).toHaveLength(4);
+  });
 });
 ```
+
+**Correction found during code-quality review:** the third test above (asserting real rendered chart content) is a required addition — without it, nothing in this test file could catch a typo'd `dataKey`. jsdom has no layout engine, so `getBoundingClientRect()` always returns `0x0` by default, and Recharts refuses to render any chart content into a zero-size container — meaning the first two tests alone would pass identically even with an empty, invisible chart. See the `setupTests.ts` correction after Step 4 for the fix that makes this test possible at all.
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -1113,21 +1136,52 @@ export default function TrendView() {
 }
 ```
 
+**Correction found during code-quality review: modify `dashboard/src/setupTests.ts`.** This is the first task to actually render a Recharts chart, and jsdom is missing two things Recharts needs: `ResizeObserver` (used by `ResponsiveContainer`, not implemented by jsdom at all) and real layout (`getBoundingClientRect()` always returns `0x0` in jsdom, and Recharts refuses to render chart content into a zero-size container — silently, no error, just an empty container). Without both stubs, `TrendView`'s chart renders nothing in tests, and the third test above would be unwritable. Update `dashboard/src/setupTests.ts` (created empty except for the jest-dom import in Task 1) to:
+
+```typescript
+import "@testing-library/jest-dom";
+
+// jsdom has no ResizeObserver; recharts' ResponsiveContainer needs one.
+// ponytail: minimal no-op stub, upgrade if a test needs real resize callbacks.
+class ResizeObserverStub {
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+}
+globalThis.ResizeObserver = globalThis.ResizeObserver ?? (ResizeObserverStub as unknown as typeof ResizeObserver);
+
+// jsdom has no layout engine, so getBoundingClientRect always returns 0x0,
+// and recharts refuses to render chart content into a 0x0 container.
+// ponytail: fixed 500x300 is arbitrary-but-sufficient to make recharts render
+// real SVG content in tests; it doesn't simulate any specific real layout.
+Element.prototype.getBoundingClientRect = () => ({
+  width: 500,
+  height: 300,
+  top: 0,
+  left: 0,
+  bottom: 300,
+  right: 500,
+  x: 0,
+  y: 0,
+  toJSON: () => {},
+});
+```
+
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `cd dashboard && npx vitest run src/__tests__/TrendView.test.tsx`
-Expected: PASS (2 tests)
+Expected: PASS (3 tests)
 
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (17 tests: 15 from Task 5 + 2 new)
+Expected: PASS (18 tests: 15 from Task 5 + 3 new)
 
 - [ ] **Step 7: Commit**
 
 ```bash
 cd /Users/surajnayak/Developer/SkyMetrics
-git add dashboard/src/hooks/useIndexSeries.ts dashboard/src/components/TrendView.tsx dashboard/src/__tests__/TrendView.test.tsx
+git add dashboard/src/hooks/useIndexSeries.ts dashboard/src/components/TrendView.tsx dashboard/src/setupTests.ts dashboard/src/__tests__/TrendView.test.tsx
 git commit -m "feat: trend view (F-4.1)"
 ```
 
@@ -1412,7 +1466,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (19 tests: 17 from Task 6 + 2 new)
+Expected: PASS (20 tests: 18 from Task 6 + 2 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1587,7 +1641,7 @@ Expected: PASS (3 tests)
 - [ ] **Step 5: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (22 tests: 19 from Task 7 + 3 new)
+Expected: PASS (23 tests: 20 from Task 7 + 3 new)
 
 - [ ] **Step 6: Commit**
 
@@ -1824,7 +1878,7 @@ Expected: PASS (4 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (26 tests: 22 from Task 8 + 4 new)
+Expected: PASS (27 tests: 23 from Task 8 + 4 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1962,9 +2016,9 @@ Expected: PASS (2 tests)
 - [ ] **Step 5: Run the full frontend suite and build**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (27 tests)
+Expected: PASS (28 tests)
 
-Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 27 tests (26 from Task 9, +2 new in this file, -1 removed placeholder test).
+Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 28 tests (27 from Task 9, +2 new in this file, -1 removed placeholder test).
 
 Run: `cd dashboard && npm run build`
 Expected: builds with no TypeScript errors.
@@ -2057,7 +2111,7 @@ git commit -m "docs: document running the Phase 4b dashboard"
 
 ## Definition of done
 
-- `cd dashboard && npm test` passes with 27 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
+- `cd dashboard && npm test` passes with 28 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
 - `cd dashboard && npm run build` succeeds with no TypeScript errors.
 - `ruff check .` passes clean.
 - The dashboard, run locally against the real Phase 1-3 data already on disk, demonstrates all six PRD features (F-4.1 through F-4.6) in a real browser.
