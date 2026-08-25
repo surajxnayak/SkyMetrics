@@ -838,7 +838,7 @@ git commit -m "feat: shared filter state and sidebar controls"
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import ExportButton from "../components/ExportButton";
+import ExportButton, { toCsv } from "../components/ExportButton";
 
 describe("ExportButton", () => {
   afterEach(() => {
@@ -863,10 +863,31 @@ describe("ExportButton", () => {
     const [blob] = createObjectURL.mock.calls[0];
     expect(blob).toBeInstanceOf(Blob);
     expect(clickSpy).toHaveBeenCalled();
-    expect(revokeObjectURL).toHaveBeenCalledWith("blob:mock-url");
+    await vi.waitFor(() => expect(revokeObjectURL).toHaveBeenCalledWith("blob:mock-url"));
+  });
+});
+
+describe("toCsv", () => {
+  it("includes the union of keys across all rows as headers, even when the first row is missing some", () => {
+    const csv = toCsv([
+      { period: "2026-07", simple_relative: 1.05 },
+      { period: "2026-08", simple_relative: 1.08, laspeyres: 1.1 },
+    ]);
+
+    const lines = csv.split("\n");
+    expect(lines[0].split(",")).toEqual(["period", "simple_relative", "laspeyres"]);
+  });
+
+  it("correctly escapes values containing commas and double quotes", () => {
+    const csv = toCsv([{ note: 'Economy "Saver", nonstop' }]);
+
+    const dataLine = csv.split("\n")[1];
+    expect(dataLine).toBe('"Economy ""Saver"", nonstop"');
   });
 });
 ```
+
+**Correction found during code-quality review:** two Critical bugs in `toCsv` (below) were caught and fixed — see the Step 3 correction note for details. The `revokeObjectURL` assertion also moved from a synchronous `expect` to `await vi.waitFor(...)`, since the fix defers the revoke call by a tick. The two new `describe("toCsv", ...)` tests call the exported `toCsv` function directly with plain objects, rather than rendering the component and reading a `Blob`'s content back out (`await blob.text()`) — jsdom's `Blob` doesn't implement `.text()` in this project's test environment, and the usual `new Response(blob).text()` workaround also doesn't round-trip correctly here (returns the literal string `"[object Blob]"`, both confirmed by direct experimentation). Testing the pure `toCsv` function directly sidesteps the environment gap entirely and matches this project's existing pattern of exporting pure aggregation functions for direct testability (see `SectorHeatmap.tsx`'s and `LeadTimeElasticity.tsx`'s exported `aggregate` from earlier tasks).
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -881,12 +902,24 @@ interface ExportButtonProps<T extends Record<string, unknown>> {
   filename: string;
 }
 
-function toCsv<T extends Record<string, unknown>>(rows: T[]): string {
+function csvEscape(value: unknown): string {
+  const str = Array.isArray(value) ? value.join("; ") : String(value ?? "");
+  if (/[",\n]/.test(str)) {
+    return `"${str.replace(/"/g, '""')}"`;
+  }
+  return str;
+}
+
+export function toCsv<T extends Record<string, unknown>>(rows: T[]): string {
   if (rows.length === 0) return "";
-  const headers = Object.keys(rows[0]);
-  const lines = [headers.join(",")];
+  const headerSet = new Set<string>();
   for (const row of rows) {
-    lines.push(headers.map((header) => JSON.stringify(row[header] ?? "")).join(","));
+    for (const key of Object.keys(row)) headerSet.add(key);
+  }
+  const headers = Array.from(headerSet);
+  const lines = [headers.map(csvEscape).join(",")];
+  for (const row of rows) {
+    lines.push(headers.map((header) => csvEscape(row[header])).join(","));
   }
   return lines.join("\n");
 }
@@ -903,7 +936,7 @@ export default function ExportButton<T extends Record<string, unknown>>({
     link.href = url;
     link.download = filename;
     link.click();
-    URL.revokeObjectURL(url);
+    setTimeout(() => URL.revokeObjectURL(url), 0);
   }
 
   return (
@@ -914,15 +947,17 @@ export default function ExportButton<T extends Record<string, unknown>>({
 }
 ```
 
+**Correction found during code-quality review:** the original `toCsv` derived headers from `Object.keys(rows[0])` only — silently dropping any column absent from the first row, a real problem for data shaped like `IndexPoint` (optional `laspeyres`/`paasche`/`fisher`). Fixed by deriving headers as the union of keys across all rows. Cell values were also serialized with `JSON.stringify`, which is not valid CSV escaping — a literal double-quote character in a value produced a corrupted file when opened in a real spreadsheet app (CSV requires doubling an embedded quote, not backslash-escaping it). Fixed with a proper `csvEscape` helper (quotes a field only when it contains a comma/quote/newline, doubles embedded quotes, joins arrays with `"; "` before escaping). `URL.revokeObjectURL` is also now deferred by a tick (`setTimeout(..., 0)`) rather than called synchronously right after `link.click()` — a real-browser download footgun the original synchronous call risked.
+
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `cd dashboard && npx vitest run src/__tests__/ExportButton.test.tsx`
-Expected: PASS (2 tests)
+Expected: PASS (4 tests)
 
 - [ ] **Step 5: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (13 tests: 11 from Task 4 + 2 new)
+Expected: PASS (15 tests: 11 from Task 4 + 4 new)
 
 - [ ] **Step 6: Commit**
 
@@ -1086,7 +1121,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (15 tests: 13 from Task 5 + 2 new)
+Expected: PASS (17 tests: 15 from Task 5 + 2 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1377,7 +1412,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (17 tests: 15 from Task 6 + 2 new)
+Expected: PASS (19 tests: 17 from Task 6 + 2 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1552,7 +1587,7 @@ Expected: PASS (3 tests)
 - [ ] **Step 5: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (20 tests: 17 from Task 7 + 3 new)
+Expected: PASS (22 tests: 19 from Task 7 + 3 new)
 
 - [ ] **Step 6: Commit**
 
@@ -1789,7 +1824,7 @@ Expected: PASS (4 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (24 tests: 20 from Task 8 + 4 new)
+Expected: PASS (26 tests: 22 from Task 8 + 4 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1927,9 +1962,9 @@ Expected: PASS (2 tests)
 - [ ] **Step 5: Run the full frontend suite and build**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (25 tests)
+Expected: PASS (27 tests)
 
-Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 25 tests (24 from Task 9, +2 new in this file, -1 removed placeholder test).
+Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 27 tests (26 from Task 9, +2 new in this file, -1 removed placeholder test).
 
 Run: `cd dashboard && npm run build`
 Expected: builds with no TypeScript errors.
@@ -2022,7 +2057,7 @@ git commit -m "docs: document running the Phase 4b dashboard"
 
 ## Definition of done
 
-- `cd dashboard && npm test` passes with 25 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
+- `cd dashboard && npm test` passes with 27 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
 - `cd dashboard && npm run build` succeeds with no TypeScript errors.
 - `ruff check .` passes clean.
 - The dashboard, run locally against the real Phase 1-3 data already on disk, demonstrates all six PRD features (F-4.1 through F-4.6) in a real browser.
