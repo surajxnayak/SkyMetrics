@@ -1354,11 +1354,13 @@ import { useFares } from "../hooks/useFares";
 import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
 
-export interface Cell {
+// `type`, not `interface` -- Task 6 established that interfaces don't get an
+// implicit index signature, which breaks ExportButton's generic constraint.
+export type Cell = {
   route: string;
   period: string;
   meanFare: number;
-}
+};
 
 export interface DrilldownFilters {
   carrier: string;
