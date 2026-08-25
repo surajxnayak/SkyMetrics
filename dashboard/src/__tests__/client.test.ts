@@ -35,6 +35,18 @@ describe("getIndex", () => {
 
     expect(result.comparison_id).toBe("abc");
   });
+
+  it("omits comparison_id, start, and end from the URL when they're not provided", async () => {
+    mockFetchOnce({ comparison_id: "abc", frequency: "daily", series: [] });
+
+    await getIndex({ frequency: "daily" });
+
+    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).not.toContain("comparison_id");
+    expect(url).not.toContain("start");
+    expect(url).not.toContain("end");
+    expect(url).not.toContain("undefined");
+  });
 });
 
 describe("getFares", () => {

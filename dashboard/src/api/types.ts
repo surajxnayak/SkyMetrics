@@ -21,7 +21,7 @@ export interface FareRecord {
   destination: string;
   carrier: string;
   advance_window: string;
-  fare_class: string;
+  fare_class: string | null;
   total_fare: number | null;
   status: string;
   is_outlier: boolean;
