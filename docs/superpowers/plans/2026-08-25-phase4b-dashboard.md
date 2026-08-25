@@ -1983,8 +1983,19 @@ describe("App", () => {
 
     await waitFor(() => expect(screen.getByText("Sector heatmap")).toBeInTheDocument());
   });
+
+  it("switches to the elasticity tab when clicked", async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+
+    await userEvent.click(screen.getByText("Elasticity"));
+
+    await waitFor(() => expect(screen.getByText("Lead-time elasticity")).toBeInTheDocument());
+  });
 });
 ```
+
+**Correction found during code-quality review:** the third test above (Elasticity tab) is a required addition — the original plan tested only the default tab and switching to Heatmap, leaving one of the three wired tabs completely unexercised by any integration test.
 
 - [ ] **Step 2: Run tests to verify they fail**
 
@@ -2016,20 +2027,22 @@ export default function App() {
           <DataQualityPanel />
         </div>
         <main>
-          <nav>
-            <button onClick={() => setTab("trend")} aria-pressed={tab === "trend"}>
+          <div role="tablist">
+            <button role="tab" aria-selected={tab === "trend"} onClick={() => setTab("trend")}>
               Trend
             </button>
-            <button onClick={() => setTab("heatmap")} aria-pressed={tab === "heatmap"}>
+            <button role="tab" aria-selected={tab === "heatmap"} onClick={() => setTab("heatmap")}>
               Heatmap
             </button>
-            <button onClick={() => setTab("elasticity")} aria-pressed={tab === "elasticity"}>
+            <button role="tab" aria-selected={tab === "elasticity"} onClick={() => setTab("elasticity")}>
               Elasticity
             </button>
-          </nav>
-          {tab === "trend" && <TrendView />}
-          {tab === "heatmap" && <SectorHeatmap />}
-          {tab === "elasticity" && <LeadTimeElasticity />}
+          </div>
+          <div role="tabpanel">
+            {tab === "trend" && <TrendView />}
+            {tab === "heatmap" && <SectorHeatmap />}
+            {tab === "elasticity" && <LeadTimeElasticity />}
+          </div>
         </main>
       </div>
     </FilterProvider>
@@ -2037,17 +2050,19 @@ export default function App() {
 }
 ```
 
+**Correction found during code-quality review:** `aria-pressed` on plain `<button>`s inside a `<nav>` is the toggle-button ARIA pattern (mute/unmute), not the tab pattern — a screen reader would announce these as "button, pressed" rather than "tab, selected." Fixed with the correct WAI-ARIA tabs roles: `role="tablist"` on the button group, `role="tab"` + `aria-selected` on each button, `role="tabpanel"` wrapping the content area. Full roving-tabindex arrow-key navigation is a legitimate, common simplification left out here — only the roles/`aria-selected` attributes were required.
+
 - [ ] **Step 4: Run tests to verify they pass**
 
 Run: `cd dashboard && npx vitest run src/__tests__/App.test.tsx`
-Expected: PASS (2 tests)
+Expected: PASS (3 tests)
 
 - [ ] **Step 5: Run the full frontend suite and build**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (29 tests)
+Expected: PASS (30 tests)
 
-Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 29 tests (28 from Task 9, +2 new in this file, -1 removed placeholder test).
+Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 3-test version — a net +2 over the running total, not +3. Expected total: 30 tests (28 from Task 9, +3 new in this file, -1 removed placeholder test).
 
 Run: `cd dashboard && npm run build`
 Expected: builds with no TypeScript errors.
@@ -2140,7 +2155,7 @@ git commit -m "docs: document running the Phase 4b dashboard"
 
 ## Definition of done
 
-- `cd dashboard && npm test` passes with 29 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
+- `cd dashboard && npm test` passes with 30 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
 - `cd dashboard && npm run build` succeeds with no TypeScript errors.
 - `ruff check .` passes clean.
 - The dashboard, run locally against the real Phase 1-3 data already on disk, demonstrates all six PRD features (F-4.1 through F-4.6) in a real browser.
