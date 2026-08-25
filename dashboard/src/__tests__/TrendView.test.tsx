@@ -43,4 +43,22 @@ describe("TrendView", () => {
 
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
   });
+
+  it("plots a line for each index series key", async () => {
+    const { container } = render(
+      <FilterProvider>
+        <TrendView />
+      </FilterProvider>
+    );
+
+    await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
+
+    // Recharts' Line uses its dataKey as the legend label when no `name` is
+    // given, so a mistyped dataKey (e.g. laspeyres -> laspeyeres) shows up
+    // here as a wrong label rather than passing silently.
+    for (const key of ["simple_relative", "laspeyres", "paasche", "fisher"]) {
+      expect(screen.getByText(key)).toBeInTheDocument();
+    }
+    expect(container.querySelectorAll(".recharts-line")).toHaveLength(4);
+  });
 });

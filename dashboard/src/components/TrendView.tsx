@@ -28,7 +28,7 @@ export default function TrendView() {
           <Line type="monotone" dataKey="fisher" stroke="#ff7300" />
         </LineChart>
       </ResponsiveContainer>
-      <ExportButton data={data.series.map((point) => ({ ...point }))} filename="trend.csv" />
+      <ExportButton data={data.series} filename="trend.csv" />
     </div>
   );
 }

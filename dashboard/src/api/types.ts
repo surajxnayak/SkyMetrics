@@ -1,6 +1,6 @@
 export type Frequency = "daily" | "weekly" | "monthly";
 
-export interface IndexPoint {
+export type IndexPoint = {
   period: string;
   base_period: string;
   routes: string[];
@@ -8,7 +8,7 @@ export interface IndexPoint {
   laspeyres?: number;
   paasche?: number;
   fisher?: number;
-}
+};
 
 export interface IndexResponse {
   comparison_id: string;
