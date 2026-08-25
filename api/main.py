@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Literal
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from api.auth import require_api_key
@@ -25,6 +26,13 @@ from index.build import CLEANED_BASE_DIR, INDEX_BASE_DIR
 from index.weights import WEIGHTS_PATH
 
 app = FastAPI(title="SkyMetrics APIx API", version="1.0.0")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:5173"],
+    allow_methods=["GET"],
+    allow_headers=["X-API-Key"],
+)
 
 
 def get_index_base_dir() -> Path:

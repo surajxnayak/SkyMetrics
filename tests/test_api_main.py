@@ -240,3 +240,30 @@ def test_openapi_docs_reachable_without_api_key():
     response = client.get("/openapi.json")
 
     assert response.status_code == 200
+
+
+def test_cors_preflight_from_configured_origin_succeeds():
+    response = client.options(
+        "/api/v1/metadata",
+        headers={
+            "Origin": "http://localhost:5173",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "X-API-Key",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
+
+
+def test_cors_preflight_from_other_origin_is_not_allowed():
+    response = client.options(
+        "/api/v1/metadata",
+        headers={
+            "Origin": "http://evil.example.com",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "X-API-Key",
+        },
+    )
+
+    assert "access-control-allow-origin" not in response.headers
