@@ -10,3 +10,6 @@ data/cleaned/
 data/index/
 .env
 .DS_Store
+.superpowers/
+node_modules/
+dist/
