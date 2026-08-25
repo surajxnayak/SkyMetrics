@@ -329,7 +329,7 @@ export interface FareRecord {
   destination: string;
   carrier: string;
   advance_window: string;
-  fare_class: string;
+  fare_class: string | null;
   total_fare: number | null;
   status: string;
   is_outlier: boolean;
@@ -388,6 +388,18 @@ describe("getIndex", () => {
     expect(url).toContain("/api/v1/index");
     expect(url).toContain("frequency=daily");
     expect((options.headers as Record<string, string>)["X-API-Key"]).toBeDefined();
+  });
+
+  it("omits comparison_id, start, and end from the URL when they're not provided", async () => {
+    mockFetchOnce({ comparison_id: "abc", frequency: "daily", series: [] });
+
+    await getIndex({ frequency: "daily" });
+
+    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).not.toContain("comparison_id");
+    expect(url).not.toContain("start");
+    expect(url).not.toContain("end");
+    expect(url).not.toContain("undefined");
   });
 
   it("returns the parsed JSON body", async () => {
@@ -485,12 +497,14 @@ export function getMetadata(): Promise<MetadataResponse> {
 - [ ] **Step 5: Run tests to verify they pass**
 
 Run: `cd dashboard && npx vitest run src/__tests__/client.test.ts`
-Expected: PASS (4 tests)
+Expected: PASS (5 tests)
+
+**Correction found during code-quality review:** `FareRecord.fare_class` in Step 1's `types.ts` must be `string | null`, not `string` — real backend records with `status: "no_flight"` have `fare_class: null` (matching `total_fare`'s already-correct nullability), and the design spec's data-quality panel treats these records as first-class data. Also, the "omits undefined filters" test originally only covered `getFares`, which doesn't actually exercise the guard (its unset params are absent object keys, not present-with-`undefined` ones) — the `getIndex` test above (already folded into Step 2) was added to close that gap, since `getIndex` always builds an object with `comparison_id`/`start`/`end` present as `undefined` when the caller omits them, making the guard genuinely load-bearing there.
 
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (5 tests: 1 from Task 1 + 4 new)
+Expected: PASS (6 tests: 1 from Task 1 + 5 new)
 
 - [ ] **Step 7: Commit**
 
@@ -764,7 +778,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 9: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (9 tests: 5 from Task 3 + 4 new)
+Expected: PASS (10 tests: 6 from Task 3 + 4 new)
 
 - [ ] **Step 10: Commit**
 
@@ -873,7 +887,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 5: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (11 tests: 9 from Task 4 + 2 new)
+Expected: PASS (12 tests: 10 from Task 4 + 2 new)
 
 - [ ] **Step 6: Commit**
 
@@ -1037,7 +1051,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (13 tests: 11 from Task 5 + 2 new)
+Expected: PASS (14 tests: 12 from Task 5 + 2 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1328,7 +1342,7 @@ Expected: PASS (2 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (15 tests: 13 from Task 6 + 2 new)
+Expected: PASS (16 tests: 14 from Task 6 + 2 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1503,7 +1517,7 @@ Expected: PASS (3 tests)
 - [ ] **Step 5: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (18 tests: 15 from Task 7 + 3 new)
+Expected: PASS (19 tests: 16 from Task 7 + 3 new)
 
 - [ ] **Step 6: Commit**
 
@@ -1740,7 +1754,7 @@ Expected: PASS (4 tests)
 - [ ] **Step 6: Run the full frontend suite**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (22 tests: 18 from Task 8 + 4 new)
+Expected: PASS (23 tests: 19 from Task 8 + 4 new)
 
 - [ ] **Step 7: Commit**
 
@@ -1878,9 +1892,9 @@ Expected: PASS (2 tests)
 - [ ] **Step 5: Run the full frontend suite and build**
 
 Run: `cd dashboard && npm test`
-Expected: PASS (23 tests)
+Expected: PASS (24 tests)
 
-Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 23 tests (22 from Task 9, +2 new in this file, -1 removed placeholder test).
+Note on the count: this task replaces Task 1's 1-test `App.test.tsx` with a 2-test version — a net +1 over the running total, not +2. Expected total: 24 tests (23 from Task 9, +2 new in this file, -1 removed placeholder test).
 
 Run: `cd dashboard && npm run build`
 Expected: builds with no TypeScript errors.
@@ -1973,7 +1987,7 @@ git commit -m "docs: document running the Phase 4b dashboard"
 
 ## Definition of done
 
-- `cd dashboard && npm test` passes with 23 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
+- `cd dashboard && npm test` passes with 24 tests, and `pytest -q` (repo root) passes with 131 tests — none of them making a live network call (every dashboard test mocks `../api/client`; the CORS test in Task 2 uses FastAPI's in-process `TestClient`, not a real server).
 - `cd dashboard && npm run build` succeeds with no TypeScript errors.
 - `ruff check .` passes clean.
 - The dashboard, run locally against the real Phase 1-3 data already on disk, demonstrates all six PRD features (F-4.1 through F-4.6) in a real browser.
