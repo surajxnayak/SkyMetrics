@@ -13,12 +13,12 @@ export type ElasticityPoint = {
   meanFare: number;
 };
 
-export interface DrilldownFilters {
+export interface ElasticityDrilldownFilters {
   carrier: string;
   fareClass: string;
 }
 
-export function aggregate(records: FareRecord[], drilldown: DrilldownFilters): ElasticityPoint[] {
+export function aggregate(records: FareRecord[], drilldown: ElasticityDrilldownFilters): ElasticityPoint[] {
   const groups = new Map<string, { sum: number; count: number }>();
   for (const record of records) {
     if (record.status !== "available" || record.is_outlier || record.total_fare === null) continue;

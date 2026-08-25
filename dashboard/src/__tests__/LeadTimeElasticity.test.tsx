@@ -62,4 +62,18 @@ describe("LeadTimeElasticity", () => {
 
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
   });
+
+  it("plots a real curve for the mean fare line", async () => {
+    const { container } = render(
+      <FilterProvider>
+        <LeadTimeElasticity />
+      </FilterProvider>
+    );
+
+    await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
+
+    const curve = container.querySelector(".recharts-line-curve");
+    expect(curve).not.toBeNull();
+    expect(curve?.getAttribute("d")).toBeTruthy();
+  });
 });
