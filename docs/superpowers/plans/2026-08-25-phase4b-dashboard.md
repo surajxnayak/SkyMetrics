@@ -1573,10 +1573,12 @@ import type { FareRecord } from "../api/types";
 
 const WINDOW_ORDER = ["T+45", "T+30", "T+15", "T+7", "T+1"];
 
-export interface ElasticityPoint {
+// `type`, not `interface` -- interfaces don't get an implicit index
+// signature, which breaks ExportButton's generic constraint.
+export type ElasticityPoint = {
   advance_window: string;
   meanFare: number;
-}
+};
 
 export interface DrilldownFilters {
   carrier: string;
