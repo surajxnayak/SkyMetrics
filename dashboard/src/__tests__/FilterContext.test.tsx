@@ -37,4 +37,35 @@ describe("FilterContext", () => {
 
     expect(screen.getByTestId("origin").textContent).toBe("DEL");
   });
+
+  it("correctly applies two updates fired in the same event handler", async () => {
+    function DoubleUpdateProbe() {
+      const { filters, setFilters } = useFilters();
+      return (
+        <div>
+          <button
+            onClick={() => {
+              setFilters((prev) => ({ ...prev, origin: "DEL" }));
+              setFilters((prev) => ({ ...prev, destination: "BOM" }));
+            }}
+          >
+            update both
+          </button>
+          <span data-testid="origin">{filters.origin}</span>
+          <span data-testid="destination">{filters.destination}</span>
+        </div>
+      );
+    }
+    const { default: userEvent } = await import("@testing-library/user-event");
+    render(
+      <FilterProvider>
+        <DoubleUpdateProbe />
+      </FilterProvider>
+    );
+
+    await userEvent.click(screen.getByText("update both"));
+
+    expect(screen.getByTestId("origin").textContent).toBe("DEL");
+    expect(screen.getByTestId("destination").textContent).toBe("BOM");
+  });
 });

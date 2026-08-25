@@ -59,4 +59,20 @@ describe("App", () => {
 
     await waitFor(() => expect(screen.getByText("Lead-time elasticity")).toBeInTheDocument());
   });
+
+  it("uses the correct ARIA tab pattern", async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+
+    expect(screen.getByRole("tablist")).toBeInTheDocument();
+    const trendTab = screen.getByRole("tab", { name: "Trend" });
+    const heatmapTab = screen.getByRole("tab", { name: "Heatmap" });
+    expect(trendTab).toHaveAttribute("aria-selected", "true");
+    expect(heatmapTab).toHaveAttribute("aria-selected", "false");
+
+    await userEvent.click(heatmapTab);
+
+    expect(trendTab).toHaveAttribute("aria-selected", "false");
+    expect(heatmapTab).toHaveAttribute("aria-selected", "true");
+  });
 });

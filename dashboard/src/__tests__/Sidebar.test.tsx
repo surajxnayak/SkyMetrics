@@ -52,4 +52,19 @@ describe("Sidebar", () => {
     const values = Array.from(select.options).map((option) => option.value);
     expect(values).toEqual(["", "T+1", "T+7", "T+15", "T+30", "T+45"]);
   });
+
+  it("does not uppercase the origin field until it loses focus", async () => {
+    render(
+      <FilterProvider>
+        <Sidebar />
+      </FilterProvider>
+    );
+
+    const input = screen.getByLabelText("Origin") as HTMLInputElement;
+    await userEvent.type(input, "del");
+    expect(input.value).toBe("del");
+
+    await userEvent.click(document.body);
+    expect(input.value).toBe("DEL");
+  });
 });
