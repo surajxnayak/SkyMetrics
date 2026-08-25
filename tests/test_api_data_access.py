@@ -101,6 +101,7 @@ def test_load_snapshot_rejects_a_comparison_id_with_path_separators(tmp_path):
 def test_load_snapshot_rejects_a_comparison_id_that_is_not_32_hex_chars(tmp_path):
     index_dir = tmp_path / "index"
     index_dir.mkdir()
+    _write_snapshot(index_dir, "not-a-real-id", "daily", [{"period": "2026-08-01"}])
 
     with pytest.raises(SnapshotNotFoundError):
         load_snapshot("daily", comparison_id="not-a-real-id", index_base_dir=index_dir)

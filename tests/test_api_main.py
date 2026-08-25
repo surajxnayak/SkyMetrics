@@ -110,11 +110,15 @@ def test_get_index_returns_404_for_unknown_comparison_id(tmp_path):
 def test_get_index_rejects_a_comparison_id_with_path_traversal(tmp_path):
     index_dir = tmp_path / "index"
     index_dir.mkdir()
+    outside_file = tmp_path / "secret.json"
+    outside_file.write_text(
+        json.dumps({"comparison_id": "leaked", "frequency": "daily", "series": []})
+    )
     app.dependency_overrides[get_index_base_dir] = lambda: index_dir
 
     response = client.get(
         "/api/v1/index",
-        params={"frequency": "daily", "comparison_id": "../../config/weights"},
+        params={"frequency": "daily", "comparison_id": "../secret"},
         headers=HEADERS,
     )
 
