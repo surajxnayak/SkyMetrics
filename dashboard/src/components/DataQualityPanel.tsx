@@ -48,21 +48,37 @@ export default function DataQualityPanel() {
   const fares = useFares();
   const metadata = useMetadata();
 
-  if (fares.loading || metadata.loading) return <p>Loading data quality...</p>;
-  if (fares.error) return <p role="alert">Failed to load data quality: {fares.error}</p>;
-  if (metadata.error) return <p role="alert">Failed to load data quality: {metadata.error}</p>;
-  if (!fares.data || !metadata.data) return <p>No data quality information available yet.</p>;
+  if (fares.loading || metadata.loading) return <p className="text-sm text-secondary">Loading data quality...</p>;
+  if (fares.error) return (
+    <p role="alert" className="text-sm text-down">
+      Failed to load data quality: {fares.error}
+    </p>
+  );
+  if (metadata.error) return (
+    <p role="alert" className="text-sm text-down">
+      Failed to load data quality: {metadata.error}
+    </p>
+  );
+  if (!metadata.data) return <p className="text-sm text-secondary">No data quality information available yet.</p>;
+  if (!fares.data) return <p className="text-sm text-secondary">No data quality information available yet.</p>;
 
   const routes = Object.keys(metadata.data.weights.weights);
   const stats = computeStats(fares.data, routes);
 
   return (
     <div>
-      <h3>Data quality</h3>
-      <p>Coverage: {stats.coveragePercent.toFixed(0)}%</p>
-      <p>Outliers flagged: {stats.outlierPercent.toFixed(1)}%</p>
-      <p>
-        Source health: {stats.availableCount} available / {stats.noFlightCount} no-flight
+      <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-secondary">Data quality</h3>
+      <p className="mb-1 text-sm text-primary">
+        Coverage: <span className="font-mono text-accent">{stats.coveragePercent.toFixed(0)}%</span>
+      </p>
+      <p className="mb-1 text-sm text-primary">
+        Outliers flagged: <span className="font-mono text-accent">{stats.outlierPercent.toFixed(1)}%</span>
+      </p>
+      <p className="text-sm text-primary">
+        Source health:{" "}
+        <span className="font-mono">
+          {stats.availableCount} available / {stats.noFlightCount} no-flight
+        </span>
       </p>
     </div>
   );
