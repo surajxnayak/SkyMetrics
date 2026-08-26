@@ -62,6 +62,41 @@ index/build.py      ----> PostgreSQL: index_points
 | `config/`   | Source compliance audit, route weights, basket + reference-series data |
 | `docs/`     | Specs, plans, validation report                                   |
 
+## Methodology
+
+SkyMetrics computes four index formulas over the same underlying fare data
+(`index/formulas.py`), each a different way of aggregating route-level price relatives
+(current price / base-period price) into a single number:
+
+- **Simple relative** — the unweighted mean of every route's price relative. Treats all
+  routes equally regardless of passenger volume.
+- **Laspeyres** — the weighted *arithmetic* mean of price relatives, using base-period
+  route weights (i.e. how much passenger traffic each route carried in the base period).
+- **Paasche** — the weighted *harmonic* mean of price relatives, using current-period
+  route weights.
+- **Fisher** — the geometric mean of the Laspeyres and Paasche values above; the standard
+  "ideal index" that splits the difference between the two.
+
+Laspeyres and Paasche diverge even when given numerically identical weights — this isn't
+a bug, it's a property of arithmetic vs. harmonic means (arithmetic mean >= harmonic
+mean, with equality only when every price relative is identical). See the docstring in
+`index/formulas.py` for the full explanation.
+
+The real route weights currently in use (`config/weights.json`) come from DGCA Monthly
+Statistics (Domestic Air Transport), via the
+[Vonter/india-aviation-traffic](https://github.com/Vonter/india-aviation-traffic) dataset
+(ODbL license), based on each route's share of 2025 full-year passenger traffic:
+
+| Route   | Weight |
+|---------|--------|
+| DEL-BOM | 0.4331 |
+| DEL-BLR | 0.3061 |
+| BOM-BLR | 0.2608 |
+
+For empirical proof these formulas track real-world airfare inflation, see
+`docs/validation-report.md`, which back-tests the computed index against the Ministry of
+Commerce's Service PPI (Air Passenger) reference series.
+
 ## Why only one live source right now
 
 All 11 airline/OTA sources named in the problem statement were live-checked
