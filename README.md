@@ -30,6 +30,38 @@ Data storage moved from git-committed flat files to PostgreSQL, packaged
 with Docker Compose — see
 `docs/superpowers/specs/2026-08-26-postgres-docker-design.md`.
 
+## Architecture
+
+```
+Akasa Air
+    |
+    v
+scraper/run.py            (writes data/raw/*.jsonl, gitignored, ephemeral)
+    |
+    v
+pipeline/clean.py   ----> PostgreSQL: fare_quotes
+    |
+    v
+index/build.py      ----> PostgreSQL: index_points
+                                |
+                                v
+                          api/main.py (FastAPI REST, api/data_access.py reads both tables)
+                                |
+                                v
+                          dashboard/ (React + TypeScript, consumes the REST API)
+```
+
+| Directory   | Responsibility                                                  |
+|-------------|------------------------------------------------------------------|
+| `scraper/`  | Akasa Air scraper + compliance guard (robots.txt, rate limiting) |
+| `pipeline/` | Cleaning: de-duplication, IQR outlier flagging                   |
+| `index/`    | Index construction: formulas, weights, build, back-test          |
+| `api/`      | FastAPI REST layer + Postgres data access                        |
+| `dashboard/`| React + TypeScript dashboard                                     |
+| `db/`       | Postgres schema + migration scripts                               |
+| `config/`   | Source compliance audit, route weights                            |
+| `docs/`     | Specs, plans, validation report                                   |
+
 ## Why only one live source right now
 
 All 11 airline/OTA sources named in the problem statement were live-checked
