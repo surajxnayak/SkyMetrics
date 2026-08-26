@@ -29,10 +29,13 @@ export default function TrendView() {
           <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
           <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} />
           <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
+          {/* Line colors map to index.css tokens: accent/up/down/warning. fisher gets a
+              dash pattern (not just color) so it stays distinguishable from laspeyres
+              for colorblind viewers -- see code-quality review. */}
           <Line type="monotone" dataKey="simple_relative" stroke="#a78bfa" />
           <Line type="monotone" dataKey="laspeyres" stroke="#4ade80" />
           <Line type="monotone" dataKey="paasche" stroke="#f0b429" />
-          <Line type="monotone" dataKey="fisher" stroke="#f87171" />
+          <Line type="monotone" dataKey="fisher" stroke="#f87171" strokeDasharray="5 5" />
         </LineChart>
       </ResponsiveContainer>
       <div className="mt-4">
