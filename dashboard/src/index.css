@@ -17,6 +17,7 @@
 
   --color-up: #4ade80;
   --color-down: #f87171;
+  --color-error: #f87171;
 
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;

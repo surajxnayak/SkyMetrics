@@ -50,12 +50,12 @@ export default function DataQualityPanel() {
 
   if (fares.loading || metadata.loading) return <p className="text-sm text-secondary">Loading data quality...</p>;
   if (fares.error) return (
-    <p role="alert" className="text-sm text-down">
+    <p role="alert" className="text-sm text-error">
       Failed to load data quality: {fares.error}
     </p>
   );
   if (metadata.error) return (
-    <p role="alert" className="text-sm text-down">
+    <p role="alert" className="text-sm text-error">
       Failed to load data quality: {metadata.error}
     </p>
   );
