@@ -9,6 +9,7 @@ from index.backtest import (
     load_reference_series,
     mape,
     pearson_correlation,
+    run_backtest,
 )
 
 
@@ -172,3 +173,87 @@ def test_align_growth_rates_returns_empty_lists_when_fewer_than_two_overlapping_
 
     assert apix_growth == []
     assert reference_growth == []
+
+
+def test_run_backtest_computes_real_statistics_when_enough_quarters_overlap():
+    # Growth rates deliberately vary quarter to quarter (not constant, no
+    # zero values) so this exercises real, non-degenerate mape()/
+    # pearson_correlation() computation. The exact statistical values are
+    # already covered by mape()'s and pearson_correlation()'s own dedicated
+    # tests -- this test's job is to verify run_backtest() wires aggregation
+    # + alignment + those functions together correctly, not to re-verify
+    # their math.
+    apix_series = [
+        {"period": "2025-04", "simple_relative": 100.0},
+        {"period": "2025-07", "simple_relative": 120.0},
+        {"period": "2025-10", "simple_relative": 114.0},
+        {"period": "2026-01", "simple_relative": 125.4},
+    ]
+    reference_data = {
+        "quarters": [
+            {"fiscal_year": "2025-26", "quarter": "Q1", "index_value": 200.0},
+            {"fiscal_year": "2025-26", "quarter": "Q2", "index_value": 210.0},
+            {"fiscal_year": "2025-26", "quarter": "Q3", "index_value": 220.5},
+            {"fiscal_year": "2025-26", "quarter": "Q4", "index_value": 209.475},
+        ]
+    }
+
+    result = run_backtest(apix_series, reference_data)
+
+    assert result["n_growth_pairs"] == 3
+    assert result["overlapping_quarters"] == [
+        ("2025-26", "Q1"),
+        ("2025-26", "Q2"),
+        ("2025-26", "Q3"),
+        ("2025-26", "Q4"),
+    ]
+    assert isinstance(result["mape"], float)
+    assert result["mape"] >= 0.0
+    assert isinstance(result["pearson_correlation"], float)
+    assert -1.0 <= result["pearson_correlation"] <= 1.0
+
+
+def test_run_backtest_handles_degenerate_growth_data_without_crashing():
+    # Both series grow by a perfectly constant 10% every quarter -- zero
+    # variance in the growth-rate series, which makes pearson_correlation()
+    # raise ValueError by design (Phase 3 behavior, unchanged). run_backtest
+    # must catch this and report it honestly rather than crash: a flat
+    # growth-rate quarter is a realistic outcome for real future data, not
+    # just a hypothetical edge case.
+    apix_series = [
+        {"period": "2025-04", "simple_relative": 100.0},
+        {"period": "2025-07", "simple_relative": 110.0},
+        {"period": "2025-10", "simple_relative": 121.0},
+        {"period": "2026-01", "simple_relative": 133.1},
+    ]
+    reference_data = {
+        "quarters": [
+            {"fiscal_year": "2025-26", "quarter": "Q1", "index_value": 200.0},
+            {"fiscal_year": "2025-26", "quarter": "Q2", "index_value": 220.0},
+            {"fiscal_year": "2025-26", "quarter": "Q3", "index_value": 242.0},
+            {"fiscal_year": "2025-26", "quarter": "Q4", "index_value": 266.2},
+        ]
+    }
+
+    result = run_backtest(apix_series, reference_data)
+
+    assert result["n_growth_pairs"] == 3
+    assert result["mape"] is None
+    assert result["pearson_correlation"] is None
+    assert result["note"] != ""
+
+
+def test_run_backtest_reports_insufficient_data_honestly_for_todays_real_state():
+    # This is the actual current real-world case: our only real monthly APIx
+    # period (August 2026, fiscal Q2 FY2026-27) doesn't overlap the real
+    # committed reference data (which only goes through Q1 FY2026-27, ending
+    # June 2026).
+    apix_series = [{"period": "2026-08", "simple_relative": 100.0}]
+    reference_data = load_reference_series()
+
+    result = run_backtest(apix_series, reference_data)
+
+    assert result["n_growth_pairs"] == 0
+    assert result["mape"] is None
+    assert result["pearson_correlation"] is None
+    assert result["note"] != ""

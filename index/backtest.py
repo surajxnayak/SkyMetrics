@@ -89,6 +89,63 @@ def pearson_correlation(series_a: list[float], series_b: list[float]) -> float:
     variance_a = sum((a - mean_a) ** 2 for a in series_a)
     variance_b = sum((b - mean_b) ** 2 for b in series_b)
     denominator = math.sqrt(variance_a * variance_b)
-    if denominator == 0:
+    # Real quarter-over-quarter growth rates reach here via division (not
+    # literal constants), so a functionally-constant series lands a few ULPs
+    # off exact zero (e.g. 9.47e-30) rather than == 0.0, letting a
+    # meaningless correlation silently through. Tolerance, not exact
+    # equality, is what actually catches degenerate real data.
+    if math.isclose(denominator, 0.0, abs_tol=1e-9):
         raise ValueError("cannot compute correlation when one series has zero variance")
     return covariance / denominator
+
+
+def run_backtest(apix_series: list[dict], reference_data: dict) -> dict:
+    apix_quarters = aggregate_apix_to_quarters(apix_series)
+    reference_quarters = {
+        (q["fiscal_year"], q["quarter"]): q["index_value"] for q in reference_data["quarters"]
+    }
+    overlapping_quarters = sorted(set(apix_quarters) & set(reference_quarters))
+    apix_growth, reference_growth = align_growth_rates(apix_quarters, reference_quarters)
+
+    if len(apix_growth) < 2:
+        return {
+            "overlapping_quarters": overlapping_quarters,
+            "n_growth_pairs": len(apix_growth),
+            "mape": None,
+            "pearson_correlation": None,
+            "note": (
+                f"Only {len(overlapping_quarters)} overlapping quarter(s) between our APIx "
+                "history and the reference data (need 3+ overlapping quarters to compute a "
+                "growth-rate correlation). This reflects the project's real, current data "
+                "maturity, not an error."
+            ),
+        }
+
+    try:
+        mape_value = mape(reference_growth, apix_growth)
+        correlation_value = pearson_correlation(apix_growth, reference_growth)
+    except (ValueError, ZeroDivisionError):
+        # A flat (zero-variance) growth-rate quarter, or a reference growth
+        # value of exactly 0%, are real possible outcomes once more genuine
+        # data accumulates -- not just hypothetical. mape()/pearson_correlation()
+        # correctly reject these (Phase 3 behavior, unchanged); run_backtest
+        # reports it honestly rather than crashing.
+        return {
+            "overlapping_quarters": overlapping_quarters,
+            "n_growth_pairs": len(apix_growth),
+            "mape": None,
+            "pearson_correlation": None,
+            "note": (
+                f"{len(apix_growth)} growth-rate pair(s) were available, but the data was "
+                "degenerate for standard statistics (zero variance in a growth-rate series, "
+                "or an exact 0% reference growth quarter)."
+            ),
+        }
+
+    return {
+        "overlapping_quarters": overlapping_quarters,
+        "n_growth_pairs": len(apix_growth),
+        "mape": mape_value,
+        "pearson_correlation": correlation_value,
+        "note": f"Computed over {len(apix_growth)} matched quarter-over-quarter growth-rate pairs.",
+    }
