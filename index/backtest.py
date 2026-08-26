@@ -18,6 +18,26 @@ def load_reference_series(path: Path = REFERENCE_PATH) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def fiscal_quarter_of(period: str) -> tuple[str, str]:
+    try:
+        year, month = (int(part) for part in period.split("-"))
+    except ValueError as exc:
+        raise ValueError(f"malformed monthly period: {period!r}") from exc
+
+    if month in (4, 5, 6):
+        fiscal_year, quarter = year, "Q1"
+    elif month in (7, 8, 9):
+        fiscal_year, quarter = year, "Q2"
+    elif month in (10, 11, 12):
+        fiscal_year, quarter = year, "Q3"
+    elif month in (1, 2, 3):
+        fiscal_year, quarter = year - 1, "Q4"
+    else:
+        raise ValueError(f"malformed monthly period: {period!r}")
+
+    return f"{fiscal_year}-{(fiscal_year + 1) % 100:02d}", quarter
+
+
 def mape(actual: list[float], predicted: list[float]) -> float:
     if len(actual) != len(predicted):
         raise ValueError("actual and predicted must be the same length")

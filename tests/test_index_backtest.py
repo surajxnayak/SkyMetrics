@@ -2,7 +2,7 @@ import json
 
 import pytest
 
-from index.backtest import load_reference_series, mape, pearson_correlation
+from index.backtest import fiscal_quarter_of, load_reference_series, mape, pearson_correlation
 
 
 def test_mape_zero_when_series_match_exactly():
@@ -79,3 +79,24 @@ def test_real_reference_file_has_five_real_quarters():
     values = {(q["fiscal_year"], q["quarter"]): q["index_value"] for q in reference["quarters"]}
     assert values[("2025-26", "Q1")] == 95.8
     assert values[("2026-27", "Q1")] == 126.4
+
+
+def test_fiscal_quarter_of_maps_calendar_months_to_fiscal_quarters():
+    assert fiscal_quarter_of("2026-04") == ("2026-27", "Q1")
+    assert fiscal_quarter_of("2026-06") == ("2026-27", "Q1")
+    assert fiscal_quarter_of("2026-07") == ("2026-27", "Q2")
+    assert fiscal_quarter_of("2026-09") == ("2026-27", "Q2")
+    assert fiscal_quarter_of("2026-10") == ("2026-27", "Q3")
+    assert fiscal_quarter_of("2026-12") == ("2026-27", "Q3")
+    assert fiscal_quarter_of("2026-08") == ("2026-27", "Q2")
+
+
+def test_fiscal_quarter_of_handles_january_march_as_prior_fiscal_year_q4():
+    assert fiscal_quarter_of("2026-01") == ("2025-26", "Q4")
+    assert fiscal_quarter_of("2026-02") == ("2025-26", "Q4")
+    assert fiscal_quarter_of("2026-03") == ("2025-26", "Q4")
+
+
+def test_fiscal_quarter_of_rejects_malformed_period():
+    with pytest.raises(ValueError):
+        fiscal_quarter_of("not-a-period")
