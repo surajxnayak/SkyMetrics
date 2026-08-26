@@ -5,6 +5,11 @@ import ExportButton from "./ExportButton";
 
 const TOOLTIP_STYLE = { backgroundColor: "#12161f", border: "1px solid #1e2530", borderRadius: 6 };
 const TOOLTIP_LABEL_STYLE = { color: "#e5e7eb" };
+// Numeric values (Y-axis ticks, tooltip line values) get the mono font, per
+// the design spec's "all numeric data" rule -- text labels (X-axis periods,
+// legend series names) stay in the default sans font.
+const MONO_FONT = "'JetBrains Mono', ui-monospace, monospace";
+const TOOLTIP_ITEM_STYLE = { fontFamily: MONO_FONT };
 
 export default function TrendView() {
   const { filters } = useFilters();
@@ -26,8 +31,8 @@ export default function TrendView() {
         <LineChart data={data.series}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />
           <XAxis dataKey="period" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-          <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-          <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} />
+          <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12, fontFamily: MONO_FONT }} />
+          <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} />
           <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
           {/* Line colors map to index.css tokens: accent/up/down/warning. fisher gets a
               dash pattern (not just color) so it stays distinguishable from laspeyres
