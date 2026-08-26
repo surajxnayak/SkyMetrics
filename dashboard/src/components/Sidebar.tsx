@@ -5,6 +5,7 @@ const ADVANCE_WINDOWS = ["T+1", "T+7", "T+15", "T+30", "T+45"];
 const LABEL_CLASS = "mb-1 mt-4 block text-xs font-medium uppercase tracking-wide text-secondary first:mt-0";
 const INPUT_CLASS =
   "w-full rounded-md border border-line bg-inset px-3 py-1.5 text-sm text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent";
+const SELECT_CLASS = INPUT_CLASS + " appearance-none";
 
 export default function Sidebar() {
   const { filters, setFilters } = useFilters();
@@ -20,7 +21,7 @@ export default function Sidebar() {
         onChange={(e) =>
           setFilters((prev) => ({ ...prev, frequency: e.target.value as Filters["frequency"] }))
         }
-        className={INPUT_CLASS}
+        className={SELECT_CLASS}
       >
         <option value="daily">Daily</option>
         <option value="weekly">Weekly</option>
@@ -87,7 +88,7 @@ export default function Sidebar() {
         id="advance-window"
         value={filters.advanceWindow}
         onChange={(e) => setFilters((prev) => ({ ...prev, advanceWindow: e.target.value }))}
-        className={INPUT_CLASS}
+        className={SELECT_CLASS}
       >
         <option value="">All</option>
         {ADVANCE_WINDOWS.map((window) => (
