@@ -7,12 +7,29 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: skymetrics
+          POSTGRES_PASSWORD: skymetrics
+          POSTGRES_DB: skymetrics
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    env:
+      DATABASE_URL: postgresql://skymetrics:skymetrics@localhost:5432/skymetrics
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
       - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python3 -m db.apply_schema
       - run: ruff check .
       - run: pytest
 
