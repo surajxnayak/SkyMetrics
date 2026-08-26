@@ -39,10 +39,13 @@ export function aggregate(records: FareRecord[], drilldown: DrilldownFilters): C
 }
 
 function colorFor(value: number, min: number, max: number): string {
-  if (max === min) return "rgb(200,200,255)";
+  if (max === min) return "#241a3d";
   const ratio = (value - min) / (max - min);
-  const intensity = Math.round(255 - ratio * 155);
-  return `rgb(255,${intensity},${intensity})`;
+  // Violet intensity scale: low fares stay near the panel background,
+  // high fares approach the full accent color -- visible against dark,
+  // unlike the original light-pink scale this replaces.
+  const lightness = Math.round(20 + ratio * 45);
+  return `hsl(258, 60%, ${lightness}%)`;
 }
 
 export default function SectorHeatmap() {
@@ -54,16 +57,20 @@ export default function SectorHeatmap() {
     end: filters.endDate,
   });
 
-  if (loading) return <p>Loading heatmap data...</p>;
-  if (error) return <p role="alert">Failed to load heatmap data: {error}</p>;
-  if (!data || data.length === 0) return <p>No fare data available yet.</p>;
+  if (loading) return <p className="text-sm text-secondary">Loading heatmap data...</p>;
+  if (error) return (
+    <p role="alert" className="text-sm text-error">
+      Failed to load heatmap data: {error}
+    </p>
+  );
+  if (!data || data.length === 0) return <p className="text-sm text-secondary">No fare data available yet.</p>;
 
   const cells = aggregate(data, {
     carrier: filters.carrier,
     advanceWindow: filters.advanceWindow,
     fareClass: filters.fareClass,
   });
-  if (cells.length === 0) return <p>No non-outlier fare data available yet.</p>;
+  if (cells.length === 0) return <p className="text-sm text-secondary">No non-outlier fare data available yet.</p>;
 
   const routes = Array.from(new Set(cells.map((cell) => cell.route))).sort();
   const periods = Array.from(new Set(cells.map((cell) => cell.period))).sort();
@@ -74,25 +81,28 @@ export default function SectorHeatmap() {
 
   return (
     <div>
-      <h2>Sector heatmap</h2>
-      <table>
+      <h2 className="mb-4 text-base font-semibold text-primary">Sector heatmap</h2>
+      <table className="border-collapse text-sm">
         <thead>
           <tr>
-            <th>Route</th>
+            <th className="border border-line bg-panel px-3 py-2 text-left font-medium text-secondary">Route</th>
             {periods.map((period) => (
-              <th key={period}>{period}</th>
+              <th key={period} className="border border-line bg-panel px-3 py-2 text-left font-mono font-medium text-secondary">
+                {period}
+              </th>
             ))}
           </tr>
         </thead>
         <tbody>
           {routes.map((route) => (
             <tr key={route}>
-              <th>{route}</th>
+              <th className="border border-line bg-panel px-3 py-2 text-left font-medium text-primary">{route}</th>
               {periods.map((period) => {
                 const value = cellByKey.get(`${route}|${period}`);
                 return (
                   <td
                     key={period}
+                    className="border border-line px-3 py-2 text-right font-mono text-primary"
                     style={{ backgroundColor: value !== undefined ? colorFor(value, min, max) : undefined }}
                   >
                     {value !== undefined ? Math.round(value) : "-"}
@@ -103,7 +113,9 @@ export default function SectorHeatmap() {
           ))}
         </tbody>
       </table>
-      <ExportButton data={cells} filename="heatmap.csv" />
+      <div className="mt-4">
+        <ExportButton data={cells} filename="heatmap.csv" />
+      </div>
     </div>
   );
 }
