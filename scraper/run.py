@@ -27,7 +27,7 @@ def load_basket() -> dict:
     return json.loads((CONFIG_DIR / "basket.json").read_text(encoding="utf-8"))
 
 
-def run() -> None:
+def run() -> str:
     basket = load_basket()
     guard = ComplianceGuard()
     run_id = uuid.uuid4().hex
@@ -52,7 +52,8 @@ def run() -> None:
                 )
         out_path = write_quotes(quotes, source_name, run_id)
         logger.info("wrote %d quotes for %s to %s", len(quotes), source_name, out_path)
+    return run_id
 
 
 if __name__ == "__main__":
-    run()
+    print(run())

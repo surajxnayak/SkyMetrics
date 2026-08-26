@@ -111,3 +111,17 @@ def test_run_skips_failing_routes_and_keeps_successful_ones(tmp_path, monkeypatc
     record = json.loads(lines[0])
     assert record["destination"] == "BOM"
     assert record["total_fare"] == 4321.0
+
+
+def test_run_returns_the_run_id_used_for_quotes(tmp_path, monkeypatch):
+    monkeypatch.setattr(run_module, "SCRAPERS", {"stubsource": _StubScraper})
+    monkeypatch.setattr(
+        run_module, "load_basket", lambda: {"city_pairs": [{"origin": "DEL", "destination": "BOM"}]}
+    )
+    monkeypatch.chdir(tmp_path)
+
+    run_id = run_module.run()
+
+    out_files = list((tmp_path / "data" / "raw" / "stubsource").glob("*.jsonl"))
+    assert len(out_files) == 1
+    assert out_files[0].stem == run_id
