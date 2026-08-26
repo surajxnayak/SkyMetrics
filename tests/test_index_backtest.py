@@ -310,3 +310,39 @@ def test_run_backtest_computes_statistics_at_exactly_three_overlapping_quarters(
     assert result["n_growth_pairs"] == 2
     assert isinstance(result["mape"], float)
     assert isinstance(result["pearson_correlation"], float)
+
+
+def test_run_backtest_correctly_orders_quarters_across_a_fiscal_year_boundary():
+    # Exercises the lexicographic-sort-matches-chronological-order assumption
+    # at the one place it's actually load-bearing: a real fiscal-year
+    # rollover (Q4 FY2025-26 -> Q1 FY2026-27), not just quarters within a
+    # single fiscal year like every other test in this file.
+    apix_series = [
+        {"period": "2025-11", "simple_relative": 100.0},  # Q3 FY2025-26
+        {"period": "2026-02", "simple_relative": 115.0},  # Q4 FY2025-26
+        {"period": "2026-05", "simple_relative": 120.0},  # Q1 FY2026-27
+    ]
+    reference_data = {
+        "quarters": [
+            {"fiscal_year": "2025-26", "quarter": "Q3", "index_value": 200.0},
+            {"fiscal_year": "2025-26", "quarter": "Q4", "index_value": 210.0},
+            {"fiscal_year": "2026-27", "quarter": "Q1", "index_value": 190.0},
+        ]
+    }
+
+    result = run_backtest(apix_series, reference_data)
+
+    assert result["overlapping_quarters"] == [
+        ("2025-26", "Q3"),
+        ("2025-26", "Q4"),
+        ("2026-27", "Q1"),
+    ]
+    assert result["n_growth_pairs"] == 2
+    # Both series move in the same direction between the two growth points
+    # (apix: 15.0 -> 4.35, reference: 5.0 -> -9.52, both decreasing) -- for
+    # exactly 2 points, Pearson correlation is mathematically guaranteed to
+    # be exactly +1.0 or -1.0, so this is a precise, not approximate, check
+    # on direction/ordering being correct across the boundary.
+    assert result["pearson_correlation"] == pytest.approx(1.0)
+    assert isinstance(result["mape"], float)
+    assert result["mape"] > 0.0
