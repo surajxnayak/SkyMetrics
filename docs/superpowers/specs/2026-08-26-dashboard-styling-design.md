@@ -41,7 +41,7 @@ Design direction was chosen interactively via mockup previews (superpowers visua
 - **Accent (violet)**: `accent-DEFAULT` `#a78bfa`, `accent-hover` `#c4b5fd`, `accent-muted` `#241a3d` (used for subtle backgrounds/tags, matching the mockup's tag treatment).
 - **Semantic**: `up` `#4ade80` (price increase — green, standard finance convention), `down` `#f87171` (price decrease — red).
 - **Fonts**: `font-sans` → `'Inter', system-ui, sans-serif` (UI text, labels, headings); `font-mono` → `'JetBrains Mono', ui-monospace, monospace` (all numeric data: fares, percentages, index values — the detail validated in the mockup).
-- **Contrast check**: `text-primary` (#e5e7eb) on `bg-page`/`bg-panel` exceeds WCAG AA (>12:1); `accent-DEFAULT` (#a78bfa) on `bg-panel` checked at ~4.6:1, meeting AA for large text/UI components — verified with a contrast calculator during implementation, not assumed from the mockup's visual read alone.
+- **Contrast check**: `text-primary` (#e5e7eb) on `bg-page`/`bg-panel` exceeds WCAG AA (15.6:1 / 14.6:1, computed during Task 1's code-quality review — a stronger result than this doc originally claimed); `accent-DEFAULT` (#a78bfa) on `bg-panel` computed at ~6.65:1 (this doc originally claimed ~4.6:1 — corrected here after independent verification), comfortably meeting AA for normal text, not just large text/UI components.
 
 ### Per-component styling plan
 
