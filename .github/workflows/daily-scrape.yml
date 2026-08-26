@@ -5,6 +5,9 @@ on:
     - cron: "30 2 * * *"
   workflow_dispatch: {}
 
+permissions:
+  contents: write
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -13,8 +16,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
-      - run: python -m scraper.run
+      - id: scrape
+        run: echo "run_id=$(python -m scraper.run)" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: raw-fares-${{ github.run_id }}
           path: data/raw/
+      - run: python -c "from pipeline.clean import clean_run; clean_run('${{ steps.scrape.outputs.run_id }}')"
+      - run: python -m index.build
+      - run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add data/cleaned data/index
+          git diff --staged --quiet || git commit -m "chore: daily fare data $(date -u +%Y-%m-%d)"
+          git pull --rebase
+          git push
