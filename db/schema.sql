@@ -35,7 +35,12 @@ CREATE TABLE IF NOT EXISTS index_points (
     laspeyres NUMERIC,
     paasche NUMERIC,
     fisher NUMERIC,
-    written_at TIMESTAMPTZ NOT NULL DEFAULT now()
+    -- clock_timestamp(), not now(): now() returns the transaction's start
+    -- time, so multiple rows inserted in one transaction (e.g. one cron
+    -- run's whole snapshot) would all get an identical written_at, breaking
+    -- "newest first" ordering between them. clock_timestamp() is real
+    -- wall-clock time at each row's insertion.
+    written_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
 );
 
 CREATE INDEX IF NOT EXISTS index_points_comparison_id_idx ON index_points (comparison_id);

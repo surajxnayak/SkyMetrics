@@ -1,190 +1,192 @@
-import json
 import os
-import time
 
 import pytest
 
 from api.data_access import (
     SnapshotNotFoundError,
-    filter_fare_records,
-    filter_series,
     list_snapshots,
     load_fare_records,
     load_snapshot,
     load_weights_metadata,
 )
+from api.db import get_connection
+
+pytestmark = pytest.mark.skipif(
+    "DATABASE_URL" not in os.environ, reason="DATABASE_URL not set in this environment"
+)
 
 
-def _write_snapshot(index_dir, comparison_id, frequency, series):
-    path = index_dir / f"{comparison_id}.json"
-    path.write_text(
-        json.dumps({"comparison_id": comparison_id, "frequency": frequency, "series": series})
-    )
-    return path
+@pytest.fixture
+def conn():
+    connection = get_connection()
+    yield connection
+    connection.rollback()
+    connection.close()
 
 
-def test_list_snapshots_returns_newest_first(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    older = _write_snapshot(index_dir, "aaa", "daily", [])
-    newer = _write_snapshot(index_dir, "bbb", "daily", [])
-    now = time.time()
-    os.utime(older, (now - 100, now - 100))
-    os.utime(newer, (now, now))
+def _insert_index_point(conn, comparison_id, frequency, period, simple_relative=100.0, **kwargs):
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO index_points
+                (comparison_id, frequency, period, base_period, routes, simple_relative,
+                 laspeyres, paasche, fisher)
+            VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+            """,
+            (
+                comparison_id,
+                frequency,
+                period,
+                kwargs.get("base_period", period),
+                kwargs.get("routes", ["DEL-BOM"]),
+                simple_relative,
+                kwargs.get("laspeyres"),
+                kwargs.get("paasche"),
+                kwargs.get("fisher"),
+            ),
+        )
 
-    snapshots = list_snapshots(index_base_dir=index_dir)
 
-    assert [s["comparison_id"] for s in snapshots] == ["bbb", "aaa"]
+def _insert_fare_quote(
+    conn, quote_id, origin="ZZZ", destination="YYY", collected_at="2026-08-24T10:00:00+00:00"
+):
+    # ZZZ/YYY (not real routes like DEL/BOM) deliberately -- the real
+    # committed migration data (see db/migrate_existing_data.py) has real
+    # rows on DEL-BOM/DEL-BLR/BOM-BLR in this shared database, so tests using
+    # those same routes would count real rows alongside their own.
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO fare_quotes
+                (quote_id, origin, destination, carrier, source, travel_date, collected_at,
+                 advance_window, status, run_id, is_outlier, source_quote_ids)
+            VALUES
+                (%s, %s, %s, 'QP', 'akasaair', '2026-09-01', %s, 'T+1', 'available', 'run1',
+                 false, %s)
+            """,
+            (quote_id, origin, destination, collected_at, [quote_id]),
+        )
 
 
-def test_load_snapshot_returns_newest_matching_frequency(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    older = _write_snapshot(index_dir, "old", "daily", [{"period": "2026-08-01"}])
-    os.utime(older, (time.time() - 100, time.time() - 100))
-    _write_snapshot(index_dir, "new", "daily", [{"period": "2026-08-02"}])
+def test_list_snapshots_returns_newest_first(conn):
+    _insert_index_point(conn, "aaa", "daily", "2026-08-01")
+    _insert_index_point(conn, "bbb", "daily", "2026-08-02")
 
-    result = load_snapshot("daily", comparison_id=None, index_base_dir=index_dir)
+    snapshots = list_snapshots(conn)
+
+    ids = [s["comparison_id"] for s in snapshots]
+    assert ids.index("bbb") < ids.index("aaa")
+
+
+def test_load_snapshot_returns_newest_matching_frequency(conn):
+    _insert_index_point(conn, "old", "daily", "2026-08-01")
+    _insert_index_point(conn, "new", "daily", "2026-08-02")
+
+    result = load_snapshot(conn, "daily", comparison_id=None)
 
     assert result["comparison_id"] == "new"
 
 
-def test_load_snapshot_by_comparison_id(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    comparison_id = "deadbeefdeadbeefdeadbeefdeadbeef"
-    _write_snapshot(index_dir, comparison_id, "weekly", [{"period": "2026-W34"}])
+def test_load_snapshot_by_comparison_id(conn):
+    _insert_index_point(conn, "deadbeefdeadbeefdeadbeefdeadbeef", "weekly", "2026-W34")
 
-    result = load_snapshot("weekly", comparison_id=comparison_id, index_base_dir=index_dir)
+    result = load_snapshot(conn, "weekly", comparison_id="deadbeefdeadbeefdeadbeefdeadbeef")
 
-    assert result["comparison_id"] == comparison_id
+    assert result["comparison_id"] == "deadbeefdeadbeefdeadbeefdeadbeef"
+    assert result["series"][0]["period"] == "2026-W34"
 
 
-def test_load_snapshot_raises_when_comparison_id_missing(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
+def test_load_snapshot_raises_when_comparison_id_missing(conn):
+    with pytest.raises(SnapshotNotFoundError):
+        load_snapshot(conn, "daily", comparison_id="deadbeefdeadbeefdeadbeefdeadbeef")
+
+
+def test_load_snapshot_raises_when_comparison_id_frequency_mismatch(conn):
+    _insert_index_point(conn, "deadbeefdeadbeefdeadbeefdeadbeef", "weekly", "2026-W34")
 
     with pytest.raises(SnapshotNotFoundError):
-        load_snapshot("daily", comparison_id="nope", index_base_dir=index_dir)
+        load_snapshot(conn, "daily", comparison_id="deadbeefdeadbeefdeadbeefdeadbeef")
 
 
-def test_load_snapshot_raises_when_comparison_id_frequency_mismatch(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    _write_snapshot(index_dir, "target", "weekly", [])
-
+def test_load_snapshot_raises_when_no_snapshot_for_frequency(conn):
+    # "weekly" (not "daily") deliberately -- the real committed migration
+    # data (see db/migrate_existing_data.py) has real "daily" rows in this
+    # shared database, so querying "daily" here would find real data instead
+    # of correctly finding nothing. No "weekly" data has ever been migrated.
     with pytest.raises(SnapshotNotFoundError):
-        load_snapshot("daily", comparison_id="target", index_base_dir=index_dir)
+        load_snapshot(conn, "weekly", comparison_id=None)
 
 
-def test_load_snapshot_raises_when_no_snapshot_for_frequency(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    _write_snapshot(index_dir, "target", "weekly", [])
-
+def test_load_snapshot_rejects_a_comparison_id_that_is_not_32_hex_chars(conn):
     with pytest.raises(SnapshotNotFoundError):
-        load_snapshot("daily", comparison_id=None, index_base_dir=index_dir)
+        load_snapshot(conn, "daily", comparison_id="not-a-real-id")
 
 
-def test_load_snapshot_rejects_a_comparison_id_with_path_separators(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    outside_file = tmp_path / "secret.json"
-    outside_file.write_text(
-        json.dumps({"comparison_id": "whatever", "frequency": "daily", "series": []})
+def test_load_snapshot_filters_by_start_and_end(conn):
+    cid = "deadbeefdeadbeefdeadbeefdeadbeef"
+    _insert_index_point(conn, cid, "daily", "2026-08-01")
+    _insert_index_point(conn, cid, "daily", "2026-08-15")
+    _insert_index_point(conn, cid, "daily", "2026-08-30")
+
+    result = load_snapshot(conn, "daily", comparison_id=cid, start="2026-08-10", end="2026-08-20")
+
+    assert [p["period"] for p in result["series"]] == ["2026-08-15"]
+
+
+def test_load_snapshot_includes_laspeyres_only_when_present(conn):
+    cid = "deadbeefdeadbeefdeadbeefdeadbeef"
+    _insert_index_point(
+        conn, cid, "daily", "2026-08-01", laspeyres=105.0, paasche=104.0, fisher=104.5
     )
 
-    with pytest.raises(SnapshotNotFoundError):
-        load_snapshot("daily", comparison_id="../secret", index_base_dir=index_dir)
+    result = load_snapshot(conn, "daily", comparison_id=cid)
+
+    assert result["series"][0]["laspeyres"] == 105.0
 
 
-def test_load_snapshot_rejects_a_comparison_id_that_is_not_32_hex_chars(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    _write_snapshot(index_dir, "not-a-real-id", "daily", [{"period": "2026-08-01"}])
+def test_load_fare_records_filters_by_origin_and_destination(conn):
+    _insert_fare_quote(conn, "q1", origin="ZZZ", destination="YYY")
+    _insert_fare_quote(conn, "q2", origin="ZZZ", destination="XXX")
 
-    with pytest.raises(SnapshotNotFoundError):
-        load_snapshot("daily", comparison_id="not-a-real-id", index_base_dir=index_dir)
-
-
-def test_filter_series_by_start_and_end():
-    series = [{"period": "2026-08-01"}, {"period": "2026-08-15"}, {"period": "2026-08-30"}]
-
-    result = filter_series(series, start="2026-08-10", end="2026-08-20")
-
-    assert [p["period"] for p in result] == ["2026-08-15"]
-
-
-def test_filter_series_with_no_bounds_returns_everything():
-    series = [{"period": "2026-08-01"}, {"period": "2026-08-15"}]
-
-    assert filter_series(series, start=None, end=None) == series
-
-
-def test_filter_series_boundaries_are_inclusive():
-    series = [{"period": "2026-08-10"}, {"period": "2026-08-15"}, {"period": "2026-08-20"}]
-
-    result = filter_series(series, start="2026-08-10", end="2026-08-20")
-
-    assert [p["period"] for p in result] == ["2026-08-10", "2026-08-15", "2026-08-20"]
-
-
-def test_filter_fare_records_by_origin_and_destination():
-    records = [
-        {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-24T10:00:00+00:00"},
-        {"origin": "DEL", "destination": "BLR", "collected_at": "2026-08-24T10:00:00+00:00"},
-    ]
-
-    result = filter_fare_records(records, origin="DEL", destination="BOM", start=None, end=None)
+    result = load_fare_records(conn, origin="ZZZ", destination="YYY")
 
     assert len(result) == 1
-    assert result[0]["destination"] == "BOM"
+    assert result[0]["destination"] == "YYY"
 
 
-def test_filter_fare_records_by_date_range_is_inclusive():
-    records = [
-        {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-24T10:00:00+00:00"},
-        {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-25T10:00:00+00:00"},
-    ]
+def test_load_fare_records_filters_by_date_range_is_inclusive(conn):
+    _insert_fare_quote(conn, "q1", collected_at="2026-08-24T10:00:00+00:00")
+    _insert_fare_quote(conn, "q2", collected_at="2026-08-25T10:00:00+00:00")
 
-    result = filter_fare_records(
-        records,
-        origin=None,
-        destination=None,
-        start="2026-08-24T10:00:00+00:00",
-        end="2026-08-24T10:00:00+00:00",
+    result = load_fare_records(
+        conn, start="2026-08-24T10:00:00+00:00", end="2026-08-24T10:00:00+00:00"
     )
 
     assert len(result) == 1
-    assert result[0]["collected_at"] == "2026-08-24T10:00:00+00:00"
+    assert result[0]["quote_id"] == "q1"
 
 
-def test_filter_fare_records_accepts_a_naive_date_bound():
-    records = [
-        {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-24T10:00:00+00:00"},
-        {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-25T10:00:00+00:00"},
-    ]
+def test_load_fare_records_accepts_a_naive_date_bound_widening_to_end_of_day(conn):
+    # 2020-01-01 (not "today") deliberately -- a whole-day range on the same
+    # date the real migration data was collected would also match every real
+    # row from that day (see the ZZZ/YYY note on _insert_fare_quote above).
+    _insert_fare_quote(conn, "q1", collected_at="2020-01-01T23:59:00+00:00")
+    _insert_fare_quote(conn, "q2", collected_at="2020-01-02T00:01:00+00:00")
 
-    result = filter_fare_records(
-        records, origin=None, destination=None, start="2026-08-24", end="2026-08-24"
-    )
+    result = load_fare_records(conn, start="2020-01-01", end="2020-01-01")
 
     assert len(result) == 1
-    assert result[0]["collected_at"] == "2026-08-24T10:00:00+00:00"
+    assert result[0]["quote_id"] == "q1"
 
 
-def test_load_fare_records_reads_from_cleaned_dir(tmp_path):
-    cleaned_dir = tmp_path / "cleaned"
-    cleaned_dir.mkdir()
-    record = {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-24T10:00:00+00:00"}
-    (cleaned_dir / "run1.jsonl").write_text(json.dumps(record) + "\n")
-
-    records = load_fare_records(cleaned_base_dir=cleaned_dir)
-
-    assert records == [record]
+def test_load_fare_records_rejects_a_malformed_date(conn):
+    with pytest.raises(ValueError):
+        load_fare_records(conn, start="not-a-date")
 
 
 def test_load_weights_metadata_returns_full_payload(tmp_path):
+    import json
+
     weights_path = tmp_path / "weights.json"
     weights_path.write_text(
         json.dumps(
