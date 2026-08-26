@@ -346,3 +346,31 @@ def test_run_backtest_correctly_orders_quarters_across_a_fiscal_year_boundary():
     assert result["pearson_correlation"] == pytest.approx(1.0)
     assert isinstance(result["mape"], float)
     assert result["mape"] > 0.0
+
+
+def test_run_backtest_handles_exact_zero_percent_reference_growth_without_crashing():
+    # Covers the OTHER degenerate case named in run_backtest()'s except-clause
+    # comment: an exact 0% reference-growth quarter raises ZeroDivisionError
+    # from mape() (which divides by the actual/reference value), independent
+    # of pearson_correlation()'s zero-variance guard. The prior degenerate
+    # test only exercised the Pearson path (via constant nonzero growth);
+    # this one exercises the ZeroDivisionError path specifically.
+    apix_series = [
+        {"period": "2025-04", "simple_relative": 100.0},
+        {"period": "2025-07", "simple_relative": 120.0},
+        {"period": "2025-10", "simple_relative": 108.0},
+    ]
+    reference_data = {
+        "quarters": [
+            {"fiscal_year": "2025-26", "quarter": "Q1", "index_value": 200.0},
+            {"fiscal_year": "2025-26", "quarter": "Q2", "index_value": 200.0},  # 0% growth from Q1
+            {"fiscal_year": "2025-26", "quarter": "Q3", "index_value": 210.0},
+        ]
+    }
+
+    result = run_backtest(apix_series, reference_data)
+
+    assert result["n_growth_pairs"] == 2
+    assert result["mape"] is None
+    assert result["pearson_correlation"] is None
+    assert result["note"] != ""
