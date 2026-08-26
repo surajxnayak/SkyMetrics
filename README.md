@@ -57,9 +57,9 @@ index/build.py      ----> PostgreSQL: index_points
 | `pipeline/` | Cleaning: de-duplication, IQR outlier flagging                   |
 | `index/`    | Index construction: formulas, weights, build, back-test          |
 | `api/`      | FastAPI REST layer + Postgres data access                        |
-| `dashboard/`| React + TypeScript dashboard                                     |
-| `db/`       | Postgres schema + migration scripts                               |
-| `config/`   | Source compliance audit, route weights                            |
+| `dashboard/` | React + TypeScript dashboard                                     |
+| `db/`       | Postgres schema + migration scripts                              |
+| `config/`   | Source compliance audit, route weights, basket + reference-series data |
 | `docs/`     | Specs, plans, validation report                                   |
 
 ## Why only one live source right now
