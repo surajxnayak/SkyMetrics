@@ -20,7 +20,15 @@ submission (problem statement SIH26056, MoSPI/DIID).
   sector heatmap, lead-time elasticity, drill-down filtering, CSV export,
   and a data-quality panel.
 
-Back-testing, documentation, and automated-test hardening (Phase 5) are next.
+Back-testing against a real government reference series (Ministry of
+Commerce's Service PPI) is also complete — see
+`docs/superpowers/specs/2026-08-26-phase5-dgca-backtest-design.md` and the
+generated `docs/validation-report.md`. Documentation and automated-test
+hardening (the rest of Phase 5) are next.
+
+Data storage moved from git-committed flat files to PostgreSQL, packaged
+with Docker Compose — see
+`docs/superpowers/specs/2026-08-26-postgres-docker-design.md`.
 
 ## Why only one live source right now
 
@@ -35,10 +43,14 @@ compliant.
 
 ## Setup
 
-Requires Python 3.11+. No runtime dependencies — the scraper is stdlib-only.
+Requires Python 3.11+ and a PostgreSQL database (a free-tier
+[Neon](https://neon.tech) instance works well — see `.env.example`).
 
 ```bash
-pip install -r requirements-dev.txt
+pip install -r requirements.txt -r requirements-dev.txt
+cp .env.example .env   # fill in DATABASE_URL and SKYMETRICS_API_KEYS
+export $(cat .env | xargs)
+python3 -m db.apply_schema   # one-time: creates fare_quotes and index_points
 ```
 
 ## Running the scraper
@@ -47,26 +59,29 @@ pip install -r requirements-dev.txt
 python -m scraper.run
 ```
 
-Writes raw fare quotes to `data/raw/<source>/<run_id>.jsonl`.
+Writes raw fare quotes to `data/raw/<source>/<run_id>.jsonl` (gitignored,
+ephemeral — only used as an intermediate before cleaning).
 
 ## Cleaning and index construction
 
 ```bash
-python3 -c "from pipeline.clean import clean_run; clean_run('<run_id>')"
-python -m index.build
+python3 -c "from pipeline.clean import clean_run_to_db; from api.db import get_connection; clean_run_to_db('<run_id>', conn=get_connection())"
+python3 -c "from index.build import build_and_write_series_to_db, load_all_cleaned_records; from index.weights import load_weights; from api.db import get_connection; build_and_write_series_to_db(load_all_cleaned_records(), 'daily', load_weights(), conn=get_connection())"
 ```
 
-Cleans a raw run into `data/cleaned/<run_id>.jsonl`, then builds a versioned
-APIx snapshot at `data/index/<comparison_id>.json` from every cleaned run on
-disk.
+Cleans a raw run and writes a versioned APIx snapshot straight into
+Postgres (`fare_quotes` and `index_points` tables) — no local flat files are
+produced by this path. The daily GitHub Actions cron
+(`.github/workflows/daily-scrape.yml`) runs this same sequence automatically.
 
 ## Running the API
 
-Requires `SKYMETRICS_API_KEYS` to be set to a comma-separated list of
-valid keys before starting.
+Requires `SKYMETRICS_API_KEYS` (a comma-separated list of valid keys) and
+`DATABASE_URL` to be set before starting.
 
 ```bash
 export SKYMETRICS_API_KEYS=dev-local-key
+export DATABASE_URL=postgresql://...
 uvicorn api.main:app --reload
 ```
 
@@ -83,21 +98,37 @@ npm run dev
 ```
 
 Open `http://localhost:5173`. Requires the API (see above) running with a
-matching key, e.g.:
-
-```bash
-export SKYMETRICS_API_KEYS=dev-local-key
-uvicorn api.main:app --reload
-```
+matching key.
 
 The dashboard embeds its API key in the built JS bundle — acceptable for a
 demo of non-sensitive, already-computed fare statistics (see
 `docs/superpowers/specs/2026-08-25-phase4b-dashboard-design.md`'s non-goals
 for the reasoning), not something to do for a real secret.
 
-## Testing
+## Running with Docker
+
+Requires Docker and Docker Compose (both included in Docker Desktop).
 
 ```bash
+cp .env.example .env   # fill in DATABASE_URL (a real Postgres, e.g. from neon.tech) and SKYMETRICS_API_KEYS
+docker compose up --build
+```
+
+API at `http://localhost:8000`, dashboard at `http://localhost:5173`. Both
+containers connect to the same Postgres database specified in
+`DATABASE_URL` — this project no longer stores durable data in
+git-committed flat files (see
+`docs/superpowers/specs/2026-08-26-postgres-docker-design.md`).
+
+## Testing
+
+Tests that touch the database run against a real PostgreSQL instance (never
+a substitute dialect like SQLite, to avoid masking real Postgres-specific
+bugs) — either the same database configured in `DATABASE_URL`, or CI's
+disposable `postgres:` service container.
+
+```bash
+export $(cat .env | xargs)   # DATABASE_URL must be set for DB-backed tests
 pytest
 ruff check .
 cd dashboard && npm test && npm run build

@@ -1,0 +1,19 @@
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      DATABASE_URL: ${DATABASE_URL}
+      SKYMETRICS_API_KEYS: ${SKYMETRICS_API_KEYS}
+
+  dashboard:
+    build:
+      context: ./dashboard
+      args:
+        VITE_API_BASE_URL: http://localhost:8000
+        VITE_API_KEY: ${SKYMETRICS_API_KEYS}
+    ports:
+      - "5173:5173"
+    depends_on:
+      - api
