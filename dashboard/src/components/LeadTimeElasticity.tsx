@@ -5,6 +5,8 @@ import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
 
 const WINDOW_ORDER = ["T+45", "T+30", "T+15", "T+7", "T+1"];
+const TOOLTIP_STYLE = { backgroundColor: "#12161f", border: "1px solid #1e2530", borderRadius: 6 };
+const TOOLTIP_LABEL_STYLE = { color: "#e5e7eb" };
 
 // `type`, not `interface` -- interfaces don't get an implicit index
 // signature, which breaks ExportButton's generic constraint.
@@ -44,27 +46,33 @@ export default function LeadTimeElasticity() {
     end: filters.endDate,
   });
 
-  if (loading) return <p>Loading elasticity data...</p>;
-  if (error) return <p role="alert">Failed to load elasticity data: {error}</p>;
-  if (!data || data.length === 0) return <p>No fare data available yet.</p>;
+  if (loading) return <p className="text-sm text-secondary">Loading elasticity data...</p>;
+  if (error) return (
+    <p role="alert" className="text-sm text-error">
+      Failed to load elasticity data: {error}
+    </p>
+  );
+  if (!data || data.length === 0) return <p className="text-sm text-secondary">No fare data available yet.</p>;
 
   const points = aggregate(data, { carrier: filters.carrier, fareClass: filters.fareClass });
-  if (points.length === 0) return <p>No non-outlier fare data available yet.</p>;
+  if (points.length === 0) return <p className="text-sm text-secondary">No non-outlier fare data available yet.</p>;
 
   return (
     <div>
-      <h2>Lead-time elasticity</h2>
+      <h2 className="mb-4 text-base font-semibold text-primary">Lead-time elasticity</h2>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={points}>
-          <CartesianGrid strokeDasharray="3 3" />
-          <XAxis dataKey="advance_window" />
-          <YAxis />
-          <Tooltip />
-          <Legend />
-          <Line type="monotone" dataKey="meanFare" stroke="#8884d8" name="Mean fare" />
+          <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />
+          <XAxis dataKey="advance_window" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+          <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+          <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} />
+          <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
+          <Line type="monotone" dataKey="meanFare" stroke="#a78bfa" name="Mean fare" />
         </LineChart>
       </ResponsiveContainer>
-      <ExportButton data={points} filename="elasticity.csv" />
+      <div className="mt-4">
+        <ExportButton data={points} filename="elasticity.csv" />
+      </div>
     </div>
   );
 }
