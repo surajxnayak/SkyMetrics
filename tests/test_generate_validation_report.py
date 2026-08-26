@@ -50,6 +50,8 @@ def test_generate_report_includes_methodology_and_reference_table():
     assert "95.8" in report
     assert "126.4" in report
     assert "eaindustry.nic.in" in report
+    assert "| No |" in report
+    assert "| Yes |" in report
 
 
 def test_generate_report_renders_insufficient_data_result_honestly():
