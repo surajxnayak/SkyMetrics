@@ -46,6 +46,27 @@ def aggregate_apix_to_quarters(apix_series: list[dict]) -> dict[tuple[str, str],
     return {key: sum(values) / len(values) for key, values in buckets.items()}
 
 
+def align_growth_rates(
+    apix_quarters: dict[tuple[str, str], float],
+    reference_quarters: dict[tuple[str, str], float],
+) -> tuple[list[float], list[float]]:
+    overlapping = sorted(set(apix_quarters) & set(reference_quarters))
+    if len(overlapping) < 2:
+        return [], []
+
+    apix_growth = []
+    reference_growth = []
+    for previous_key, current_key in zip(overlapping, overlapping[1:]):
+        apix_curr = apix_quarters[current_key]
+        apix_prev = apix_quarters[previous_key]
+        apix_growth.append(100.0 * (apix_curr - apix_prev) / apix_prev)
+
+        ref_curr = reference_quarters[current_key]
+        ref_prev = reference_quarters[previous_key]
+        reference_growth.append(100.0 * (ref_curr - ref_prev) / ref_prev)
+    return apix_growth, reference_growth
+
+
 def mape(actual: list[float], predicted: list[float]) -> float:
     if len(actual) != len(predicted):
         raise ValueError("actual and predicted must be the same length")

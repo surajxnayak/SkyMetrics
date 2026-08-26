@@ -4,6 +4,7 @@ import pytest
 
 from index.backtest import (
     aggregate_apix_to_quarters,
+    align_growth_rates,
     fiscal_quarter_of,
     load_reference_series,
     mape,
@@ -124,3 +125,50 @@ def test_aggregate_apix_to_quarters_buckets_and_averages_simple_relative():
 
 def test_aggregate_apix_to_quarters_handles_empty_series():
     assert aggregate_apix_to_quarters([]) == {}
+
+
+def test_align_growth_rates_computes_matched_period_over_period_growth():
+    apix_quarters = {
+        ("2025-26", "Q1"): 100.0,
+        ("2025-26", "Q2"): 110.0,
+        ("2025-26", "Q3"): 121.0,
+        ("2025-26", "Q4"): 133.1,
+    }
+    reference_quarters = {
+        ("2025-26", "Q1"): 200.0,
+        ("2025-26", "Q2"): 220.0,
+        ("2025-26", "Q3"): 242.0,
+        ("2025-26", "Q4"): 266.2,
+    }
+
+    apix_growth, reference_growth = align_growth_rates(apix_quarters, reference_quarters)
+
+    assert apix_growth == pytest.approx([10.0, 10.0, 10.0])
+    assert reference_growth == pytest.approx([10.0, 10.0, 10.0])
+
+
+def test_align_growth_rates_only_uses_quarters_present_in_both():
+    apix_quarters = {("2025-26", "Q1"): 100.0, ("2025-26", "Q2"): 110.0, ("2026-27", "Q1"): 999.0}
+    reference_quarters = {("2025-26", "Q1"): 200.0, ("2025-26", "Q2"): 220.0}
+
+    apix_growth, reference_growth = align_growth_rates(apix_quarters, reference_quarters)
+
+    # Only ("2025-26", "Q1") and ("2025-26", "Q2") overlap -> exactly 1 growth-rate point.
+    assert apix_growth == pytest.approx([10.0])
+    assert reference_growth == pytest.approx([10.0])
+
+
+def test_align_growth_rates_returns_empty_lists_when_fewer_than_two_overlapping_quarters():
+    apix_quarters = {("2026-27", "Q2"): 100.0}
+    reference_quarters = {
+        ("2025-26", "Q1"): 95.8,
+        ("2025-26", "Q2"): 94.3,
+        ("2025-26", "Q3"): 107.3,
+        ("2025-26", "Q4"): 106.9,
+        ("2026-27", "Q1"): 126.4,
+    }
+
+    apix_growth, reference_growth = align_growth_rates(apix_quarters, reference_quarters)
+
+    assert apix_growth == []
+    assert reference_growth == []
