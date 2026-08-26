@@ -8,6 +8,10 @@ on:
 permissions:
   contents: write
 
+concurrency:
+  group: daily-scrape
+  cancel-in-progress: false
+
 jobs:
   scrape:
     runs-on: ubuntu-latest
@@ -17,12 +21,16 @@ jobs:
         with:
           python-version: "3.11"
       - id: scrape
-        run: echo "run_id=$(python -m scraper.run)" >> "$GITHUB_OUTPUT"
+        run: |
+          run_id=$(python -m scraper.run)
+          echo "run_id=$run_id" >> "$GITHUB_OUTPUT"
       - uses: actions/upload-artifact@v4
         with:
           name: raw-fares-${{ github.run_id }}
           path: data/raw/
-      - run: python -c "from pipeline.clean import clean_run; clean_run('${{ steps.scrape.outputs.run_id }}')"
+      - run: python -c "from pipeline.clean import clean_run; clean_run('$RUN_ID')"
+        env:
+          RUN_ID: ${{ steps.scrape.outputs.run_id }}
       - run: python -m index.build
       - run: |
           git config user.name "github-actions[bot]"
