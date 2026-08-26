@@ -68,6 +68,7 @@ Create `dashboard/src/index.css`:
 
   --color-up: #4ade80;
   --color-down: #f87171;
+  --color-error: #f87171;
 
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
@@ -341,6 +342,15 @@ git commit -m "style: dark theme styling for Sidebar filter controls"
 
 ### Task 4: Style `DataQualityPanel.tsx`
 
+> **Correction found during review:** the code below originally used `text-down`
+> for error states. A code-quality reviewer flagged this as a semantic-color
+> mismatch — `down` is defined (Task 1) as specifically "price decrease," not a
+> generic error color, and reusing it here would set a bad precedent once
+> real price-direction UI exists. Fixed by adding a dedicated `--color-error`
+> token (Task 1's `@theme` block, same red value, distinct meaning) and using
+> `text-error` for all `role="alert"` error states throughout this plan
+> (Tasks 4, 5, 6, 7). The code blocks below already reflect this fix.
+
 **Files:**
 - Modify: `dashboard/src/components/DataQualityPanel.tsx`
 
@@ -355,12 +365,12 @@ export default function DataQualityPanel() {
 
   if (fares.loading || metadata.loading) return <p className="text-sm text-secondary">Loading data quality...</p>;
   if (fares.error) return (
-    <p role="alert" className="text-sm text-down">
+    <p role="alert" className="text-sm text-error">
       Failed to load data quality: {fares.error}
     </p>
   );
   if (metadata.error) return (
-    <p role="alert" className="text-sm text-down">
+    <p role="alert" className="text-sm text-error">
       Failed to load data quality: {metadata.error}
     </p>
   );
@@ -430,7 +440,7 @@ export default function TrendView() {
 
   if (loading) return <p className="text-sm text-secondary">Loading trend data...</p>;
   if (error) return (
-    <p role="alert" className="text-sm text-down">
+    <p role="alert" className="text-sm text-error">
       Failed to load trend data: {error}
     </p>
   );
@@ -553,7 +563,7 @@ export default function SectorHeatmap() {
 
   if (loading) return <p className="text-sm text-secondary">Loading heatmap data...</p>;
   if (error) return (
-    <p role="alert" className="text-sm text-down">
+    <p role="alert" className="text-sm text-error">
       Failed to load heatmap data: {error}
     </p>
   );
@@ -691,7 +701,7 @@ export default function LeadTimeElasticity() {
 
   if (loading) return <p className="text-sm text-secondary">Loading elasticity data...</p>;
   if (error) return (
-    <p role="alert" className="text-sm text-down">
+    <p role="alert" className="text-sm text-error">
       Failed to load elasticity data: {error}
     </p>
   );
