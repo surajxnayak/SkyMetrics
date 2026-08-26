@@ -44,7 +44,7 @@ export default function ExportButton<T extends Record<string, unknown>>({
     <button
       onClick={handleClick}
       disabled={data.length === 0}
-      className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-page hover:bg-accent-hover disabled:cursor-not-allowed disabled:opacity-40"
+      className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-page hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-accent/40 disabled:text-secondary"
     >
       Export CSV
     </button>
