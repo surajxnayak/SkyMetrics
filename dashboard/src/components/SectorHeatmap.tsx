@@ -41,10 +41,13 @@ export function aggregate(records: FareRecord[], drilldown: DrilldownFilters): C
 function colorFor(value: number, min: number, max: number): string {
   if (max === min) return "#241a3d";
   const ratio = (value - min) / (max - min);
-  // Violet intensity scale: low fares stay near the panel background,
-  // high fares approach the full accent color -- visible against dark,
-  // unlike the original light-pink scale this replaces.
-  const lightness = Math.round(20 + ratio * 45);
+  // Violet intensity scale, lightness 28%-48%: high enough above the page
+  // background (#0a0e14) to stay visually distinct from empty/no-data
+  // cells, low enough that text-primary (#e5e7eb) rendered on top still
+  // meets WCAG AA (4.5:1) even at the brightest (highest-fare) end --
+  // verified via code-quality review after the original 20%-65% range
+  // failed both checks.
+  const lightness = Math.round(28 + ratio * 20);
   return `hsl(258, 60%, ${lightness}%)`;
 }
 
