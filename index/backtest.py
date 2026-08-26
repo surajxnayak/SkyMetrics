@@ -38,6 +38,14 @@ def fiscal_quarter_of(period: str) -> tuple[str, str]:
     return f"{fiscal_year}-{(fiscal_year + 1) % 100:02d}", quarter
 
 
+def aggregate_apix_to_quarters(apix_series: list[dict]) -> dict[tuple[str, str], float]:
+    buckets: dict[tuple[str, str], list[float]] = {}
+    for point in apix_series:
+        quarter_key = fiscal_quarter_of(point["period"])
+        buckets.setdefault(quarter_key, []).append(point["simple_relative"])
+    return {key: sum(values) / len(values) for key, values in buckets.items()}
+
+
 def mape(actual: list[float], predicted: list[float]) -> float:
     if len(actual) != len(predicted):
         raise ValueError("actual and predicted must be the same length")

@@ -2,7 +2,13 @@ import json
 
 import pytest
 
-from index.backtest import fiscal_quarter_of, load_reference_series, mape, pearson_correlation
+from index.backtest import (
+    aggregate_apix_to_quarters,
+    fiscal_quarter_of,
+    load_reference_series,
+    mape,
+    pearson_correlation,
+)
 
 
 def test_mape_zero_when_series_match_exactly():
@@ -100,3 +106,21 @@ def test_fiscal_quarter_of_handles_january_march_as_prior_fiscal_year_q4():
 def test_fiscal_quarter_of_rejects_malformed_period():
     with pytest.raises(ValueError):
         fiscal_quarter_of("not-a-period")
+
+
+def test_aggregate_apix_to_quarters_buckets_and_averages_simple_relative():
+    apix_series = [
+        {"period": "2026-04", "simple_relative": 100.0},
+        {"period": "2026-05", "simple_relative": 110.0},
+        {"period": "2026-06", "simple_relative": 120.0},
+        {"period": "2026-07", "simple_relative": 200.0},
+    ]
+
+    result = aggregate_apix_to_quarters(apix_series)
+
+    assert result[("2026-27", "Q1")] == pytest.approx(110.0)  # mean(100, 110, 120)
+    assert result[("2026-27", "Q2")] == pytest.approx(200.0)
+
+
+def test_aggregate_apix_to_quarters_handles_empty_series():
+    assert aggregate_apix_to_quarters([]) == {}
