@@ -1,8 +1,9 @@
 """Back-test comparison utility (PRD F-3.6): MAPE and correlation between
-two aligned time series. Not wired to a live DGCA/CPI feed in this phase
--- see the design spec for why (no 30 days of real APIx history yet, no
-way to backfill historical Akasa fares to shortcut it). Correct and
-tested now, ready to point at real reference data once both series exist.
+two aligned time series, wired to a real government reference series (the
+Service PPI's Air (Passenger) Service Price Index -- see
+config/service_ppi_reference.json and load_reference_series()) via
+run_backtest(). Comparisons run on period-over-period growth rates, not raw
+levels, since the two series have different base periods.
 """
 
 from __future__ import annotations
