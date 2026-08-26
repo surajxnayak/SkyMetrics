@@ -1,0 +1,13 @@
+{
+  "source": "Service Producer Price Index (Base Year 2022-23), Air (Passenger) Service Price Index -- Office of the Economic Adviser, Ministry of Commerce & Industry, Government of India",
+  "source_url": "https://eaindustry.nic.in/download_data_2223.asp",
+  "retrieved_at": "2026-08-26",
+  "methodology_note": "Quarterly, base year 2022-23=100. Index not compiled before Q1 FY2025-26 (source's own footnote: price reference period is FY2025-26). Q1 FY2026-27 is marked provisional by the source.",
+  "quarters": [
+    {"fiscal_year": "2025-26", "quarter": "Q1", "period_start": "2025-04-01", "period_end": "2025-06-30", "index_value": 95.8, "provisional": false},
+    {"fiscal_year": "2025-26", "quarter": "Q2", "period_start": "2025-07-01", "period_end": "2025-09-30", "index_value": 94.3, "provisional": false},
+    {"fiscal_year": "2025-26", "quarter": "Q3", "period_start": "2025-10-01", "period_end": "2025-12-31", "index_value": 107.3, "provisional": false},
+    {"fiscal_year": "2025-26", "quarter": "Q4", "period_start": "2026-01-01", "period_end": "2026-03-31", "index_value": 106.9, "provisional": false},
+    {"fiscal_year": "2026-27", "quarter": "Q1", "period_start": "2026-04-01", "period_end": "2026-06-30", "index_value": 126.4, "provisional": true}
+  ]
+}

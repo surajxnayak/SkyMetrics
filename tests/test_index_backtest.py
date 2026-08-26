@@ -1,6 +1,8 @@
+import json
+
 import pytest
 
-from index.backtest import mape, pearson_correlation
+from index.backtest import load_reference_series, mape, pearson_correlation
 
 
 def test_mape_zero_when_series_match_exactly():
@@ -39,3 +41,41 @@ def test_pearson_correlation_rejects_fewer_than_two_points():
 def test_pearson_correlation_rejects_zero_variance_series():
     with pytest.raises(ValueError):
         pearson_correlation([5.0, 5.0, 5.0], [1.0, 2.0, 3.0])
+
+
+def test_load_reference_series_reads_a_given_file(tmp_path):
+    ref_file = tmp_path / "reference.json"
+    ref_file.write_text(
+        json.dumps(
+            {
+                "source": "test",
+                "source_url": "https://example.com",
+                "retrieved_at": "2026-01-01",
+                "methodology_note": "test",
+                "quarters": [
+                    {
+                        "fiscal_year": "2025-26",
+                        "quarter": "Q1",
+                        "period_start": "2025-04-01",
+                        "period_end": "2025-06-30",
+                        "index_value": 100.0,
+                        "provisional": False,
+                    }
+                ],
+            }
+        )
+    )
+
+    reference = load_reference_series(path=ref_file)
+
+    assert reference["source"] == "test"
+    assert reference["quarters"][0]["index_value"] == 100.0
+
+
+def test_real_reference_file_has_five_real_quarters():
+    reference = load_reference_series()
+
+    assert len(reference["quarters"]) == 5
+    values = {(q["fiscal_year"], q["quarter"]): q["index_value"] for q in reference["quarters"]}
+    assert values[("2025-26", "Q1")] == 95.8
+    assert values[("2026-27", "Q1")] == 126.4

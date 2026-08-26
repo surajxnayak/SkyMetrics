@@ -7,7 +7,15 @@ tested now, ready to point at real reference data once both series exist.
 
 from __future__ import annotations
 
+import json
 import math
+from pathlib import Path
+
+REFERENCE_PATH = Path("config/service_ppi_reference.json")
+
+
+def load_reference_series(path: Path = REFERENCE_PATH) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
 
 
 def mape(actual: list[float], predicted: list[float]) -> float:
