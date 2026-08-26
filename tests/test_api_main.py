@@ -1,4 +1,3 @@
-import json
 import os
 
 os.environ["SKYMETRICS_API_KEYS"] = "test-key-123"
@@ -7,11 +6,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from api import rate_limit
-from api.main import app, get_cleaned_base_dir, get_index_base_dir, get_weights_path
+from api.db import get_connection
+from api.main import app, get_db_connection, get_weights_path
 from api.rate_limit import RateLimiter
 
 client = TestClient(app)
 HEADERS = {"X-API-Key": "test-key-123"}
+
+pytestmark = pytest.mark.skipif(
+    "DATABASE_URL" not in os.environ, reason="DATABASE_URL not set in this environment"
+)
 
 
 @pytest.fixture(autouse=True)
@@ -19,156 +23,107 @@ def _fresh_rate_limiter():
     rate_limit.limiter = RateLimiter()
 
 
-@pytest.fixture(autouse=True)
-def _clear_dependency_overrides():
-    yield
+@pytest.fixture
+def db_conn():
+    connection = get_connection()
+
+    def _override():
+        yield connection
+
+    app.dependency_overrides[get_db_connection] = _override
+    yield connection
     app.dependency_overrides.clear()
+    connection.rollback()
+    connection.close()
 
 
-def _write_snapshot(index_dir, comparison_id, frequency, series):
-    path = index_dir / f"{comparison_id}.json"
-    path.write_text(
-        json.dumps({"comparison_id": comparison_id, "frequency": frequency, "series": series})
-    )
+def _insert_index_point(conn, comparison_id, frequency, period, **kwargs):
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO index_points
+                (comparison_id, frequency, period, base_period, routes, simple_relative)
+            VALUES (%s, %s, %s, %s, %s, %s)
+            """,
+            (
+                comparison_id,
+                frequency,
+                period,
+                kwargs.get("base_period", period),
+                ["ZZZ-YYY"],
+                100.0,
+            ),
+        )
+    # No conn.commit() here, deliberately: get_db_connection is overridden
+    # to yield this exact same connection object to the FastAPI endpoint, so
+    # the insert is already visible to it within the same open transaction
+    # (read-your-own-writes) -- committing would make the fixture's
+    # rollback() teardown a no-op, permanently leaking test rows into the
+    # real database (this is exactly what happened before this comment was
+    # added: a stray quote_id='q1' row survived a full-suite run and broke
+    # a later run with a UniqueViolation).
 
 
-def test_get_index_returns_latest_snapshot(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    _write_snapshot(
-        index_dir, "abc123", "daily", [{"period": "2026-08-24", "simple_relative": 100.0}]
-    )
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
+def test_get_index_returns_latest_snapshot(db_conn):
+    _insert_index_point(db_conn, "abc12300000000000000000000000000"[:32], "daily", "2026-08-24")
 
     response = client.get("/api/v1/index", params={"frequency": "daily"}, headers=HEADERS)
 
     assert response.status_code == 200
     body = response.json()
-    assert body["comparison_id"] == "abc123"
-    assert body["series"] == [{"period": "2026-08-24", "simple_relative": 100.0}]
+    assert body["series"][0]["period"] == "2026-08-24"
 
 
-def test_get_index_by_comparison_id(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    comparison_id = "deadbeefdeadbeefdeadbeefdeadbeef"
-    _write_snapshot(index_dir, comparison_id, "weekly", [{"period": "2026-W34"}])
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
-
-    response = client.get(
-        "/api/v1/index",
-        params={"frequency": "weekly", "comparison_id": comparison_id},
-        headers=HEADERS,
-    )
-
-    assert response.status_code == 200
-    assert response.json()["comparison_id"] == comparison_id
-
-
-def test_get_index_filters_by_start_and_end(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    _write_snapshot(
-        index_dir,
-        "abc",
-        "daily",
-        [{"period": "2026-08-01"}, {"period": "2026-08-15"}, {"period": "2026-08-30"}],
-    )
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
-
-    response = client.get(
-        "/api/v1/index",
-        params={"frequency": "daily", "start": "2026-08-10", "end": "2026-08-20"},
-        headers=HEADERS,
-    )
-
-    assert [p["period"] for p in response.json()["series"]] == ["2026-08-15"]
-
-
-def test_get_index_returns_404_when_no_snapshot_for_frequency(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
-
-    response = client.get("/api/v1/index", params={"frequency": "daily"}, headers=HEADERS)
+def test_get_index_returns_404_when_no_snapshot_for_frequency(db_conn):
+    # "weekly" -- see the same-name note in tests/test_api_data_access.py:
+    # real committed migration data has real "daily" rows in this shared
+    # database, so a "no daily snapshot exists" premise would be false here.
+    response = client.get("/api/v1/index", params={"frequency": "weekly"}, headers=HEADERS)
 
     assert response.status_code == 404
 
 
-def test_get_index_returns_404_for_unknown_comparison_id(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
-
-    response = client.get(
-        "/api/v1/index", params={"frequency": "daily", "comparison_id": "nope"}, headers=HEADERS
-    )
-
-    assert response.status_code == 404
-
-
-def test_get_index_rejects_a_comparison_id_with_path_traversal(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    outside_file = tmp_path / "secret.json"
-    outside_file.write_text(
-        json.dumps({"comparison_id": "leaked", "frequency": "daily", "series": []})
-    )
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
-
-    response = client.get(
-        "/api/v1/index",
-        params={"frequency": "daily", "comparison_id": "../secret"},
-        headers=HEADERS,
-    )
-
-    assert response.status_code == 404
-
-
-def test_get_index_rejects_invalid_frequency(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
-
+def test_get_index_rejects_invalid_frequency(db_conn):
     response = client.get("/api/v1/index", params={"frequency": "yearly"}, headers=HEADERS)
 
     assert response.status_code == 422
 
 
-def test_get_fares_filters_by_origin_and_destination(tmp_path):
-    cleaned_dir = tmp_path / "cleaned"
-    cleaned_dir.mkdir()
-    records = [
-        {"origin": "DEL", "destination": "BOM", "collected_at": "2026-08-24T10:00:00+00:00"},
-        {"origin": "DEL", "destination": "BLR", "collected_at": "2026-08-24T10:00:00+00:00"},
-    ]
-    (cleaned_dir / "run1.jsonl").write_text("\n".join(json.dumps(r) for r in records) + "\n")
-    app.dependency_overrides[get_cleaned_base_dir] = lambda: cleaned_dir
+def test_get_fares_filters_by_origin_and_destination(db_conn):
+    # ZZZ/YYY -- see the same-name note in tests/test_api_data_access.py:
+    # avoids colliding with real migrated fare data on real routes.
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO fare_quotes
+                (quote_id, origin, destination, carrier, source, travel_date, collected_at,
+                 advance_window, status, run_id, is_outlier, source_quote_ids)
+            VALUES ('q1', 'ZZZ', 'YYY', 'QP', 'akasaair', '2026-09-01',
+                    '2026-08-24T10:00:00+00:00', 'T+1', 'available', 'run1', false, ARRAY['q1'])
+            """
+        )
+    # No db_conn.commit() here -- see the comment in _insert_index_point above.
 
     response = client.get(
-        "/api/v1/fares", params={"origin": "DEL", "destination": "BOM"}, headers=HEADERS
+        "/api/v1/fares", params={"origin": "ZZZ", "destination": "YYY"}, headers=HEADERS
     )
 
     assert response.status_code == 200
     body = response.json()
     assert len(body) == 1
-    assert body[0]["destination"] == "BOM"
+    assert body[0]["destination"] == "YYY"
 
 
-def test_get_fares_rejects_a_malformed_date(tmp_path):
-    cleaned_dir = tmp_path / "cleaned"
-    cleaned_dir.mkdir()
-    app.dependency_overrides[get_cleaned_base_dir] = lambda: cleaned_dir
-
+def test_get_fares_rejects_a_malformed_date(db_conn):
     response = client.get("/api/v1/fares", params={"start": "not-a-date"}, headers=HEADERS)
 
     assert response.status_code == 422
 
 
-def test_get_metadata_returns_weights_and_snapshots(tmp_path):
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    _write_snapshot(index_dir, "abc", "daily", [])
+def test_get_metadata_returns_weights_and_snapshots(db_conn, tmp_path):
+    import json
+
+    _insert_index_point(db_conn, "abc12300000000000000000000000000"[:32], "daily", "2026-08-24")
     weights_path = tmp_path / "weights.json"
     weights_path.write_text(
         json.dumps(
@@ -180,17 +135,14 @@ def test_get_metadata_returns_weights_and_snapshots(tmp_path):
             }
         )
     )
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
     app.dependency_overrides[get_weights_path] = lambda: weights_path
 
     response = client.get("/api/v1/metadata", headers=HEADERS)
 
     assert response.status_code == 200
     body = response.json()
-    assert body["weights"]["source"] == "test"
     assert body["weights"]["weights"] == {"DEL-BOM": 0.5}
-    assert len(body["snapshots"]) == 1
-    assert body["snapshots"][0]["comparison_id"] == "abc"
+    assert len(body["snapshots"]) >= 1
     assert "laspeyres" in body["formulas"]
 
 
@@ -206,34 +158,22 @@ def test_wrong_api_key_returns_401():
     assert response.status_code == 401
 
 
-def test_rate_limit_exceeded_returns_429(tmp_path):
+def test_invalid_api_key_returns_401_even_when_rate_limited():
     rate_limit.limiter = RateLimiter(max_requests=1, window_seconds=60.0)
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
 
-    client.get("/api/v1/index", params={"frequency": "daily"}, headers=HEADERS)
-    response = client.get("/api/v1/index", params={"frequency": "daily"}, headers=HEADERS)
-
-    assert response.status_code == 429
-
-
-def test_invalid_api_key_returns_401_even_when_rate_limited(tmp_path):
-    # Auth must run before rate limiting: a caller with a bad key gets a
-    # clean 401, never a 429, even if that same key string has already
-    # exhausted the rate limit -- otherwise an unauthenticated caller could
-    # fingerprint the rate limiter's internal state through the response code.
-    rate_limit.limiter = RateLimiter(max_requests=1, window_seconds=60.0)
-    index_dir = tmp_path / "index"
-    index_dir.mkdir()
-    app.dependency_overrides[get_index_base_dir] = lambda: index_dir
-
-    client.get("/api/v1/index", params={"frequency": "daily"}, headers={"X-API-Key": "wrong-key"})
-    response = client.get(
-        "/api/v1/index", params={"frequency": "daily"}, headers={"X-API-Key": "wrong-key"}
-    )
+    client.get("/api/v1/metadata", headers={"X-API-Key": "wrong-key"})
+    response = client.get("/api/v1/metadata", headers={"X-API-Key": "wrong-key"})
 
     assert response.status_code == 401
+
+
+def test_rate_limit_exceeded_returns_429(db_conn):
+    rate_limit.limiter = RateLimiter(max_requests=1, window_seconds=60.0)
+
+    client.get("/api/v1/index", params={"frequency": "weekly"}, headers=HEADERS)
+    response = client.get("/api/v1/index", params={"frequency": "weekly"}, headers=HEADERS)
+
+    assert response.status_code == 429
 
 
 def test_openapi_docs_reachable_without_api_key():

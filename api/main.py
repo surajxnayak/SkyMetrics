@@ -1,6 +1,6 @@
 """FastAPI app exposing the SkyMetrics APIx and cleaned fare data (PRD
-F-5.1/F-5.2/F-5.3/F-5.5) over already-computed files on disk. No database,
-no request-time recomputation -- see the design spec's non-goals.
+F-5.1/F-5.2/F-5.3/F-5.5), backed by Postgres. No request-time recomputation
+-- see the design spec's non-goals.
 """
 from __future__ import annotations
 
@@ -14,15 +14,13 @@ from fastapi.responses import JSONResponse
 from api.auth import require_api_key
 from api.data_access import (
     SnapshotNotFoundError,
-    filter_fare_records,
-    filter_series,
     list_snapshots,
     load_fare_records,
     load_snapshot,
     load_weights_metadata,
 )
+from api.db import get_db_connection
 from api.rate_limit import enforce_rate_limit
-from index.build import CLEANED_BASE_DIR, INDEX_BASE_DIR
 from index.weights import WEIGHTS_PATH
 
 app = FastAPI(title="SkyMetrics APIx API", version="1.0.0")
@@ -33,14 +31,6 @@ app.add_middleware(
     allow_methods=["GET"],
     allow_headers=["X-API-Key"],
 )
-
-
-def get_index_base_dir() -> Path:
-    return INDEX_BASE_DIR
-
-
-def get_cleaned_base_dir() -> Path:
-    return CLEANED_BASE_DIR
 
 
 def get_weights_path() -> Path:
@@ -59,15 +49,9 @@ def get_index(
     comparison_id: str | None = None,
     start: str | None = None,
     end: str | None = None,
-    index_base_dir: Path = Depends(get_index_base_dir),
+    conn=Depends(get_db_connection),
 ) -> dict:
-    snapshot = load_snapshot(frequency, comparison_id, index_base_dir=index_base_dir)
-    series = filter_series(snapshot["series"], start=start, end=end)
-    return {
-        "comparison_id": snapshot["comparison_id"],
-        "frequency": snapshot["frequency"],
-        "series": series,
-    }
+    return load_snapshot(conn, frequency, comparison_id, start=start, end=end)
 
 
 @router.get("/fares")
@@ -76,20 +60,17 @@ def get_fares(
     destination: str | None = None,
     start: str | None = None,
     end: str | None = None,
-    cleaned_base_dir: Path = Depends(get_cleaned_base_dir),
+    conn=Depends(get_db_connection),
 ) -> list[dict]:
-    records = load_fare_records(cleaned_base_dir=cleaned_base_dir)
     try:
-        return filter_fare_records(
-            records, origin=origin, destination=destination, start=start, end=end
-        )
+        return load_fare_records(conn, origin=origin, destination=destination, start=start, end=end)
     except ValueError as exc:
         raise HTTPException(status_code=422, detail=str(exc)) from exc
 
 
 @router.get("/metadata")
 def get_metadata(
-    index_base_dir: Path = Depends(get_index_base_dir),
+    conn=Depends(get_db_connection),
     weights_path: Path = Depends(get_weights_path),
 ) -> dict:
     weights_metadata = load_weights_metadata(weights_path=weights_path)
@@ -101,7 +82,7 @@ def get_metadata(
             "paasche": "Current-period-weighted harmonic mean of price relatives.",
             "fisher": "Geometric mean of Laspeyres and Paasche.",
         },
-        "snapshots": list_snapshots(index_base_dir=index_base_dir),
+        "snapshots": list_snapshots(conn),
     }
 
 
