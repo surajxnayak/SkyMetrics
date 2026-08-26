@@ -257,3 +257,56 @@ def test_run_backtest_reports_insufficient_data_honestly_for_todays_real_state()
     assert result["mape"] is None
     assert result["pearson_correlation"] is None
     assert result["note"] != ""
+
+
+def test_run_backtest_reports_insufficient_data_at_exactly_two_overlapping_quarters():
+    apix_series = [
+        {"period": "2025-04", "simple_relative": 100.0},
+        {"period": "2025-07", "simple_relative": 110.0},
+    ]
+    reference_data = {
+        "quarters": [
+            {"fiscal_year": "2025-26", "quarter": "Q1", "index_value": 200.0},
+            {"fiscal_year": "2025-26", "quarter": "Q2", "index_value": 220.0},
+        ]
+    }
+
+    result = run_backtest(apix_series, reference_data)
+
+    assert result["overlapping_quarters"] == [("2025-26", "Q1"), ("2025-26", "Q2")]
+    assert result["n_growth_pairs"] == 1
+    assert result["mape"] is None
+    assert result["pearson_correlation"] is None
+
+
+def test_run_backtest_computes_statistics_at_exactly_three_overlapping_quarters():
+    # Reference index deliberately does NOT reuse 220.5 for Q3: that value
+    # (taken from the 4-quarter "enough data" test) makes Q1->Q2->Q3
+    # reference growth exactly [5.0, 5.0] -- constant, zero variance -- which
+    # would trip pearson_correlation()'s (correct) zero-variance guard and
+    # make this "success branch" test degenerate by accident, the same trap
+    # flagged in this module's history. 200.0 keeps both growth series
+    # genuinely non-constant so this exercises the real success path.
+    apix_series = [
+        {"period": "2025-04", "simple_relative": 100.0},
+        {"period": "2025-07", "simple_relative": 120.0},
+        {"period": "2025-10", "simple_relative": 114.0},
+    ]
+    reference_data = {
+        "quarters": [
+            {"fiscal_year": "2025-26", "quarter": "Q1", "index_value": 200.0},
+            {"fiscal_year": "2025-26", "quarter": "Q2", "index_value": 210.0},
+            {"fiscal_year": "2025-26", "quarter": "Q3", "index_value": 200.0},
+        ]
+    }
+
+    result = run_backtest(apix_series, reference_data)
+
+    assert result["overlapping_quarters"] == [
+        ("2025-26", "Q1"),
+        ("2025-26", "Q2"),
+        ("2025-26", "Q3"),
+    ]
+    assert result["n_growth_pairs"] == 2
+    assert isinstance(result["mape"], float)
+    assert isinstance(result["pearson_correlation"], float)
