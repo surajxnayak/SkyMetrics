@@ -1,7 +1,10 @@
 import json
+import os
 from datetime import date, datetime, timezone
 
-from pipeline.clean import clean_run, load_run_quotes
+import pytest
+
+from pipeline.clean import clean_run, clean_run_to_db, load_run_quotes
 from scraper.schema import FareQuote, new_quote_id
 from scraper.storage import write_quotes
 
@@ -81,3 +84,32 @@ def test_clean_run_writes_deduped_flagged_output(tmp_path):
     assert record["is_outlier"] is False
     expected_ids = sorted([duplicate_a.quote_id, duplicate_b.quote_id])
     assert sorted(record["source_quote_ids"]) == expected_ids
+
+
+def test_clean_run_to_db_inserts_cleaned_records(tmp_path):
+    if "DATABASE_URL" not in os.environ:
+        pytest.skip("DATABASE_URL not set in this environment")
+
+    from api.db import get_connection
+
+    raw_dir = tmp_path / "raw"
+    quote = _quote(run_id="run-db-test-clean")
+    write_quotes([quote], source="akasaair", run_id="run-db-test-clean", base_dir=raw_dir)
+
+    conn = get_connection()
+    try:
+        count = clean_run_to_db("run-db-test-clean", conn=conn, raw_base_dir=raw_dir)
+        assert count == 1
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT quote_id FROM fare_quotes WHERE run_id = %s", ("run-db-test-clean",)
+            )
+            assert cur.fetchone()[0] == quote.quote_id
+    finally:
+        # clean_run_to_db commits internally (it's the real production write
+        # path), so conn.rollback() alone can't undo it -- explicit cleanup
+        # is required to avoid leaving test data in the real database.
+        with conn.cursor() as cur:
+            cur.execute("DELETE FROM fare_quotes WHERE run_id = %s", ("run-db-test-clean",))
+        conn.commit()
+        conn.close()

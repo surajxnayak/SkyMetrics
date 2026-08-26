@@ -94,6 +94,40 @@ def build_and_write_series(
     return out_path
 
 
+def build_and_write_series_to_db(
+    records: list[dict], frequency: str, weights: dict[str, float] | None, conn
+) -> str:
+    if weights is None:
+        weights = load_weights()
+
+    series = build_series(records, frequency, weights)
+    comparison_id = uuid.uuid4().hex
+
+    with conn.cursor() as cur:
+        for point in series:
+            cur.execute(
+                """
+                INSERT INTO index_points
+                    (comparison_id, frequency, period, base_period, routes, simple_relative,
+                     laspeyres, paasche, fisher)
+                VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+                """,
+                (
+                    comparison_id,
+                    frequency,
+                    point["period"],
+                    point["base_period"],
+                    point["routes"],
+                    point["simple_relative"],
+                    point.get("laspeyres"),
+                    point.get("paasche"),
+                    point.get("fisher"),
+                ),
+            )
+    conn.commit()
+    return comparison_id
+
+
 if __name__ == "__main__":
     written = build_and_write_series()
     print(f"wrote {written}")

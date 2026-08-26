@@ -1,9 +1,15 @@
 import json
+import os
 from datetime import datetime, timezone
 
 import pytest
 
-from index.build import build_and_write_series, build_series, load_all_cleaned_records
+from index.build import (
+    build_and_write_series,
+    build_and_write_series_to_db,
+    build_series,
+    load_all_cleaned_records,
+)
 
 DAY1 = datetime(2026, 8, 24, 10, 0, tzinfo=timezone.utc)
 DAY2 = datetime(2026, 8, 25, 10, 0, tzinfo=timezone.utc)
@@ -129,3 +135,34 @@ def test_build_and_write_series_writes_a_versioned_snapshot(tmp_path):
     result = json.loads(out_path.read_text())
     assert result["frequency"] == "daily"
     assert len(result["series"]) == 1
+
+
+def test_build_and_write_series_to_db_inserts_index_points():
+    if "DATABASE_URL" not in os.environ:
+        pytest.skip("DATABASE_URL not set in this environment")
+
+    from api.db import get_connection
+
+    conn = get_connection()
+    comparison_id = None
+    try:
+        records = [_record("DEL", "BOM", 5000.0, DAY1)]
+        comparison_id = build_and_write_series_to_db(
+            records, "daily", weights={"DEL-BOM": 1.0}, conn=conn
+        )
+        assert len(comparison_id) == 32
+        with conn.cursor() as cur:
+            cur.execute(
+                "SELECT period FROM index_points WHERE comparison_id = %s", (comparison_id,)
+            )
+            assert cur.fetchone()[0] == "2026-08-24"
+    finally:
+        # build_and_write_series_to_db commits internally (it's the real
+        # production write path), so conn.rollback() alone can't undo it --
+        # explicit cleanup is required to avoid leaving test data in the
+        # real database.
+        if comparison_id is not None:
+            with conn.cursor() as cur:
+                cur.execute("DELETE FROM index_points WHERE comparison_id = %s", (comparison_id,))
+            conn.commit()
+        conn.close()

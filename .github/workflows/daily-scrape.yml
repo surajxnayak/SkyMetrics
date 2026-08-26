@@ -5,9 +5,6 @@ on:
     - cron: "30 2 * * *"
   workflow_dispatch: {}
 
-permissions:
-  contents: write
-
 concurrency:
   group: daily-scrape
   cancel-in-progress: false
@@ -15,11 +12,14 @@ concurrency:
 jobs:
   scrape:
     runs-on: ubuntu-latest
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+      - run: pip install -r requirements.txt
       - id: scrape
         run: |
           run_id=$(python -m scraper.run)
@@ -28,14 +28,35 @@ jobs:
         with:
           name: raw-fares-${{ github.run_id }}
           path: data/raw/
-      - run: python -c "from pipeline.clean import clean_run; clean_run('$RUN_ID')"
+      - run: |
+          python3 -c "
+          from api.db import get_connection
+          from pipeline.clean import clean_run_to_db
+          import os
+          conn = get_connection()
+          n = clean_run_to_db(os.environ['RUN_ID'], conn=conn)
+          print(f'cleaned {n} records into Postgres')
+          "
         env:
           RUN_ID: ${{ steps.scrape.outputs.run_id }}
-      - run: python -m index.build
       - run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add data/cleaned data/index
-          git diff --staged --quiet || git commit -m "chore: daily fare data $(date -u +%Y-%m-%d)"
-          git pull --rebase
-          git push
+          python3 -c "
+          from api.db import get_connection
+          from index.build import build_and_write_series_to_db
+          from index.weights import load_weights
+
+          conn = get_connection()
+          with conn.cursor() as cur:
+              cur.execute(
+                  'SELECT quote_id, origin, destination, carrier, source, travel_date, '
+                  'collected_at, advance_window, fare_class, base_fare, taxes, udf, '
+                  'convenience_fee, total_fare, status, run_id, fee_breakdown, routing, '
+                  'is_outlier, source_quote_ids FROM fare_quotes'
+              )
+              columns = [d[0] for d in cur.description]
+              records = [dict(zip(columns, row)) for row in cur.fetchall()]
+          for r in records:
+              r['collected_at'] = r['collected_at'].isoformat()
+          cid = build_and_write_series_to_db(records, 'daily', load_weights(), conn=conn)
+          print(f'wrote index snapshot {cid} to Postgres')
+          "

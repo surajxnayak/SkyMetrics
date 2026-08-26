@@ -6,6 +6,8 @@ import json
 from datetime import date, datetime
 from pathlib import Path
 
+from psycopg.types.json import Jsonb
+
 from pipeline.dedup import dedup_quotes
 from pipeline.outliers import flag_outliers
 from pipeline.schema import CleanedFareQuote
@@ -64,3 +66,54 @@ def clean_run(
         for cleaned in cleaned_quotes:
             f.write(json.dumps(cleaned.to_json_dict()) + "\n")
     return out_path
+
+
+def clean_run_to_db(run_id: str, conn, raw_base_dir: Path = RAW_BASE_DIR) -> int:
+    quotes = load_run_quotes(run_id, raw_base_dir)
+    deduped = dedup_quotes(quotes)
+    representative_quotes = [quote for quote, _ in deduped]
+    outlier_flags = flag_outliers(representative_quotes)
+
+    with conn.cursor() as cur:
+        for quote, source_quote_ids in deduped:
+            cur.execute(
+                """
+                INSERT INTO fare_quotes
+                    (quote_id, origin, destination, carrier, source, travel_date, collected_at,
+                     advance_window, fare_class, base_fare, taxes, udf, convenience_fee,
+                     total_fare, status, run_id, fee_breakdown, routing, is_outlier,
+                     source_quote_ids)
+                VALUES
+                    (%(quote_id)s, %(origin)s, %(destination)s, %(carrier)s, %(source)s,
+                     %(travel_date)s, %(collected_at)s, %(advance_window)s, %(fare_class)s,
+                     %(base_fare)s, %(taxes)s, %(udf)s, %(convenience_fee)s, %(total_fare)s,
+                     %(status)s, %(run_id)s, %(fee_breakdown)s, %(routing)s, %(is_outlier)s,
+                     %(source_quote_ids)s)
+                """,
+                {
+                    "quote_id": quote.quote_id,
+                    "origin": quote.origin,
+                    "destination": quote.destination,
+                    "carrier": quote.carrier,
+                    "source": quote.source,
+                    "travel_date": quote.travel_date,
+                    "collected_at": quote.collected_at,
+                    "advance_window": quote.advance_window,
+                    "fare_class": quote.fare_class,
+                    "base_fare": quote.base_fare,
+                    "taxes": quote.taxes,
+                    "udf": quote.udf,
+                    "convenience_fee": quote.convenience_fee,
+                    "total_fare": quote.total_fare,
+                    "status": quote.status,
+                    "run_id": quote.run_id,
+                    "fee_breakdown": (
+                        Jsonb(quote.fee_breakdown) if quote.fee_breakdown is not None else None
+                    ),
+                    "routing": quote.routing,
+                    "is_outlier": outlier_flags[quote.quote_id],
+                    "source_quote_ids": source_quote_ids,
+                },
+            )
+    conn.commit()
+    return len(deduped)
