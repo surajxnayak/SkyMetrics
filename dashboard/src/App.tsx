@@ -6,14 +6,16 @@ import TrendView from "./components/TrendView";
 import SectorHeatmap from "./components/SectorHeatmap";
 import LeadTimeElasticity from "./components/LeadTimeElasticity";
 import RawListView from "./components/RawListView";
+import AskApix from "./components/AskApix";
 
-type Tab = "trend" | "heatmap" | "elasticity" | "list";
+type Tab = "trend" | "heatmap" | "elasticity" | "list" | "ask";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
   { id: "trend", label: "Trend Analysis", icon: "show_chart" },
   { id: "heatmap", label: "Sector Heatmap", icon: "grid_view" },
   { id: "elasticity", label: "Elasticity", icon: "analytics" },
   { id: "list", label: "Data Drill-down", icon: "database" },
+  { id: "ask", label: "Ask APIx", icon: "chat" },
 ];
 
 export default function App() {
@@ -77,6 +79,7 @@ export default function App() {
                 {tab === "heatmap" && <SectorHeatmap />}
                 {tab === "elasticity" && <LeadTimeElasticity />}
                 {tab === "list" && <RawListView />}
+                {tab === "ask" && <AskApix />}
               </div>
             </main>
           </div>

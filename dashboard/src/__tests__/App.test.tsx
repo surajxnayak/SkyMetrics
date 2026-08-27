@@ -53,6 +53,7 @@ vi.mock("../api/client", () => ({
     formulas: {},
     snapshots: [],
   }),
+  askQuestion: vi.fn().mockResolvedValue({ answer: "", tool_calls: [] }),
 }));
 
 describe("App", () => {
@@ -104,5 +105,14 @@ describe("App", () => {
 
     expect(trendTab).toHaveAttribute("aria-selected", "false");
     expect(heatmapTab).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("switches to the Ask APIx tab when clicked", async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+
+    await userEvent.click(screen.getByText("Ask APIx"));
+
+    await waitFor(() => expect(screen.getByText("Ask a question about real fare data or the index -- every answer is grounded in a real API call, shown below it.")).toBeInTheDocument());
   });
 });
