@@ -1,0 +1,98 @@
+{
+  "_readme": "Structural definitions match db/schema.sql exactly. sample_row in each table is a real row queried live from the project's Postgres database (not invented placeholder data).",
+  "tables": {
+    "fare_quotes": {
+      "description": "One row per cleaned fare quote, written by pipeline/clean.py.",
+      "columns": [
+        { "name": "quote_id", "type": "TEXT", "nullable": false, "notes": "primary key" },
+        { "name": "origin", "type": "TEXT", "nullable": false, "notes": "airport code, e.g. DEL" },
+        { "name": "destination", "type": "TEXT", "nullable": false },
+        { "name": "carrier", "type": "TEXT", "nullable": false, "notes": "airline code, e.g. QP = Akasa Air" },
+        { "name": "source", "type": "TEXT", "nullable": false, "notes": "scraper source name, e.g. akasaair" },
+        { "name": "travel_date", "type": "DATE", "nullable": false },
+        { "name": "collected_at", "type": "TIMESTAMPTZ", "nullable": false },
+        { "name": "advance_window", "type": "TEXT", "nullable": false, "notes": "e.g. T+1, T+7, T+15, T+30, T+45" },
+        { "name": "fare_class", "type": "TEXT", "nullable": true },
+        { "name": "base_fare", "type": "NUMERIC", "nullable": true },
+        { "name": "taxes", "type": "NUMERIC", "nullable": true },
+        { "name": "udf", "type": "NUMERIC", "nullable": true, "notes": "user development fee" },
+        { "name": "convenience_fee", "type": "NUMERIC", "nullable": true },
+        { "name": "total_fare", "type": "NUMERIC", "nullable": true },
+        { "name": "status", "type": "TEXT", "nullable": false, "notes": "e.g. available" },
+        { "name": "run_id", "type": "TEXT", "nullable": false, "notes": "id of the scraper run this quote came from" },
+        { "name": "fee_breakdown", "type": "JSONB", "nullable": true, "notes": "raw per-fee breakdown as returned by the source" },
+        { "name": "routing", "type": "TEXT", "nullable": true },
+        { "name": "is_outlier", "type": "BOOLEAN", "nullable": false, "notes": "IQR-based outlier flag from pipeline/clean.py" },
+        { "name": "source_quote_ids", "type": "TEXT[]", "nullable": false, "notes": "quote_id(s) this row was de-duplicated from" }
+      ],
+      "indexes": [
+        { "name": "fare_quotes_origin_destination_idx", "columns": ["origin", "destination"] },
+        { "name": "fare_quotes_collected_at_idx", "columns": ["collected_at"] }
+      ],
+      "sample_row": {
+        "quote_id": "63768c28-af95-48e0-9ff3-c0be1619a251",
+        "origin": "DEL",
+        "destination": "BOM",
+        "carrier": "QP",
+        "source": "akasaair",
+        "travel_date": "2026-08-25",
+        "collected_at": "2026-08-24T17:00:43.224871+00:00",
+        "advance_window": "T+1",
+        "fare_class": "U1",
+        "base_fare": 5718,
+        "taxes": 292,
+        "udf": 578,
+        "convenience_fee": 800,
+        "total_fare": 7388,
+        "status": "available",
+        "run_id": "352caab5a07b44e3946eb6c1b3d87db8",
+        "fee_breakdown": {
+          "ASF": 236.0,
+          "RCS": 50.0,
+          "Tax": 292.0,
+          "UDF": 578.0,
+          "WFE": 350.0,
+          "CUTE": 75.0,
+          "DUDF": 89.0,
+          "FarePrice": 5718.0
+        },
+        "routing": "DXN-BOM",
+        "is_outlier": false,
+        "source_quote_ids": ["63768c28-af95-48e0-9ff3-c0be1619a251"]
+      }
+    },
+    "index_points": {
+      "description": "One row per computed APIx snapshot (one period, one comparison run), written by index/build.py.",
+      "columns": [
+        { "name": "id", "type": "BIGSERIAL", "nullable": false, "notes": "primary key" },
+        { "name": "comparison_id", "type": "TEXT", "nullable": false, "notes": "groups all rows from one build run" },
+        { "name": "frequency", "type": "TEXT", "nullable": false, "notes": "daily | weekly | monthly" },
+        { "name": "period", "type": "TEXT", "nullable": false },
+        { "name": "base_period", "type": "TEXT", "nullable": false },
+        { "name": "routes", "type": "TEXT[]", "nullable": false, "notes": "route codes included in this snapshot" },
+        { "name": "simple_relative", "type": "NUMERIC", "nullable": false },
+        { "name": "laspeyres", "type": "NUMERIC", "nullable": true },
+        { "name": "paasche", "type": "NUMERIC", "nullable": true },
+        { "name": "fisher", "type": "NUMERIC", "nullable": true },
+        { "name": "written_at", "type": "TIMESTAMPTZ", "nullable": false, "notes": "DEFAULT clock_timestamp() -- real wall-clock insert time, not now()" }
+      ],
+      "indexes": [
+        { "name": "index_points_comparison_id_idx", "columns": ["comparison_id"] },
+        { "name": "index_points_frequency_period_idx", "columns": ["frequency", "period"] }
+      ],
+      "sample_row": {
+        "id": 1,
+        "comparison_id": "3f7431f401454339b39bb5345734f840",
+        "frequency": "daily",
+        "period": "2026-08-24",
+        "base_period": "2026-08-24",
+        "routes": ["BOM-BLR", "DEL-BLR", "DEL-BOM"],
+        "simple_relative": 100,
+        "laspeyres": 100,
+        "paasche": 100,
+        "fisher": 100,
+        "written_at": "2026-08-26T13:12:04.426420+00:00"
+      }
+    }
+  }
+}
