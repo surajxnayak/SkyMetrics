@@ -54,21 +54,21 @@ export default function App() {
           </nav>
         </aside>
 
-        <div className="ml-14 flex min-h-screen flex-1 flex-col">
+        <div className="ml-14 flex min-h-screen min-w-0 flex-1 flex-col">
           <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center border-b border-outline-variant bg-surface-container px-4">
             <h1 className="font-mono text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
               {activeLabel}
             </h1>
           </header>
 
-          <div className="flex flex-1 gap-4 p-4">
+          <div className="flex min-w-0 flex-1 gap-4 p-4">
             <div className="w-72 shrink-0 rounded-sm border border-outline-variant bg-panel p-4">
               <Sidebar />
               <div className="mt-6 border-t border-outline-variant pt-6">
                 <DataQualityPanel />
               </div>
             </div>
-            <main className="flex-1">
+            <main className="min-w-0 flex-1">
               <div role="tabpanel">
                 {tab === "trend" && <TrendView />}
                 {tab === "heatmap" && <SectorHeatmap />}
