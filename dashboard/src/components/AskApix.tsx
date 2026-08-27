@@ -20,7 +20,7 @@ export default function AskApix() {
         API call, shown below it.
       </p>
 
-      <div className="mb-4 flex flex-col gap-3">
+      <div className="mb-4 flex flex-col gap-3" aria-live="polite">
         {messages.length === 0 && (
           <p className="text-sm text-secondary">
             Try: &quot;How did DEL-BOM fares move over the last month?&quot;
@@ -63,6 +63,7 @@ export default function AskApix() {
           value={input}
           onChange={(e) => setInput(e.target.value)}
           placeholder="Ask a question about real fare data..."
+          aria-label="Question"
           className="flex-1 rounded-md border border-outline-variant bg-inset px-3 py-1.5 text-sm text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent"
         />
         <button
