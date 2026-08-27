@@ -84,7 +84,7 @@ export default function RawListView() {
           </thead>
           <tbody>
             {data.records.map((record) => (
-              <tr key={record.quote_id} className="odd:bg-surface-container-low even:bg-panel">
+              <tr key={record.quote_id} className="even:bg-surface-container">
                 <td className="border border-outline-variant px-3 py-2 font-mono text-primary">
                   {formatDateTime(record.collected_at)}
                 </td>
