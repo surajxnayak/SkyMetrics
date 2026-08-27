@@ -82,12 +82,14 @@ Replace `App.tsx`'s current fixed 288px sidebar + top tab bar with:
 
 ## Per-component changes
 
-- **`TrendView.tsx`**: add a KPI summary row above the chart — one card per formula
-  (Simple Relative, Laspeyres, Paasche, Fisher) showing its latest value from the already
-  fetched series, styled per the mockup's card look. **No % delta** (not computed).
-  Recharts chart restyled with the new tokens (grid/axis/tooltip colors, `label-caps` for
-  axis ticks) — stays Recharts, not hand-rolled SVG, since Recharts already provides real
-  tooltips/interactivity the mockup's static paths don't have.
+- **`TrendView.tsx`**: **correction post-approval** — this component no longer plots the
+  four index formulas (that data source, `useIndexSeries`/`getIndex`, is unused dead code
+  as of the `dataCheck` branch merge). It now plots mean fare per selected route over
+  time, via `useFares`. The KPI summary row is adjusted accordingly: one small card per
+  currently-plotted route, showing that route's latest (most recent period's) mean fare —
+  derived client-side from the already-fetched `chartData`, no new API calls. **No %
+  delta.** Recharts chart restyled with the new tokens (grid/axis/tooltip colors,
+  `label-caps` for axis ticks) — stays Recharts, not hand-rolled SVG.
 - **`SectorHeatmap.tsx`**: keep the existing single-scale violet intensity encoding by
   absolute mean fare (`colorFor()`'s logic is unchanged) — **not** the mockup's diverging
   red/green %-change bands, since that requires a baseline/reference-period concept that
