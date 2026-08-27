@@ -75,8 +75,26 @@ describe("TrendView", () => {
 
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
 
-    expect(screen.getAllByText("DEL-BOM").length).toBeGreaterThan(0);
-    expect(screen.getAllByText("DEL-BLR").length).toBeGreaterThan(0);
+    // Exact count of 2, not just >0 -- one from the KPI card, one from
+    // Recharts' Legend -- so this actually fails if the KPI row (this
+    // task's only new logic) silently disappears, rather than passing
+    // vacuously off the Legend alone.
+    expect(screen.getAllByText("DEL-BOM")).toHaveLength(2);
+    expect(screen.getAllByText("DEL-BLR")).toHaveLength(2);
     expect(container.querySelectorAll(".recharts-line")).toHaveLength(2);
+  });
+
+  it("shows the latest mean fare per route in the KPI row", async () => {
+    render(
+      <FilterProvider>
+        <TrendView />
+      </FilterProvider>
+    );
+
+    await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
+
+    // DEL-BOM: mean of 7000 and 9000 (same day) = 8000. DEL-BLR: 6000 only.
+    expect(screen.getByText("₹8,000")).toBeInTheDocument();
+    expect(screen.getByText("₹6,000")).toBeInTheDocument();
   });
 });
