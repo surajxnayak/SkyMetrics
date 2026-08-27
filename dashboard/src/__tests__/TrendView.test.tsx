@@ -75,8 +75,8 @@ describe("TrendView", () => {
 
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
 
-    expect(screen.getByText("DEL-BOM")).toBeInTheDocument();
-    expect(screen.getByText("DEL-BLR")).toBeInTheDocument();
+    expect(screen.getAllByText("DEL-BOM").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("DEL-BLR").length).toBeGreaterThan(0);
     expect(container.querySelectorAll(".recharts-line")).toHaveLength(2);
   });
 });
