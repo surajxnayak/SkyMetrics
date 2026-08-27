@@ -3,6 +3,10 @@ import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App";
 
+vi.mock("../components/IndiaMapView", () => ({
+  default: () => <div>Route CPI map</div>,
+}));
+
 vi.mock("../api/client", () => ({
   getIndex: vi.fn().mockResolvedValue({
     comparison_id: "abc",
@@ -56,16 +60,16 @@ vi.mock("../api/client", () => ({
 }));
 
 describe("App", () => {
-  it("renders the dashboard title and defaults to the trend tab", async () => {
+  it("renders the dashboard title and defaults to the map tab", async () => {
     render(<App />);
 
     expect(screen.getByText("SkyMetrics APIx Dashboard")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
   });
 
   it("switches to the heatmap tab when clicked", async () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
 
     await userEvent.click(screen.getByText("Heatmap"));
 
@@ -74,7 +78,7 @@ describe("App", () => {
 
   it("switches to the elasticity tab when clicked", async () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
 
     await userEvent.click(screen.getByText("Elasticity"));
 
@@ -83,7 +87,7 @@ describe("App", () => {
 
   it("switches to the list tab when clicked", async () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
 
     await userEvent.click(screen.getByText("List"));
 
@@ -92,12 +96,14 @@ describe("App", () => {
 
   it("uses the correct ARIA tab pattern", async () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
 
     expect(screen.getByRole("tablist")).toBeInTheDocument();
+    const mapTab = screen.getByRole("tab", { name: "Map" });
     const trendTab = screen.getByRole("tab", { name: "Trend" });
     const heatmapTab = screen.getByRole("tab", { name: "Heatmap" });
-    expect(trendTab).toHaveAttribute("aria-selected", "true");
+    expect(mapTab).toHaveAttribute("aria-selected", "true");
+    expect(trendTab).toHaveAttribute("aria-selected", "false");
     expect(heatmapTab).toHaveAttribute("aria-selected", "false");
 
     await userEvent.click(heatmapTab);

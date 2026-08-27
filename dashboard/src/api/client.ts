@@ -1,4 +1,10 @@
-import type { FareRecord, FareRecordsResponse, IndexResponse, MetadataResponse } from "./types";
+import type {
+  FareRecord,
+  FareRecordsResponse,
+  IndexResponse,
+  MapRoutesResponse,
+  MetadataResponse,
+} from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
@@ -104,4 +110,20 @@ export function getFareRecords(
 
 export function getMetadata(): Promise<MetadataResponse> {
   return get<MetadataResponse>("/api/v1/metadata");
+}
+
+export function getMapRoutes(
+  params: {
+    frequency: string;
+    routes?: string[];
+    period?: string;
+    snapshotId?: string;
+  }
+): Promise<MapRoutesResponse> {
+  return get<MapRoutesResponse>("/api/v1/map/routes", {
+    frequency: params.frequency,
+    route: params.routes,
+    period: params.period,
+    snapshot_id: params.snapshotId,
+  });
 }

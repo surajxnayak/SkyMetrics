@@ -93,6 +93,73 @@
         "fisher": 100,
         "written_at": "2026-08-26T13:12:04.426420+00:00"
       }
+    },
+    "map_city_nodes": {
+      "description": "One row per airport city shown as a node in the India map view. If this table is empty, the API falls back to config/airport_cities.json.",
+      "columns": [
+        { "name": "city_code", "type": "TEXT", "nullable": false, "notes": "primary key, representative airport/city code, e.g. DEL" },
+        { "name": "city_name", "type": "TEXT", "nullable": false },
+        { "name": "latitude", "type": "NUMERIC", "nullable": false },
+        { "name": "longitude", "type": "NUMERIC", "nullable": false },
+        { "name": "airport_codes", "type": "TEXT[]", "nullable": false, "notes": "all airport codes grouped into this city node" },
+        { "name": "is_active", "type": "BOOLEAN", "nullable": false, "notes": "DEFAULT true" },
+        { "name": "metadata", "type": "JSONB", "nullable": true }
+      ],
+      "indexes": [],
+      "sample_row": {
+        "city_code": "DEL",
+        "city_name": "Delhi",
+        "latitude": 28.5562,
+        "longitude": 77.1,
+        "airport_codes": ["DEL", "DXN", "HDO"],
+        "is_active": true,
+        "metadata": {
+          "note": "DXN and HDO are grouped into the Delhi city node for city-level display."
+        }
+      }
+    },
+    "map_route_cpi_edges": {
+      "description": "Precomputed directed CPI values between airport-city nodes, fetched by the map API without request-time recomputation.",
+      "columns": [
+        { "name": "id", "type": "BIGSERIAL", "nullable": false, "notes": "primary key" },
+        { "name": "snapshot_id", "type": "TEXT", "nullable": false, "notes": "groups a map precompute run" },
+        { "name": "frequency", "type": "TEXT", "nullable": false, "notes": "daily | weekly | monthly" },
+        { "name": "period", "type": "TEXT", "nullable": false },
+        { "name": "base_period", "type": "TEXT", "nullable": false },
+        { "name": "origin_city_code", "type": "TEXT", "nullable": false, "notes": "references map_city_nodes(city_code)" },
+        { "name": "destination_city_code", "type": "TEXT", "nullable": false, "notes": "references map_city_nodes(city_code)" },
+        { "name": "route_key", "type": "TEXT", "nullable": false, "notes": "directed route code, e.g. DEL-BOM" },
+        { "name": "cpi", "type": "NUMERIC", "nullable": false },
+        { "name": "quote_count", "type": "INTEGER", "nullable": false, "notes": "DEFAULT 0" },
+        { "name": "available_count", "type": "INTEGER", "nullable": false, "notes": "DEFAULT 0" },
+        { "name": "no_flight_count", "type": "INTEGER", "nullable": false, "notes": "DEFAULT 0" },
+        { "name": "source_count", "type": "INTEGER", "nullable": false, "notes": "DEFAULT 0" },
+        { "name": "metadata", "type": "JSONB", "nullable": true },
+        { "name": "written_at", "type": "TIMESTAMPTZ", "nullable": false, "notes": "DEFAULT clock_timestamp()" }
+      ],
+      "indexes": [
+        { "name": "map_route_cpi_edges_snapshot_idx", "columns": ["snapshot_id"] },
+        { "name": "map_route_cpi_edges_frequency_period_idx", "columns": ["frequency", "period"] },
+        { "name": "map_route_cpi_edges_origin_destination_idx", "columns": ["origin_city_code", "destination_city_code"] },
+        { "name": "map_route_cpi_edges_written_at_idx", "columns": ["written_at"] }
+      ],
+      "sample_row": {
+        "id": 1,
+        "snapshot_id": "example-map-snapshot",
+        "frequency": "daily",
+        "period": "2026-08-24",
+        "base_period": "2026-08-01",
+        "origin_city_code": "DEL",
+        "destination_city_code": "BOM",
+        "route_key": "DEL-BOM",
+        "cpi": 108.4,
+        "quote_count": 226,
+        "available_count": 226,
+        "no_flight_count": 0,
+        "source_count": 1,
+        "metadata": null,
+        "written_at": "2026-08-24T10:00:00+00:00"
+      }
     }
   }
 }

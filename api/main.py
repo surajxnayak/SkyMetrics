@@ -25,6 +25,7 @@ from api.data_access import (
 )
 from api.db import get_db_connection
 from api.rate_limit import enforce_rate_limit
+from api.routers.map import router as map_router
 from index.weights import WEIGHTS_PATH
 from models.enums import AirportCode, CarrierCode, Frequency, SourceName
 from scraper.schema import ADVANCE_WINDOWS
@@ -266,6 +267,11 @@ def get_metadata(
 
 
 app.include_router(router)
+app.include_router(
+    map_router,
+    prefix="/api/v1",
+    dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)],
+)
 
 
 @app.exception_handler(RequestValidationError)

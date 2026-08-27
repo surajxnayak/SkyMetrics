@@ -6,10 +6,12 @@ import TrendView from "./components/TrendView";
 import SectorHeatmap from "./components/SectorHeatmap";
 import LeadTimeElasticity from "./components/LeadTimeElasticity";
 import RawListView from "./components/RawListView";
+import IndiaMapView from "./components/IndiaMapView";
 
-type Tab = "trend" | "heatmap" | "elasticity" | "list";
+type Tab = "map" | "trend" | "heatmap" | "elasticity" | "list";
 
 const TABS: { id: Tab; label: string }[] = [
+  { id: "map", label: "Map" },
   { id: "trend", label: "Trend" },
   { id: "heatmap", label: "Heatmap" },
   { id: "elasticity", label: "Elasticity" },
@@ -17,7 +19,7 @@ const TABS: { id: Tab; label: string }[] = [
 ];
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("trend");
+  const [tab, setTab] = useState<Tab>("map");
 
   return (
     <FilterProvider>
@@ -48,6 +50,7 @@ export default function App() {
             ))}
           </div>
           <div role="tabpanel">
+            {tab === "map" && <IndiaMapView />}
             {tab === "trend" && <TrendView />}
             {tab === "heatmap" && <SectorHeatmap />}
             {tab === "elasticity" && <LeadTimeElasticity />}

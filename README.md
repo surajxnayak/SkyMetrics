@@ -15,9 +15,10 @@ submission (problem statement SIH26056, MoSPI/DIID).
   Fisher formulas over real DGCA-weighted routes, with daily/weekly/monthly
   aggregation and versioned snapshots (`index/build.py`).
 - **Phase 4** — a REST API (`api/`) serving the computed index, cleaned
-  fares, and methodology metadata, and a React + TypeScript dashboard
-  (`dashboard/`) covering all six PRD dashboard features: trend view,
-  sector heatmap, lead-time elasticity, drill-down filtering, CSV export,
+  fares, methodology metadata, and precomputed route-CPI map data, plus a
+  React + TypeScript dashboard (`dashboard/`) covering all six PRD dashboard
+  features and the default India map view: trend view, sector heatmap,
+  lead-time elasticity, raw list view, drill-down filtering, CSV export,
   and a data-quality panel.
 
 Back-testing against a real government reference series (Ministry of
@@ -43,9 +44,10 @@ pipeline/clean.py   ----> PostgreSQL: fare_quotes
     |
     v
 index/build.py      ----> PostgreSQL: index_points
+map precompute      ----> PostgreSQL: map_city_nodes + map_route_cpi_edges
                                 |
                                 v
-                          api/main.py (FastAPI REST, api/data_access.py reads both tables)
+                          api/main.py (FastAPI REST, api/data_access.py reads DB tables)
                                 |
                                 v
                           dashboard/ (React + TypeScript, consumes the REST API)
@@ -59,7 +61,7 @@ index/build.py      ----> PostgreSQL: index_points
 | `api/`      | FastAPI REST layer + Postgres data access                        |
 | `dashboard/` | React + TypeScript dashboard                                     |
 | `db/`       | Postgres schema + migration scripts                              |
-| `config/`   | Source compliance audit, route weights, basket + reference-series data |
+| `config/`   | Source compliance audit, route weights, basket, airport-city map config + reference-series data |
 | `docs/`     | Specs, plans, validation report                                   |
 
 ## Methodology
@@ -117,7 +119,7 @@ Requires Python 3.11+ and a PostgreSQL database (a free-tier
 pip install -r requirements.txt -r requirements-dev.txt
 cp .env.example .env   # fill in DATABASE_URL and SKYMETRICS_API_KEYS
 export $(cat .env | xargs)
-python3 -m db.apply_schema   # one-time: creates fare_quotes and index_points
+python3 -m db.apply_schema   # one-time: creates fare, index, and map tables
 ```
 
 ## Running the scraper
@@ -154,6 +156,16 @@ uvicorn api.main:app --reload
 
 Interactive docs at `http://127.0.0.1:8000/docs`. All `/api/v1/*` endpoints
 require an `X-API-Key` header matching one of the configured keys.
+
+The India map endpoint is `GET /api/v1/map/routes`. It returns only
+precomputed city-to-city CPI edges from `map_route_cpi_edges`; the dashboard
+owns all map geometry, city nodes, and blank route rendering locally. For a
+local smoke test of the CPI overlay, apply the optional demo seed after the
+schema:
+
+```bash
+psql "$DATABASE_URL" -f db/seed_map_dummy.sql
+```
 
 ## Running the dashboard
 

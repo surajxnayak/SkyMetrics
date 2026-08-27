@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, getFareRecords, getFares, getIndex, getMetadata } from "../api/client";
+import { ApiError, getFareRecords, getFares, getIndex, getMapRoutes, getMetadata } from "../api/client";
 
 function mockFetchOnce(body: unknown, status = 200) {
   vi.stubGlobal(
@@ -89,6 +89,19 @@ describe("getFareRecords", () => {
 
     const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(url).toContain("/api/v1/fare-records");
+    expect(url).toContain("route=DEL-BOM");
+  });
+});
+
+describe("getMapRoutes", () => {
+  it("calls the route CPI map endpoint with frequency and routes", async () => {
+    mockFetchOnce({ snapshot_id: null, frequency: "daily", period: null, edges: [] });
+
+    await getMapRoutes({ frequency: "daily", routes: ["DEL-BOM"] });
+
+    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toContain("/api/v1/map/routes");
+    expect(url).toContain("frequency=daily");
     expect(url).toContain("route=DEL-BOM");
   });
 });

@@ -1,0 +1,2436 @@
+{
+  "source": "OurAirports airports.csv public-domain dataset, generated from rows where iso_country=IN, IATA code exists, and airport type is small/medium/large. Delhi metro aliases DXN and HDO are explicitly grouped under DEL for city-level display.",
+  "generated_at": "2026-08-27",
+  "cities": [
+    {
+      "city_code": "AIP",
+      "city_name": "Adampur",
+      "airport_codes": [
+        "AIP"
+      ],
+      "airports": [
+        {
+          "iata_code": "AIP",
+          "airport_name": "Adampur Airport"
+        }
+      ],
+      "latitude": 31.4338,
+      "longitude": 75.758797
+    },
+    {
+      "city_code": "IXA",
+      "city_name": "Agartala",
+      "airport_codes": [
+        "IXA"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXA",
+          "airport_name": "Agartala - Maharaja Bir Bikram Airport"
+        }
+      ],
+      "latitude": 23.886999,
+      "longitude": 91.240402
+    },
+    {
+      "city_code": "AGX",
+      "city_name": "Agatti",
+      "airport_codes": [
+        "AGX"
+      ],
+      "airports": [
+        {
+          "iata_code": "AGX",
+          "airport_name": "Agatti Airport"
+        }
+      ],
+      "latitude": 10.8237,
+      "longitude": 72.176003
+    },
+    {
+      "city_code": "AGR",
+      "city_name": "Agra",
+      "airport_codes": [
+        "AGR"
+      ],
+      "airports": [
+        {
+          "iata_code": "AGR",
+          "airport_name": "Agra Airport / Agra Air Force Station"
+        }
+      ],
+      "latitude": 27.157975,
+      "longitude": 77.961025
+    },
+    {
+      "city_code": "AMD",
+      "city_name": "Ahmedabad",
+      "airport_codes": [
+        "AMD"
+      ],
+      "airports": [
+        {
+          "iata_code": "AMD",
+          "airport_name": "Sardar Vallabh Patel International Airport"
+        }
+      ],
+      "latitude": 23.0772,
+      "longitude": 72.634697
+    },
+    {
+      "city_code": "AJL",
+      "city_name": "Aizawl (Lengpui)",
+      "airport_codes": [
+        "AJL"
+      ],
+      "airports": [
+        {
+          "iata_code": "AJL",
+          "airport_name": "Lengpui Airport"
+        }
+      ],
+      "latitude": 23.840599,
+      "longitude": 92.619698
+    },
+    {
+      "city_code": "KQH",
+      "city_name": "Ajmer (Kishangarh)",
+      "airport_codes": [
+        "KQH"
+      ],
+      "airports": [
+        {
+          "iata_code": "KQH",
+          "airport_name": "Kishangarh Airport Ajmer"
+        }
+      ],
+      "latitude": 26.591007,
+      "longitude": 74.812956
+    },
+    {
+      "city_code": "AKD",
+      "city_name": "Akola",
+      "airport_codes": [
+        "AKD"
+      ],
+      "airports": [
+        {
+          "iata_code": "AKD",
+          "airport_name": "Akola Airport"
+        }
+      ],
+      "latitude": 20.698931,
+      "longitude": 77.056883
+    },
+    {
+      "city_code": "HRH",
+      "city_name": "Aligarh",
+      "airport_codes": [
+        "HRH"
+      ],
+      "airports": [
+        {
+          "iata_code": "HRH",
+          "airport_name": "Aligarh Airport"
+        }
+      ],
+      "latitude": 27.861437,
+      "longitude": 78.145404
+    },
+    {
+      "city_code": "IXD",
+      "city_name": "Allahabad",
+      "airport_codes": [
+        "IXD"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXD",
+          "airport_name": "Prayagraj Airport"
+        }
+      ],
+      "latitude": 25.4401,
+      "longitude": 81.733902
+    },
+    {
+      "city_code": "IXV",
+      "city_name": "Along Airport",
+      "airport_codes": [
+        "IXV"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXV",
+          "airport_name": "Along Airport"
+        }
+      ],
+      "latitude": 28.175301,
+      "longitude": 94.802002
+    },
+    {
+      "city_code": "AHA",
+      "city_name": "Ambikapur",
+      "airport_codes": [
+        "AHA"
+      ],
+      "airports": [
+        {
+          "iata_code": "AHA",
+          "airport_name": "Maa Mahamaya Airport"
+        }
+      ],
+      "latitude": 22.98753,
+      "longitude": 83.19612
+    },
+    {
+      "city_code": "AVR",
+      "city_name": "Amravati",
+      "airport_codes": [
+        "AVR"
+      ],
+      "airports": [
+        {
+          "iata_code": "AVR",
+          "airport_name": "Amravati  Airport"
+        }
+      ],
+      "latitude": 20.814608,
+      "longitude": 77.717765
+    },
+    {
+      "city_code": "ATQ",
+      "city_name": "Amritsar",
+      "airport_codes": [
+        "ATQ"
+      ],
+      "airports": [
+        {
+          "iata_code": "ATQ",
+          "airport_name": "Sri Guru Ram Das Ji International Airport"
+        }
+      ],
+      "latitude": 31.7096,
+      "longitude": 74.797302
+    },
+    {
+      "city_code": "IXU",
+      "city_name": "Aurangabad",
+      "airport_codes": [
+        "IXU"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXU",
+          "airport_name": "Aurangabad Airport"
+        }
+      ],
+      "latitude": 19.862875,
+      "longitude": 75.396312
+    },
+    {
+      "city_code": "AZH",
+      "city_name": "Azamgarh",
+      "airport_codes": [
+        "AZH"
+      ],
+      "airports": [
+        {
+          "iata_code": "AZH",
+          "airport_name": "Azamgarh Airport"
+        }
+      ],
+      "latitude": 26.153333,
+      "longitude": 83.118333
+    },
+    {
+      "city_code": "RGH",
+      "city_name": "Balurghat",
+      "airport_codes": [
+        "RGH"
+      ],
+      "airports": [
+        {
+          "iata_code": "RGH",
+          "airport_name": "Balurghat Airport"
+        }
+      ],
+      "latitude": 25.2617,
+      "longitude": 88.795601
+    },
+    {
+      "city_code": "BEK",
+      "city_name": "Bareilly",
+      "airport_codes": [
+        "BEK"
+      ],
+      "airports": [
+        {
+          "iata_code": "BEK",
+          "airport_name": "Bareilly Air Force Station"
+        }
+      ],
+      "latitude": 28.4221,
+      "longitude": 79.450798
+    },
+    {
+      "city_code": "IXG",
+      "city_name": "Belgaum",
+      "airport_codes": [
+        "IXG"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXG",
+          "airport_name": "Belagavi Airport"
+        }
+      ],
+      "latitude": 15.8593,
+      "longitude": 74.618301
+    },
+    {
+      "city_code": "BEP",
+      "city_name": "Bellary",
+      "airport_codes": [
+        "BEP"
+      ],
+      "airports": [
+        {
+          "iata_code": "BEP",
+          "airport_name": "Bellary Airport"
+        }
+      ],
+      "latitude": 15.1628,
+      "longitude": 76.882797
+    },
+    {
+      "city_code": "BLR",
+      "city_name": "Bengaluru",
+      "airport_codes": [
+        "BLR"
+      ],
+      "airports": [
+        {
+          "iata_code": "BLR",
+          "airport_name": "Kempegowda International Airport Bengaluru"
+        }
+      ],
+      "latitude": 13.1979,
+      "longitude": 77.706299
+    },
+    {
+      "city_code": "BUP",
+      "city_name": "Bhatinda Air Force Station",
+      "airport_codes": [
+        "BUP"
+      ],
+      "airports": [
+        {
+          "iata_code": "BUP",
+          "airport_name": "Bhatinda Air Force Station"
+        }
+      ],
+      "latitude": 30.2701,
+      "longitude": 74.755798
+    },
+    {
+      "city_code": "BHU",
+      "city_name": "Bhavnagar",
+      "airport_codes": [
+        "BHU"
+      ],
+      "airports": [
+        {
+          "iata_code": "BHU",
+          "airport_name": "Bhavnagar Airport"
+        }
+      ],
+      "latitude": 21.752199,
+      "longitude": 72.185204
+    },
+    {
+      "city_code": "UKE",
+      "city_name": "Bhawanipatna",
+      "airport_codes": [
+        "UKE"
+      ],
+      "airports": [
+        {
+          "iata_code": "UKE",
+          "airport_name": "Utkela Airport"
+        }
+      ],
+      "latitude": 20.097778,
+      "longitude": 83.183333
+    },
+    {
+      "city_code": "BHO",
+      "city_name": "Bhopal",
+      "airport_codes": [
+        "BHO"
+      ],
+      "airports": [
+        {
+          "iata_code": "BHO",
+          "airport_name": "Raja Bhoj International Airport"
+        }
+      ],
+      "latitude": 23.2875,
+      "longitude": 77.337402
+    },
+    {
+      "city_code": "BBI",
+      "city_name": "Bhubaneswar",
+      "airport_codes": [
+        "BBI"
+      ],
+      "airports": [
+        {
+          "iata_code": "BBI",
+          "airport_name": "Biju Patnaik International Airport"
+        }
+      ],
+      "latitude": 20.251021,
+      "longitude": 85.814747
+    },
+    {
+      "city_code": "BHJ",
+      "city_name": "Bhuj",
+      "airport_codes": [
+        "BHJ"
+      ],
+      "airports": [
+        {
+          "iata_code": "BHJ",
+          "airport_name": "Bhuj Airport"
+        }
+      ],
+      "latitude": 23.2878,
+      "longitude": 69.670197
+    },
+    {
+      "city_code": "KUU",
+      "city_name": "Bhuntar",
+      "airport_codes": [
+        "KUU"
+      ],
+      "airports": [
+        {
+          "iata_code": "KUU",
+          "airport_name": "Kullu Manali Airport"
+        }
+      ],
+      "latitude": 31.876699,
+      "longitude": 77.154404
+    },
+    {
+      "city_code": "IXX",
+      "city_name": "Bidar",
+      "airport_codes": [
+        "IXX"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXX",
+          "airport_name": "Bidar Airport / Bidar Air Force Station"
+        }
+      ],
+      "latitude": 17.9081,
+      "longitude": 77.487099
+    },
+    {
+      "city_code": "BKB",
+      "city_name": "Bikaner",
+      "airport_codes": [
+        "BKB"
+      ],
+      "airports": [
+        {
+          "iata_code": "BKB",
+          "airport_name": "Nal Airport"
+        }
+      ],
+      "latitude": 28.070601,
+      "longitude": 73.207199
+    },
+    {
+      "city_code": "PAB",
+      "city_name": "Bilaspur",
+      "airport_codes": [
+        "PAB"
+      ],
+      "airports": [
+        {
+          "iata_code": "PAB",
+          "airport_name": "Bilaspur Airport"
+        }
+      ],
+      "latitude": 21.9884,
+      "longitude": 82.111
+    },
+    {
+      "city_code": "CCJ",
+      "city_name": "Calicut",
+      "airport_codes": [
+        "CCJ"
+      ],
+      "airports": [
+        {
+          "iata_code": "CCJ",
+          "airport_name": "Calicut International Airport"
+        }
+      ],
+      "latitude": 11.135996,
+      "longitude": 75.955152
+    },
+    {
+      "city_code": "IXC",
+      "city_name": "Chandigarh",
+      "airport_codes": [
+        "IXC"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXC",
+          "airport_name": "Shaheed Bhagat Singh International Airport"
+        }
+      ],
+      "latitude": 30.6735,
+      "longitude": 76.788498
+    },
+    {
+      "city_code": "MAA",
+      "city_name": "Chennai",
+      "airport_codes": [
+        "MAA"
+      ],
+      "airports": [
+        {
+          "iata_code": "MAA",
+          "airport_name": "Chennai International Airport"
+        }
+      ],
+      "latitude": 12.990005,
+      "longitude": 80.169296
+    },
+    {
+      "city_code": "SDW",
+      "city_name": "Chipi",
+      "airport_codes": [
+        "SDW"
+      ],
+      "airports": [
+        {
+          "iata_code": "SDW",
+          "airport_name": "Sindhudurg Airport"
+        }
+      ],
+      "latitude": 16.002552,
+      "longitude": 73.529846
+    },
+    {
+      "city_code": "CWK",
+      "city_name": "Chitrakoot",
+      "airport_codes": [
+        "CWK"
+      ],
+      "airports": [
+        {
+          "iata_code": "CWK",
+          "airport_name": "Chitrakoot Airport"
+        }
+      ],
+      "latitude": 25.167694,
+      "longitude": 80.9358
+    },
+    {
+      "city_code": "CJB",
+      "city_name": "Coimbatore",
+      "airport_codes": [
+        "CJB"
+      ],
+      "airports": [
+        {
+          "iata_code": "CJB",
+          "airport_name": "Coimbatore International Airport"
+        }
+      ],
+      "latitude": 11.03,
+      "longitude": 77.043404
+    },
+    {
+      "city_code": "COH",
+      "city_name": "Cooch Behar",
+      "airport_codes": [
+        "COH"
+      ],
+      "airports": [
+        {
+          "iata_code": "COH",
+          "airport_name": "Cooch Behar Airport"
+        }
+      ],
+      "latitude": 26.3305,
+      "longitude": 89.467201
+    },
+    {
+      "city_code": "NMB",
+      "city_name": "Daman",
+      "airport_codes": [
+        "NMB"
+      ],
+      "airports": [
+        {
+          "iata_code": "NMB",
+          "airport_name": "Daman Airport"
+        }
+      ],
+      "latitude": 20.434401,
+      "longitude": 72.843201
+    },
+    {
+      "city_code": "DEP",
+      "city_name": "Daporijo",
+      "airport_codes": [
+        "DEP"
+      ],
+      "airports": [
+        {
+          "iata_code": "DEP",
+          "airport_name": "Daporijo Airport"
+        }
+      ],
+      "latitude": 27.9855,
+      "longitude": 94.222801
+    },
+    {
+      "city_code": "DBR",
+      "city_name": "Darbhanga",
+      "airport_codes": [
+        "DBR"
+      ],
+      "airports": [
+        {
+          "iata_code": "DBR",
+          "airport_name": "Darbhanga Airport"
+        }
+      ],
+      "latitude": 26.192801,
+      "longitude": 85.916901
+    },
+    {
+      "city_code": "DED",
+      "city_name": "Dehradun (Jauligrant)",
+      "airport_codes": [
+        "DED"
+      ],
+      "airports": [
+        {
+          "iata_code": "DED",
+          "airport_name": "Dehradun Jolly Grant Airport"
+        }
+      ],
+      "latitude": 30.189243,
+      "longitude": 78.176651
+    },
+    {
+      "city_code": "DEL",
+      "city_name": "Delhi",
+      "airport_codes": [
+        "DEL",
+        "DXN",
+        "HDO"
+      ],
+      "airports": [
+        {
+          "iata_code": "DEL",
+          "airport_name": "Indira Gandhi International Airport"
+        },
+        {
+          "iata_code": "DXN",
+          "airport_name": "Noida International Airport"
+        },
+        {
+          "iata_code": "HDO",
+          "airport_name": "Hindon Airport / Hindon Air Force Station"
+        }
+      ],
+      "latitude": 28.46464,
+      "longitude": 77.407187
+    },
+    {
+      "city_code": "DGH",
+      "city_name": "Deoghar",
+      "airport_codes": [
+        "DGH"
+      ],
+      "airports": [
+        {
+          "iata_code": "DGH",
+          "airport_name": "Deoghar Airport"
+        }
+      ],
+      "latitude": 24.446842,
+      "longitude": 86.704955
+    },
+    {
+      "city_code": "DBD",
+      "city_name": "Dhanbad Airport",
+      "airport_codes": [
+        "DBD"
+      ],
+      "airports": [
+        {
+          "iata_code": "DBD",
+          "airport_name": "Dhanbad Airport"
+        }
+      ],
+      "latitude": 23.834,
+      "longitude": 86.425301
+    },
+    {
+      "city_code": "DIB",
+      "city_name": "Dibrugarh",
+      "airport_codes": [
+        "DIB"
+      ],
+      "airports": [
+        {
+          "iata_code": "DIB",
+          "airport_name": "Dibrugarh Airport"
+        }
+      ],
+      "latitude": 27.4839,
+      "longitude": 95.016899
+    },
+    {
+      "city_code": "DMU",
+      "city_name": "Dimapur",
+      "airport_codes": [
+        "DMU"
+      ],
+      "airports": [
+        {
+          "iata_code": "DMU",
+          "airport_name": "Dimapur Airport"
+        }
+      ],
+      "latitude": 25.8839,
+      "longitude": 93.771103
+    },
+    {
+      "city_code": "DIU",
+      "city_name": "Diu",
+      "airport_codes": [
+        "DIU"
+      ],
+      "airports": [
+        {
+          "iata_code": "DIU",
+          "airport_name": "Diu Airport"
+        }
+      ],
+      "latitude": 20.714185,
+      "longitude": 70.921855
+    },
+    {
+      "city_code": "RDP",
+      "city_name": "Durgapur",
+      "airport_codes": [
+        "RDP"
+      ],
+      "airports": [
+        {
+          "iata_code": "RDP",
+          "airport_name": "Kazi Nazrul Islam Airport"
+        }
+      ],
+      "latitude": 23.6225,
+      "longitude": 87.243
+    },
+    {
+      "city_code": "AYJ",
+      "city_name": "Faizabad",
+      "airport_codes": [
+        "AYJ"
+      ],
+      "airports": [
+        {
+          "iata_code": "AYJ",
+          "airport_name": "Maharshi Valmiki International Airport"
+        }
+      ],
+      "latitude": 26.747736,
+      "longitude": 82.163664
+    },
+    {
+      "city_code": "GAY",
+      "city_name": "Gaya",
+      "airport_codes": [
+        "GAY"
+      ],
+      "airports": [
+        {
+          "iata_code": "GAY",
+          "airport_name": "Gaya Airport"
+        }
+      ],
+      "latitude": 24.744301,
+      "longitude": 84.951202
+    },
+    {
+      "city_code": "GOI",
+      "city_name": "Goa",
+      "airport_codes": [
+        "GOI"
+      ],
+      "airports": [
+        {
+          "iata_code": "GOI",
+          "airport_name": "Goa Dabolim International Airport"
+        }
+      ],
+      "latitude": 15.380062,
+      "longitude": 73.833328
+    },
+    {
+      "city_code": "GOX",
+      "city_name": "Goa Mopa",
+      "airport_codes": [
+        "GOX"
+      ],
+      "airports": [
+        {
+          "iata_code": "GOX",
+          "airport_name": "Manohar International Airport"
+        }
+      ],
+      "latitude": 15.744257,
+      "longitude": 73.860625
+    },
+    {
+      "city_code": "GDB",
+      "city_name": "Gondia",
+      "airport_codes": [
+        "GDB"
+      ],
+      "airports": [
+        {
+          "iata_code": "GDB",
+          "airport_name": "Gondia Airport"
+        }
+      ],
+      "latitude": 21.526817,
+      "longitude": 80.290347
+    },
+    {
+      "city_code": "GOP",
+      "city_name": "Gorakhpur",
+      "airport_codes": [
+        "GOP"
+      ],
+      "airports": [
+        {
+          "iata_code": "GOP",
+          "airport_name": "Gorakhpur Airport"
+        }
+      ],
+      "latitude": 26.7397,
+      "longitude": 83.449699
+    },
+    {
+      "city_code": "GUX",
+      "city_name": "Guna Airport",
+      "airport_codes": [
+        "GUX"
+      ],
+      "airports": [
+        {
+          "iata_code": "GUX",
+          "airport_name": "Guna Airport"
+        }
+      ],
+      "latitude": 24.654699,
+      "longitude": 77.347298
+    },
+    {
+      "city_code": "GAU",
+      "city_name": "Guwahati",
+      "airport_codes": [
+        "GAU"
+      ],
+      "airports": [
+        {
+          "iata_code": "GAU",
+          "airport_name": "Lokpriya Gopinath Bordoloi International Airport"
+        }
+      ],
+      "latitude": 26.106654,
+      "longitude": 91.585226
+    },
+    {
+      "city_code": "GWL",
+      "city_name": "Gwalior",
+      "airport_codes": [
+        "GWL"
+      ],
+      "airports": [
+        {
+          "iata_code": "GWL",
+          "airport_name": "Gwalior Airport"
+        }
+      ],
+      "latitude": 26.293301,
+      "longitude": 78.227798
+    },
+    {
+      "city_code": "HWR",
+      "city_name": "Halwara",
+      "airport_codes": [
+        "HWR"
+      ],
+      "airports": [
+        {
+          "iata_code": "HWR",
+          "airport_name": "Halwara International Airport"
+        }
+      ],
+      "latitude": 30.748501,
+      "longitude": 75.629799
+    },
+    {
+      "city_code": "HSS",
+      "city_name": "Hisar",
+      "airport_codes": [
+        "HSS"
+      ],
+      "airports": [
+        {
+          "iata_code": "HSS",
+          "airport_name": "Maharaja Agrasen International Airport"
+        }
+      ],
+      "latitude": 29.186065,
+      "longitude": 75.74142
+    },
+    {
+      "city_code": "HGI",
+      "city_name": "Hollongi",
+      "airport_codes": [
+        "HGI"
+      ],
+      "airports": [
+        {
+          "iata_code": "HGI",
+          "airport_name": "Itanagar Donyi Polo Hollongi Airport"
+        }
+      ],
+      "latitude": 26.96683,
+      "longitude": 93.638792
+    },
+    {
+      "city_code": "HBX",
+      "city_name": "Hubballi",
+      "airport_codes": [
+        "HBX"
+      ],
+      "airports": [
+        {
+          "iata_code": "HBX",
+          "airport_name": "Hubballi Airport"
+        }
+      ],
+      "latitude": 15.361084,
+      "longitude": 75.082096
+    },
+    {
+      "city_code": "HYD",
+      "city_name": "Hyderabad",
+      "airport_codes": [
+        "BPM",
+        "HYD"
+      ],
+      "airports": [
+        {
+          "iata_code": "BPM",
+          "airport_name": "Begumpet Airport"
+        },
+        {
+          "iata_code": "HYD",
+          "airport_name": "Rajiv Gandhi International Airport"
+        }
+      ],
+      "latitude": 17.342209,
+      "longitude": 78.448726
+    },
+    {
+      "city_code": "CBD",
+      "city_name": "IAF Camp",
+      "airport_codes": [
+        "CBD"
+      ],
+      "airports": [
+        {
+          "iata_code": "CBD",
+          "airport_name": "Car Nicobar Air Force Base"
+        }
+      ],
+      "latitude": 9.153056,
+      "longitude": 92.819273
+    },
+    {
+      "city_code": "IMF",
+      "city_name": "Imphal",
+      "airport_codes": [
+        "IMF"
+      ],
+      "airports": [
+        {
+          "iata_code": "IMF",
+          "airport_name": "Bir Tikendrajit International Airport"
+        }
+      ],
+      "latitude": 24.76,
+      "longitude": 93.896698
+    },
+    {
+      "city_code": "IDR",
+      "city_name": "Indore",
+      "airport_codes": [
+        "IDR"
+      ],
+      "airports": [
+        {
+          "iata_code": "IDR",
+          "airport_name": "Devi Ahilya Bai Holkar International Airport"
+        }
+      ],
+      "latitude": 22.721404,
+      "longitude": 75.80051
+    },
+    {
+      "city_code": "JLR",
+      "city_name": "Jabalpur",
+      "airport_codes": [
+        "JLR"
+      ],
+      "airports": [
+        {
+          "iata_code": "JLR",
+          "airport_name": "Jabalpur Airport"
+        }
+      ],
+      "latitude": 23.177799,
+      "longitude": 80.052002
+    },
+    {
+      "city_code": "JGB",
+      "city_name": "Jagdalpur",
+      "airport_codes": [
+        "JGB"
+      ],
+      "airports": [
+        {
+          "iata_code": "JGB",
+          "airport_name": "Jagdalpur Airport"
+        }
+      ],
+      "latitude": 19.074301,
+      "longitude": 82.036797
+    },
+    {
+      "city_code": "JAI",
+      "city_name": "Jaipur",
+      "airport_codes": [
+        "JAI"
+      ],
+      "airports": [
+        {
+          "iata_code": "JAI",
+          "airport_name": "Jaipur International Airport"
+        }
+      ],
+      "latitude": 26.8242,
+      "longitude": 75.812202
+    },
+    {
+      "city_code": "JSA",
+      "city_name": "Jaisalmer Airport",
+      "airport_codes": [
+        "JSA"
+      ],
+      "airports": [
+        {
+          "iata_code": "JSA",
+          "airport_name": "Jaisalmer Airport"
+        }
+      ],
+      "latitude": 26.8887,
+      "longitude": 70.864998
+    },
+    {
+      "city_code": "JLG",
+      "city_name": "Jalgaon",
+      "airport_codes": [
+        "JLG"
+      ],
+      "airports": [
+        {
+          "iata_code": "JLG",
+          "airport_name": "Jalgaon Airport"
+        }
+      ],
+      "latitude": 20.962678,
+      "longitude": 75.627492
+    },
+    {
+      "city_code": "IXJ",
+      "city_name": "Jammu",
+      "airport_codes": [
+        "IXJ"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXJ",
+          "airport_name": "Jammu Airport"
+        }
+      ],
+      "latitude": 32.688849,
+      "longitude": 74.838152
+    },
+    {
+      "city_code": "JGA",
+      "city_name": "Jamnagar",
+      "airport_codes": [
+        "JGA"
+      ],
+      "airports": [
+        {
+          "iata_code": "JGA",
+          "airport_name": "Jamnagar Airport"
+        }
+      ],
+      "latitude": 22.4655,
+      "longitude": 70.012604
+    },
+    {
+      "city_code": "IXW",
+      "city_name": "Jamshedpur",
+      "airport_codes": [
+        "IXW"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXW",
+          "airport_name": "Sonari Airport"
+        }
+      ],
+      "latitude": 22.813706,
+      "longitude": 86.168981
+    },
+    {
+      "city_code": "PYB",
+      "city_name": "Jeypore",
+      "airport_codes": [
+        "PYB"
+      ],
+      "airports": [
+        {
+          "iata_code": "PYB",
+          "airport_name": "Jeypore Airport"
+        }
+      ],
+      "latitude": 18.879549,
+      "longitude": 82.552478
+    },
+    {
+      "city_code": "JRG",
+      "city_name": "Jharsuguda Airport",
+      "airport_codes": [
+        "JRG"
+      ],
+      "airports": [
+        {
+          "iata_code": "JRG",
+          "airport_name": "Jharsuguda Airport"
+        }
+      ],
+      "latitude": 21.9135,
+      "longitude": 84.0504
+    },
+    {
+      "city_code": "JDH",
+      "city_name": "Jodhpur",
+      "airport_codes": [
+        "JDH"
+      ],
+      "airports": [
+        {
+          "iata_code": "JDH",
+          "airport_name": "Jodhpur Airport"
+        }
+      ],
+      "latitude": 26.251101,
+      "longitude": 73.048897
+    },
+    {
+      "city_code": "JRH",
+      "city_name": "Jorhat",
+      "airport_codes": [
+        "JRH"
+      ],
+      "airports": [
+        {
+          "iata_code": "JRH",
+          "airport_name": "Jorhat Airport"
+        }
+      ],
+      "latitude": 26.730456,
+      "longitude": 94.175416
+    },
+    {
+      "city_code": "SLV",
+      "city_name": "Jubbarhatti",
+      "airport_codes": [
+        "SLV"
+      ],
+      "airports": [
+        {
+          "iata_code": "SLV",
+          "airport_name": "Shimla Airport"
+        }
+      ],
+      "latitude": 31.0818,
+      "longitude": 77.068001
+    },
+    {
+      "city_code": "CDP",
+      "city_name": "Kadapa",
+      "airport_codes": [
+        "CDP"
+      ],
+      "airports": [
+        {
+          "iata_code": "CDP",
+          "airport_name": "Kadapa Airport"
+        }
+      ],
+      "latitude": 14.513154,
+      "longitude": 78.769183
+    },
+    {
+      "city_code": "IXH",
+      "city_name": "Kailashahar",
+      "airport_codes": [
+        "IXH"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXH",
+          "airport_name": "Kailashahar Airport"
+        }
+      ],
+      "latitude": 24.308657,
+      "longitude": 92.00768
+    },
+    {
+      "city_code": "SAG",
+      "city_name": "Kakadi",
+      "airport_codes": [
+        "SAG"
+      ],
+      "airports": [
+        {
+          "iata_code": "SAG",
+          "airport_name": "Shirdi International Airport"
+        }
+      ],
+      "latitude": 19.689211,
+      "longitude": 74.373655
+    },
+    {
+      "city_code": "GBI",
+      "city_name": "Kalaburagi",
+      "airport_codes": [
+        "GBI"
+      ],
+      "airports": [
+        {
+          "iata_code": "GBI",
+          "airport_name": "Kalaburagi Airport"
+        }
+      ],
+      "latitude": 17.308154,
+      "longitude": 76.965246
+    },
+    {
+      "city_code": "IXY",
+      "city_name": "Kandla",
+      "airport_codes": [
+        "IXY"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXY",
+          "airport_name": "Kandla Airport"
+        }
+      ],
+      "latitude": 23.1127,
+      "longitude": 70.100304
+    },
+    {
+      "city_code": "DHM",
+      "city_name": "Kangra",
+      "airport_codes": [
+        "DHM"
+      ],
+      "airports": [
+        {
+          "iata_code": "DHM",
+          "airport_name": "Kangra Airport"
+        }
+      ],
+      "latitude": 32.164902,
+      "longitude": 76.263018
+    },
+    {
+      "city_code": "CNN",
+      "city_name": "Kannur",
+      "airport_codes": [
+        "CNN"
+      ],
+      "airports": [
+        {
+          "iata_code": "CNN",
+          "airport_name": "Kannur International Airport"
+        }
+      ],
+      "latitude": 11.916343,
+      "longitude": 75.544979
+    },
+    {
+      "city_code": "KNU",
+      "city_name": "Kanpur",
+      "airport_codes": [
+        "KNU"
+      ],
+      "airports": [
+        {
+          "iata_code": "KNU",
+          "airport_name": "Kanpur Airport"
+        }
+      ],
+      "latitude": 26.404301,
+      "longitude": 80.410103
+    },
+    {
+      "city_code": "IXK",
+      "city_name": "Keshod",
+      "airport_codes": [
+        "IXK"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXK",
+          "airport_name": "Keshod Airport"
+        }
+      ],
+      "latitude": 21.317101,
+      "longitude": 70.270401
+    },
+    {
+      "city_code": "HJR",
+      "city_name": "Khajuraho",
+      "airport_codes": [
+        "HJR"
+      ],
+      "airports": [
+        {
+          "iata_code": "HJR",
+          "airport_name": "Khajuraho Airport"
+        }
+      ],
+      "latitude": 24.8172,
+      "longitude": 79.918602
+    },
+    {
+      "city_code": "IXN",
+      "city_name": "Khowai",
+      "airport_codes": [
+        "IXN"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXN",
+          "airport_name": "Khowai Airport"
+        }
+      ],
+      "latitude": 24.061899,
+      "longitude": 91.603897
+    },
+    {
+      "city_code": "COK",
+      "city_name": "Kochi",
+      "airport_codes": [
+        "COK"
+      ],
+      "airports": [
+        {
+          "iata_code": "COK",
+          "airport_name": "Cochin International Airport"
+        }
+      ],
+      "latitude": 10.151047,
+      "longitude": 76.400838
+    },
+    {
+      "city_code": "KLH",
+      "city_name": "Kolhapur",
+      "airport_codes": [
+        "KLH"
+      ],
+      "airports": [
+        {
+          "iata_code": "KLH",
+          "airport_name": "Kolhapur Airport"
+        }
+      ],
+      "latitude": 16.6647,
+      "longitude": 74.289398
+    },
+    {
+      "city_code": "CCU",
+      "city_name": "Kolkata",
+      "airport_codes": [
+        "CCU"
+      ],
+      "airports": [
+        {
+          "iata_code": "CCU",
+          "airport_name": "Netaji Subhash Chandra Bose International Airport"
+        }
+      ],
+      "latitude": 22.654012,
+      "longitude": 88.44765
+    },
+    {
+      "city_code": "KTU",
+      "city_name": "Kota",
+      "airport_codes": [
+        "KTU"
+      ],
+      "airports": [
+        {
+          "iata_code": "KTU",
+          "airport_name": "Kota Airport"
+        }
+      ],
+      "latitude": 25.1602,
+      "longitude": 75.845596
+    },
+    {
+      "city_code": "KBK",
+      "city_name": "Kushinagar",
+      "airport_codes": [
+        "KBK"
+      ],
+      "airports": [
+        {
+          "iata_code": "KBK",
+          "airport_name": "Kushinagar International Airport"
+        }
+      ],
+      "latitude": 26.776534,
+      "longitude": 83.889214
+    },
+    {
+      "city_code": "LTU",
+      "city_name": "Latur",
+      "airport_codes": [
+        "LTU"
+      ],
+      "airports": [
+        {
+          "iata_code": "LTU",
+          "airport_name": "Murod Kond Airport"
+        }
+      ],
+      "latitude": 18.411501,
+      "longitude": 76.464699
+    },
+    {
+      "city_code": "IXL",
+      "city_name": "Leh",
+      "airport_codes": [
+        "IXL"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXL",
+          "airport_name": "Leh Kushok Bakula Rimpochee Airport"
+        }
+      ],
+      "latitude": 34.135899,
+      "longitude": 77.546501
+    },
+    {
+      "city_code": "IXI",
+      "city_name": "Lilabari",
+      "airport_codes": [
+        "IXI"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXI",
+          "airport_name": "Lilabari North Lakhimpur Airport"
+        }
+      ],
+      "latitude": 27.295682,
+      "longitude": 94.097266
+    },
+    {
+      "city_code": "LKO",
+      "city_name": "Lucknow",
+      "airport_codes": [
+        "LKO"
+      ],
+      "airports": [
+        {
+          "iata_code": "LKO",
+          "airport_name": "Chaudhary Charan Singh International Airport"
+        }
+      ],
+      "latitude": 26.760599,
+      "longitude": 80.889297
+    },
+    {
+      "city_code": "LUH",
+      "city_name": "Ludhiana Airport",
+      "airport_codes": [
+        "LUH"
+      ],
+      "airports": [
+        {
+          "iata_code": "LUH",
+          "airport_name": "Ludhiana Airport"
+        }
+      ],
+      "latitude": 30.8547,
+      "longitude": 75.952599
+    },
+    {
+      "city_code": "RJA",
+      "city_name": "Madhurapudi",
+      "airport_codes": [
+        "RJA"
+      ],
+      "airports": [
+        {
+          "iata_code": "RJA",
+          "airport_name": "Rajahmundry Airport"
+        }
+      ],
+      "latitude": 17.105799,
+      "longitude": 81.813204
+    },
+    {
+      "city_code": "IXM",
+      "city_name": "Madurai",
+      "airport_codes": [
+        "IXM"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXM",
+          "airport_name": "Madurai Airport"
+        }
+      ],
+      "latitude": 9.83451,
+      "longitude": 78.093399
+    },
+    {
+      "city_code": "LDA",
+      "city_name": "Malda",
+      "airport_codes": [
+        "LDA"
+      ],
+      "airports": [
+        {
+          "iata_code": "LDA",
+          "airport_name": "Malda Airport"
+        }
+      ],
+      "latitude": 25.01018,
+      "longitude": 88.126917
+    },
+    {
+      "city_code": "IXE",
+      "city_name": "Mangaluru",
+      "airport_codes": [
+        "IXE"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXE",
+          "airport_name": "Mangaluru International Airport"
+        }
+      ],
+      "latitude": 12.95471,
+      "longitude": 74.886812
+    },
+    {
+      "city_code": "IXQ",
+      "city_name": "Manik Bhandar",
+      "airport_codes": [
+        "IXQ"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXQ",
+          "airport_name": "Kamalpur Airport"
+        }
+      ],
+      "latitude": 24.134325,
+      "longitude": 91.810769
+    },
+    {
+      "city_code": "MZS",
+      "city_name": "Moradabad",
+      "airport_codes": [
+        "MZS"
+      ],
+      "airports": [
+        {
+          "iata_code": "MZS",
+          "airport_name": "Moradabad Airport"
+        }
+      ],
+      "latitude": 28.81746,
+      "longitude": 78.92187
+    },
+    {
+      "city_code": "BOM",
+      "city_name": "Mumbai",
+      "airport_codes": [
+        "BOM"
+      ],
+      "airports": [
+        {
+          "iata_code": "BOM",
+          "airport_name": "Chhatrapati Shivaji Maharaj International Airport"
+        }
+      ],
+      "latitude": 19.088699,
+      "longitude": 72.867897
+    },
+    {
+      "city_code": "MZU",
+      "city_name": "Muzaffarpur",
+      "airport_codes": [
+        "MZU"
+      ],
+      "airports": [
+        {
+          "iata_code": "MZU",
+          "airport_name": "Muzaffarpur Airport"
+        }
+      ],
+      "latitude": 26.119101,
+      "longitude": 85.313698
+    },
+    {
+      "city_code": "MYQ",
+      "city_name": "Mysore",
+      "airport_codes": [
+        "MYQ"
+      ],
+      "airports": [
+        {
+          "iata_code": "MYQ",
+          "airport_name": "Mysore Airport"
+        }
+      ],
+      "latitude": 12.229751,
+      "longitude": 76.653683
+    },
+    {
+      "city_code": "NAG",
+      "city_name": "Nagpur",
+      "airport_codes": [
+        "NAG"
+      ],
+      "airports": [
+        {
+          "iata_code": "NAG",
+          "airport_name": "Dr. Babasaheb Ambedkar International Airport"
+        }
+      ],
+      "latitude": 21.092199,
+      "longitude": 79.047203
+    },
+    {
+      "city_code": "NDC",
+      "city_name": "Nanded",
+      "airport_codes": [
+        "NDC"
+      ],
+      "airports": [
+        {
+          "iata_code": "NDC",
+          "airport_name": "Nanded Airport"
+        }
+      ],
+      "latitude": 19.1833,
+      "longitude": 77.316704
+    },
+    {
+      "city_code": "ISK",
+      "city_name": "Nashik",
+      "airport_codes": [
+        "ISK"
+      ],
+      "airports": [
+        {
+          "iata_code": "ISK",
+          "airport_name": "Nashik International Airport"
+        }
+      ],
+      "latitude": 20.119101,
+      "longitude": 73.912903
+    },
+    {
+      "city_code": "NMI",
+      "city_name": "Navi Mumbai",
+      "airport_codes": [
+        "NMI"
+      ],
+      "airports": [
+        {
+          "iata_code": "NMI",
+          "airport_name": "Navi Mumbai International Airport"
+        }
+      ],
+      "latitude": 18.984597,
+      "longitude": 73.065253
+    },
+    {
+      "city_code": "NVY",
+      "city_name": "Neyveli",
+      "airport_codes": [
+        "NVY"
+      ],
+      "airports": [
+        {
+          "iata_code": "NVY",
+          "airport_name": "Neyveli Airport"
+        }
+      ],
+      "latitude": 11.612956,
+      "longitude": 79.527382
+    },
+    {
+      "city_code": "KJB",
+      "city_name": "Orvakal",
+      "airport_codes": [
+        "KJB"
+      ],
+      "airports": [
+        {
+          "iata_code": "KJB",
+          "airport_name": "Kurnool Airport"
+        }
+      ],
+      "latitude": 15.716288,
+      "longitude": 78.16923
+    },
+    {
+      "city_code": "PYG",
+      "city_name": "Pakyong",
+      "airport_codes": [
+        "PYG"
+      ],
+      "airports": [
+        {
+          "iata_code": "PYG",
+          "airport_name": "Pakyong Airport"
+        }
+      ],
+      "latitude": 27.2313,
+      "longitude": 88.587196
+    },
+    {
+      "city_code": "PGH",
+      "city_name": "Pantnagar",
+      "airport_codes": [
+        "PGH"
+      ],
+      "airports": [
+        {
+          "iata_code": "PGH",
+          "airport_name": "Pantnagar Airport"
+        }
+      ],
+      "latitude": 29.0334,
+      "longitude": 79.473701
+    },
+    {
+      "city_code": "IXT",
+      "city_name": "Pasighat",
+      "airport_codes": [
+        "IXT"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXT",
+          "airport_name": "Pasighat Airport"
+        }
+      ],
+      "latitude": 28.064786,
+      "longitude": 95.336952
+    },
+    {
+      "city_code": "IXP",
+      "city_name": "Pathankot",
+      "airport_codes": [
+        "IXP"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXP",
+          "airport_name": "Pathankot Airport"
+        }
+      ],
+      "latitude": 32.233611,
+      "longitude": 75.634444
+    },
+    {
+      "city_code": "PAT",
+      "city_name": "Patna",
+      "airport_codes": [
+        "PAT"
+      ],
+      "airports": [
+        {
+          "iata_code": "PAT",
+          "airport_name": "Jay Prakash Narayan Airport"
+        }
+      ],
+      "latitude": 25.591299,
+      "longitude": 85.087997
+    },
+    {
+      "city_code": "PBD",
+      "city_name": "Porbandar",
+      "airport_codes": [
+        "PBD"
+      ],
+      "airports": [
+        {
+          "iata_code": "PBD",
+          "airport_name": "Porbandar Airport"
+        }
+      ],
+      "latitude": 21.649524,
+      "longitude": 69.656405
+    },
+    {
+      "city_code": "IXZ",
+      "city_name": "Port Blair",
+      "airport_codes": [
+        "IXZ"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXZ",
+          "airport_name": "Veer Savarkar International Airport / INS Utkrosh"
+        }
+      ],
+      "latitude": 11.640194,
+      "longitude": 92.72902
+    },
+    {
+      "city_code": "PNY",
+      "city_name": "Puducherry (Pondicherry)",
+      "airport_codes": [
+        "PNY"
+      ],
+      "airports": [
+        {
+          "iata_code": "PNY",
+          "airport_name": "Pondicherry Airport"
+        }
+      ],
+      "latitude": 11.968,
+      "longitude": 79.812
+    },
+    {
+      "city_code": "PNQ",
+      "city_name": "Pune",
+      "airport_codes": [
+        "PNQ"
+      ],
+      "airports": [
+        {
+          "iata_code": "PNQ",
+          "airport_name": "Pune International Airport"
+        }
+      ],
+      "latitude": 18.5821,
+      "longitude": 73.919701
+    },
+    {
+      "city_code": "PUT",
+      "city_name": "Puttaparthi",
+      "airport_codes": [
+        "PUT"
+      ],
+      "airports": [
+        {
+          "iata_code": "PUT",
+          "airport_name": "Sri Sathya Sai Airport"
+        }
+      ],
+      "latitude": 14.1493,
+      "longitude": 77.7911
+    },
+    {
+      "city_code": "RPR",
+      "city_name": "Raipur",
+      "airport_codes": [
+        "RPR"
+      ],
+      "airports": [
+        {
+          "iata_code": "RPR",
+          "airport_name": "Swami Vivekananda Airport"
+        }
+      ],
+      "latitude": 21.180401,
+      "longitude": 81.7388
+    },
+    {
+      "city_code": "HSR",
+      "city_name": "Rajkot",
+      "airport_codes": [
+        "HSR"
+      ],
+      "airports": [
+        {
+          "iata_code": "HSR",
+          "airport_name": "Rajkot International Airport"
+        }
+      ],
+      "latitude": 22.378824,
+      "longitude": 71.039391
+    },
+    {
+      "city_code": "RAJ",
+      "city_name": "Rajkot",
+      "airport_codes": [
+        "RAJ"
+      ],
+      "airports": [
+        {
+          "iata_code": "RAJ",
+          "airport_name": "Rajkot Airport"
+        }
+      ],
+      "latitude": 22.3092,
+      "longitude": 70.779503
+    },
+    {
+      "city_code": "RJI",
+      "city_name": "Rajouri",
+      "airport_codes": [
+        "RJI"
+      ],
+      "airports": [
+        {
+          "iata_code": "RJI",
+          "airport_name": "Rajouri Airport"
+        }
+      ],
+      "latitude": 33.377899,
+      "longitude": 74.315201
+    },
+    {
+      "city_code": "RMD",
+      "city_name": "Ramagundam",
+      "airport_codes": [
+        "RMD"
+      ],
+      "airports": [
+        {
+          "iata_code": "RMD",
+          "airport_name": "Basanth Nagar Airport"
+        }
+      ],
+      "latitude": 18.701,
+      "longitude": 79.3923
+    },
+    {
+      "city_code": "IXR",
+      "city_name": "Ranchi",
+      "airport_codes": [
+        "IXR"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXR",
+          "airport_name": "Birsa Munda Airport"
+        }
+      ],
+      "latitude": 23.314301,
+      "longitude": 85.321701
+    },
+    {
+      "city_code": "RTC",
+      "city_name": "Ratnagiri Airport",
+      "airport_codes": [
+        "RTC"
+      ],
+      "airports": [
+        {
+          "iata_code": "RTC",
+          "airport_name": "Ratnagiri Airport"
+        }
+      ],
+      "latitude": 17.013599,
+      "longitude": 73.327797
+    },
+    {
+      "city_code": "REW",
+      "city_name": "Rewa",
+      "airport_codes": [
+        "REW"
+      ],
+      "airports": [
+        {
+          "iata_code": "REW",
+          "airport_name": "Rewa Airport, Chorhata, REWA"
+        }
+      ],
+      "latitude": 24.503401,
+      "longitude": 81.220299
+    },
+    {
+      "city_code": "RRK",
+      "city_name": "Rourkela",
+      "airport_codes": [
+        "RRK"
+      ],
+      "airports": [
+        {
+          "iata_code": "RRK",
+          "airport_name": "Rourkela Airport"
+        }
+      ],
+      "latitude": 22.256571,
+      "longitude": 84.815193
+    },
+    {
+      "city_code": "RUP",
+      "city_name": "Rupsi",
+      "airport_codes": [
+        "RUP"
+      ],
+      "airports": [
+        {
+          "iata_code": "RUP",
+          "airport_name": "Rupsi Airport"
+        }
+      ],
+      "latitude": 26.141867,
+      "longitude": 89.907892
+    },
+    {
+      "city_code": "SXV",
+      "city_name": "Salem",
+      "airport_codes": [
+        "SXV"
+      ],
+      "airports": [
+        {
+          "iata_code": "SXV",
+          "airport_name": "Salem Airport"
+        }
+      ],
+      "latitude": 11.7833,
+      "longitude": 78.065598
+    },
+    {
+      "city_code": "TNI",
+      "city_name": "Satna Airport",
+      "airport_codes": [
+        "TNI"
+      ],
+      "airports": [
+        {
+          "iata_code": "TNI",
+          "airport_name": "Satna Airport"
+        }
+      ],
+      "latitude": 24.56262,
+      "longitude": 80.852927
+    },
+    {
+      "city_code": "SWN",
+      "city_name": "Sherpur Naqeebpur",
+      "airport_codes": [
+        "SWN"
+      ],
+      "airports": [
+        {
+          "iata_code": "SWN",
+          "airport_name": "Sarsawa Air Force Station"
+        }
+      ],
+      "latitude": 29.994303,
+      "longitude": 77.42456
+    },
+    {
+      "city_code": "SHL",
+      "city_name": "Shillong",
+      "airport_codes": [
+        "SHL"
+      ],
+      "airports": [
+        {
+          "iata_code": "SHL",
+          "airport_name": "Shillong Airport"
+        }
+      ],
+      "latitude": 25.7036,
+      "longitude": 91.978699
+    },
+    {
+      "city_code": "RQY",
+      "city_name": "Shimoga",
+      "airport_codes": [
+        "RQY"
+      ],
+      "airports": [
+        {
+          "iata_code": "RQY",
+          "airport_name": "Rashtrakavi Kuvempu Airport"
+        }
+      ],
+      "latitude": 13.858024,
+      "longitude": 75.618868
+    },
+    {
+      "city_code": "VSV",
+      "city_name": "Shravasti",
+      "airport_codes": [
+        "VSV"
+      ],
+      "airports": [
+        {
+          "iata_code": "VSV",
+          "airport_name": "Shravasti Airport"
+        }
+      ],
+      "latitude": 27.499732,
+      "longitude": 82.032927
+    },
+    {
+      "city_code": "IXS",
+      "city_name": "Silchar",
+      "airport_codes": [
+        "IXS"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXS",
+          "airport_name": "Silchar Airport"
+        }
+      ],
+      "latitude": 24.912901,
+      "longitude": 92.978699
+    },
+    {
+      "city_code": "IXB",
+      "city_name": "Siliguri",
+      "airport_codes": [
+        "IXB"
+      ],
+      "airports": [
+        {
+          "iata_code": "IXB",
+          "airport_name": "Bagdogra Airport"
+        }
+      ],
+      "latitude": 26.6812,
+      "longitude": 88.328598
+    },
+    {
+      "city_code": "SSE",
+      "city_name": "Solapur",
+      "airport_codes": [
+        "SSE"
+      ],
+      "airports": [
+        {
+          "iata_code": "SSE",
+          "airport_name": "Solapur Airport"
+        }
+      ],
+      "latitude": 17.628,
+      "longitude": 75.934799
+    },
+    {
+      "city_code": "SXR",
+      "city_name": "Srinagar",
+      "airport_codes": [
+        "SXR"
+      ],
+      "airports": [
+        {
+          "iata_code": "SXR",
+          "airport_name": "Srinagar International Airport"
+        }
+      ],
+      "latitude": 33.987099,
+      "longitude": 74.7742
+    },
+    {
+      "city_code": "STV",
+      "city_name": "Surat",
+      "airport_codes": [
+        "STV"
+      ],
+      "airports": [
+        {
+          "iata_code": "STV",
+          "airport_name": "Surat International Airport"
+        }
+      ],
+      "latitude": 21.115531,
+      "longitude": 72.743251
+    },
+    {
+      "city_code": "TEZ",
+      "city_name": "Tezpur Airport",
+      "airport_codes": [
+        "TEZ"
+      ],
+      "airports": [
+        {
+          "iata_code": "TEZ",
+          "airport_name": "Tezpur Airport"
+        }
+      ],
+      "latitude": 26.709101,
+      "longitude": 92.784698
+    },
+    {
+      "city_code": "TEI",
+      "city_name": "Tezu",
+      "airport_codes": [
+        "TEI"
+      ],
+      "airports": [
+        {
+          "iata_code": "TEI",
+          "airport_name": "Tezu Airport"
+        }
+      ],
+      "latitude": 27.9412,
+      "longitude": 96.134399
+    },
+    {
+      "city_code": "TJV",
+      "city_name": "Thanjavur",
+      "airport_codes": [
+        "TJV"
+      ],
+      "airports": [
+        {
+          "iata_code": "TJV",
+          "airport_name": "Thanjavur Air Force Station"
+        }
+      ],
+      "latitude": 10.723835,
+      "longitude": 79.109457
+    },
+    {
+      "city_code": "TRV",
+      "city_name": "Thiruvananthapuram",
+      "airport_codes": [
+        "TRV"
+      ],
+      "airports": [
+        {
+          "iata_code": "TRV",
+          "airport_name": "Thiruvananthapuram International Airport"
+        }
+      ],
+      "latitude": 8.481889,
+      "longitude": 76.920029
+    },
+    {
+      "city_code": "TRZ",
+      "city_name": "Tiruchirappalli",
+      "airport_codes": [
+        "TRZ"
+      ],
+      "airports": [
+        {
+          "iata_code": "TRZ",
+          "airport_name": "Tiruchirappalli International Airport"
+        }
+      ],
+      "latitude": 10.762915,
+      "longitude": 78.717741
+    },
+    {
+      "city_code": "TIR",
+      "city_name": "Tirupati",
+      "airport_codes": [
+        "TIR"
+      ],
+      "airports": [
+        {
+          "iata_code": "TIR",
+          "airport_name": "Tirupati International Airport"
+        }
+      ],
+      "latitude": 13.631988,
+      "longitude": 79.539869
+    },
+    {
+      "city_code": "VDY",
+      "city_name": "Toranagallu",
+      "airport_codes": [
+        "VDY"
+      ],
+      "airports": [
+        {
+          "iata_code": "VDY",
+          "airport_name": "Jindal Vijaynagar Airport"
+        }
+      ],
+      "latitude": 15.175921,
+      "longitude": 76.63303
+    },
+    {
+      "city_code": "UDR",
+      "city_name": "Udaipur",
+      "airport_codes": [
+        "UDR"
+      ],
+      "airports": [
+        {
+          "iata_code": "UDR",
+          "airport_name": "Maharana Pratap Airport"
+        }
+      ],
+      "latitude": 24.617701,
+      "longitude": 73.896103
+    },
+    {
+      "city_code": "BDQ",
+      "city_name": "Vadodara",
+      "airport_codes": [
+        "BDQ"
+      ],
+      "airports": [
+        {
+          "iata_code": "BDQ",
+          "airport_name": "Vadodara International Airport"
+        }
+      ],
+      "latitude": 22.336201,
+      "longitude": 73.226303
+    },
+    {
+      "city_code": "TCR",
+      "city_name": "Vagaikulam",
+      "airport_codes": [
+        "TCR"
+      ],
+      "airports": [
+        {
+          "iata_code": "TCR",
+          "airport_name": "Tuticorin Airport"
+        }
+      ],
+      "latitude": 8.724241,
+      "longitude": 78.025803
+    },
+    {
+      "city_code": "VNS",
+      "city_name": "Varanasi",
+      "airport_codes": [
+        "VNS"
+      ],
+      "airports": [
+        {
+          "iata_code": "VNS",
+          "airport_name": "Lal Bahadur Shastri International Airport"
+        }
+      ],
+      "latitude": 25.452171,
+      "longitude": 82.862549
+    },
+    {
+      "city_code": "VGA",
+      "city_name": "Vijayawada",
+      "airport_codes": [
+        "VGA"
+      ],
+      "airports": [
+        {
+          "iata_code": "VGA",
+          "airport_name": "Vijayawada International Airport"
+        }
+      ],
+      "latitude": 16.530011,
+      "longitude": 80.804888
+    },
+    {
+      "city_code": "VTZ",
+      "city_name": "Visakhapatnam",
+      "airport_codes": [
+        "VTZ"
+      ],
+      "airports": [
+        {
+          "iata_code": "VTZ",
+          "airport_name": "Alluri Sitarama Raju International Airport (Vizag)"
+        }
+      ],
+      "latitude": 17.971512,
+      "longitude": 83.503617
+    },
+    {
+      "city_code": "WGC",
+      "city_name": "Warangal",
+      "airport_codes": [
+        "WGC"
+      ],
+      "airports": [
+        {
+          "iata_code": "WGC",
+          "airport_name": "Warangal Airport"
+        }
+      ],
+      "latitude": 17.9144,
+      "longitude": 79.602203
+    },
+    {
+      "city_code": "ZER",
+      "city_name": "Ziro",
+      "airport_codes": [
+        "ZER"
+      ],
+      "airports": [
+        {
+          "iata_code": "ZER",
+          "airport_name": "Ziro Airport"
+        }
+      ],
+      "latitude": 27.588301,
+      "longitude": 93.828102
+    }
+  ]
+}
