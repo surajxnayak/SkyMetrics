@@ -13,7 +13,9 @@ from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from pydantic import BaseModel
 
+from api.ask import answer_question
 from api.auth import require_api_key
 from api.data_access import (
     SnapshotNotFoundError,
@@ -263,6 +265,35 @@ def get_metadata(
         },
         "snapshots": list_snapshots(conn),
     }
+
+
+class ChatTurn(BaseModel):
+    role: str
+    text: str
+
+
+class AskRequest(BaseModel):
+    question: str
+    history: list[ChatTurn] = []
+
+
+class ToolCallOut(BaseModel):
+    name: str
+    args: dict
+    result: dict
+
+
+class AskResponse(BaseModel):
+    answer: str
+    tool_calls: list[ToolCallOut]
+
+
+@router.post("/ask")
+def post_ask(body: AskRequest, conn=Depends(get_db_connection)) -> AskResponse:
+    result = answer_question(
+        body.question, [turn.model_dump() for turn in body.history], conn
+    )
+    return AskResponse(**result)
 
 
 app.include_router(router)
