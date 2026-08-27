@@ -1,20 +1,18 @@
 import { useEffect, useState } from "react";
-import { getFares } from "../api/client";
-import type { FareRecord } from "../api/types";
+import { getFareRecords } from "../api/client";
+import type { FareRecordsResponse } from "../api/types";
 
-interface UseFaresResult {
-  data: FareRecord[] | null;
+interface UseFareRecordsResult {
+  data: FareRecordsResponse | null;
   loading: boolean;
   error: string | null;
 }
 
 const EMPTY_LIST: string[] = [];
 
-export function useFares(
+export function useFareRecords(
   params: {
     routes?: string[];
-    origin?: string;
-    destination?: string;
     sources?: string[];
     carrier?: string;
     advanceWindow?: string;
@@ -22,14 +20,12 @@ export function useFares(
     start?: string;
     end?: string;
   } = {}
-): UseFaresResult {
-  const [data, setData] = useState<FareRecord[] | null>(null);
+): UseFareRecordsResult {
+  const [data, setData] = useState<FareRecordsResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const {
     routes = EMPTY_LIST,
-    origin,
-    destination,
     sources = EMPTY_LIST,
     carrier,
     advanceWindow,
@@ -42,10 +38,8 @@ export function useFares(
     let cancelled = false;
     setLoading(true);
     setError(null);
-    getFares({
+    getFareRecords({
       routes: routes.length > 0 ? routes : undefined,
-      origin: origin || undefined,
-      destination: destination || undefined,
       sources: sources.length > 0 ? sources : undefined,
       carrier: carrier || undefined,
       advanceWindow: advanceWindow || undefined,
@@ -65,7 +59,7 @@ export function useFares(
     return () => {
       cancelled = true;
     };
-  }, [routes, origin, destination, sources, carrier, advanceWindow, fareClass, start, end]);
+  }, [routes, sources, carrier, advanceWindow, fareClass, start, end]);
 
   return { data, loading, error };
 }

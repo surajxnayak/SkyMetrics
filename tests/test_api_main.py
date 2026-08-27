@@ -108,28 +108,111 @@ def test_get_index_rejects_invalid_frequency(db_conn):
 
 
 def test_get_fares_filters_by_origin_and_destination(db_conn):
-    # ZZZ/YYY -- see the same-name note in tests/test_api_data_access.py:
-    # avoids colliding with real migrated fare data on real routes.
     with db_conn.cursor() as cur:
         cur.execute(
             """
             INSERT INTO fare_quotes
                 (quote_id, origin, destination, carrier, source, travel_date, collected_at,
                  advance_window, status, run_id, is_outlier, source_quote_ids)
-            VALUES ('q1', 'ZZZ', 'YYY', 'QP', 'akasaair', '2026-09-01',
-                    '2026-08-24T10:00:00+00:00', 'T+1', 'available', 'run1', false, ARRAY['q1'])
+            VALUES ('q1', 'DEL', 'BOM', 'QP', 'akasaair', '2031-01-01',
+                    '2030-12-01T10:00:00+00:00', 'T+1', 'available', 'run1', false, ARRAY['q1'])
             """
         )
     # No db_conn.commit() here -- see the comment in _insert_index_point above.
 
     response = client.get(
-        "/api/v1/fares", params={"origin": "ZZZ", "destination": "YYY"}, headers=HEADERS
+        "/api/v1/fares",
+        params={"origin": "DEL", "destination": "BOM", "start": "2030-12-01", "end": "2030-12-01"},
+        headers=HEADERS,
     )
 
     assert response.status_code == 200
     body = response.json()
     assert len(body) == 1
-    assert body[0]["destination"] == "YYY"
+    assert body[0]["destination"] == "BOM"
+
+
+def test_get_fares_rejects_unknown_airport_code(db_conn):
+    response = client.get("/api/v1/fares", params={"origin": "ZZZ"}, headers=HEADERS)
+
+    assert response.status_code == 422
+    assert "Invalid filter 'origin'" in response.json()["detail"]
+
+
+def test_get_fares_filters_by_route_list(db_conn):
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO fare_quotes
+                (quote_id, origin, destination, carrier, source, travel_date, collected_at,
+                 advance_window, status, run_id, is_outlier, source_quote_ids)
+            VALUES
+                ('route-q1', 'DEL', 'BOM', 'QP', 'akasaair', '2031-01-01',
+                 '2030-12-01T10:00:00+00:00', 'T+1', 'available', 'run1',
+                 false, ARRAY['route-q1']),
+                ('route-q2', 'DEL', 'BLR', 'QP', 'akasaair', '2031-01-01',
+                 '2030-12-01T10:00:00+00:00', 'T+1', 'available', 'run1',
+                 false, ARRAY['route-q2'])
+            """
+        )
+
+    response = client.get(
+        "/api/v1/fares",
+        params=[
+            ("route", "DEL-BOM"),
+            ("start", "2030-12-01"),
+            ("end", "2030-12-01"),
+        ],
+        headers=HEADERS,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert len(body) == 1
+    assert body[0]["destination"] == "BOM"
+
+
+def test_get_fares_rejects_unknown_route(db_conn):
+    response = client.get("/api/v1/fares", params={"route": "BOM-DEL"}, headers=HEADERS)
+
+    assert response.status_code == 422
+    assert "Invalid filter 'route'" in response.json()["detail"]
+
+
+def test_get_fare_records_returns_mean_and_sorted_rows(db_conn):
+    with db_conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO fare_quotes
+                (quote_id, origin, destination, carrier, source, travel_date, collected_at,
+                 advance_window, fare_class, total_fare, status, run_id, is_outlier,
+                 source_quote_ids)
+            VALUES
+                ('table-q2', 'DEL', 'BOM', 'QP', 'akasaair', '2031-01-02',
+                 '2030-12-02T10:00:00+00:00', 'T+7', 'U1', 9000, 'available',
+                 'run1', false, ARRAY['table-q2']),
+                ('table-q1', 'DEL', 'BOM', 'QP', 'akasaair', '2031-01-01',
+                 '2030-12-01T10:00:00+00:00', 'T+1', 'U1', 7000, 'available',
+                 'run1', false, ARRAY['table-q1'])
+            """
+        )
+
+    response = client.get(
+        "/api/v1/fare-records",
+        params=[
+            ("route", "DEL-BOM"),
+            ("start", "2030-12-01"),
+            ("end", "2030-12-02"),
+        ],
+        headers=HEADERS,
+    )
+
+    assert response.status_code == 200
+    body = response.json()
+    assert body["mean_total_fare"] == 8000
+    assert [record["quote_id"] for record in body["records"]] == ["table-q1", "table-q2"]
+    assert body["records"][0]["delta_from_mean"] == -1000
+    assert body["records"][1]["delta_from_mean"] == 1000
 
 
 def test_get_fares_returns_total_fare_as_a_json_number_not_a_string(db_conn):
@@ -139,21 +222,30 @@ def test_get_fares_returns_total_fare_as_a_json_number_not_a_string(db_conn):
     # SectorHeatmap.tsx and LeadTimeElasticity.tsx both aggregate fares with
     # `existing.sum += record.total_fare` -- if total_fare arrives as a JSON
     # string, that `+=` silently does string concatenation, not addition.
+    #
+    # DEL/BOM + a future date, not ZZZ/YYY -- /fares now validates origin/
+    # destination against a known airport-code list (see
+    # test_get_fares_rejects_unknown_airport_code below), so a fictional code
+    # is rejected with 422. A future date (not "today") avoids colliding with
+    # real migrated fare data on this real route, same as
+    # test_get_fares_filters_by_origin_and_destination above.
     with db_conn.cursor() as cur:
         cur.execute(
             """
             INSERT INTO fare_quotes
                 (quote_id, origin, destination, carrier, source, travel_date, collected_at,
                  advance_window, status, run_id, is_outlier, source_quote_ids, total_fare)
-            VALUES ('q1', 'ZZZ', 'YYY', 'QP', 'akasaair', '2026-09-01',
-                    '2026-08-24T10:00:00+00:00', 'T+1', 'available', 'run1', false, ARRAY['q1'],
-                    7388.0)
+            VALUES ('numeric-q1', 'DEL', 'BOM', 'QP', 'akasaair', '2031-01-01',
+                    '2030-12-01T10:00:00+00:00', 'T+1', 'available', 'run1', false,
+                    ARRAY['numeric-q1'], 7388.0)
             """
         )
     # No db_conn.commit() here -- see the comment in _insert_index_point above.
 
     response = client.get(
-        "/api/v1/fares", params={"origin": "ZZZ", "destination": "YYY"}, headers=HEADERS
+        "/api/v1/fares",
+        params={"origin": "DEL", "destination": "BOM", "start": "2030-12-01", "end": "2030-12-01"},
+        headers=HEADERS,
     )
 
     assert response.status_code == 200

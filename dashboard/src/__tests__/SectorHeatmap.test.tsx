@@ -9,6 +9,7 @@ vi.mock("../api/client", () => ({
       origin: "DEL",
       destination: "BOM",
       carrier: "QP",
+      source: "akasaair",
       advance_window: "T+1",
       fare_class: "U1",
       total_fare: 7000,
@@ -20,6 +21,7 @@ vi.mock("../api/client", () => ({
       origin: "DEL",
       destination: "BOM",
       carrier: "QP",
+      source: "akasaair",
       advance_window: "T+7",
       fare_class: "T3",
       total_fare: 9000,
@@ -31,6 +33,7 @@ vi.mock("../api/client", () => ({
       origin: "DEL",
       destination: "BOM",
       carrier: "QP",
+      source: "akasaair",
       advance_window: "T+1",
       fare_class: "U1",
       total_fare: 999999,
@@ -62,6 +65,7 @@ describe("aggregate", () => {
         origin: "DEL",
         destination: "BOM",
         carrier: "QP",
+        source: "akasaair",
         advance_window: "T+1",
         fare_class: "U1",
         total_fare: 7000,
@@ -73,6 +77,7 @@ describe("aggregate", () => {
         origin: "DEL",
         destination: "BOM",
         carrier: "6E",
+        source: "other",
         advance_window: "T+1",
         fare_class: "U1",
         total_fare: 5000,
@@ -82,7 +87,12 @@ describe("aggregate", () => {
       },
     ];
 
-    const cells = aggregate(records, { carrier: "QP", advanceWindow: "", fareClass: "" });
+    const cells = aggregate(records, {
+      carrier: "QP",
+      advanceWindow: "",
+      fareClass: "",
+      sources: ["akasaair"],
+    });
 
     expect(cells).toHaveLength(1);
     expect(cells[0].meanFare).toBe(7000);

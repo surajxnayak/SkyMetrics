@@ -7,8 +7,8 @@ function Probe() {
   return (
     <div>
       <span data-testid="frequency">{filters.frequency}</span>
-      <button onClick={() => setFilters((prev) => ({ ...prev, origin: "DEL" }))}>set origin</button>
-      <span data-testid="origin">{filters.origin}</span>
+      <button onClick={() => setFilters((prev) => ({ ...prev, selectedRoutes: ["DEL-BLR"] }))}>set route</button>
+      <span data-testid="selected-routes">{filters.selectedRoutes.join(",")}</span>
     </div>
   );
 }
@@ -22,7 +22,7 @@ describe("FilterContext", () => {
     );
 
     expect(screen.getByTestId("frequency").textContent).toBe("daily");
-    expect(screen.getByTestId("origin").textContent).toBe("");
+    expect(screen.getByTestId("selected-routes").textContent).toBe("DEL-BOM,DEL-BLR,BOM-BLR");
   });
 
   it("lets a consumer update filters", async () => {
@@ -33,9 +33,9 @@ describe("FilterContext", () => {
       </FilterProvider>
     );
 
-    await userEvent.click(screen.getByText("set origin"));
+    await userEvent.click(screen.getByText("set route"));
 
-    expect(screen.getByTestId("origin").textContent).toBe("DEL");
+    expect(screen.getByTestId("selected-routes").textContent).toBe("DEL-BLR");
   });
 
   it("correctly applies two updates fired in the same event handler", async () => {
@@ -45,14 +45,14 @@ describe("FilterContext", () => {
         <div>
           <button
             onClick={() => {
-              setFilters((prev) => ({ ...prev, origin: "DEL" }));
-              setFilters((prev) => ({ ...prev, destination: "BOM" }));
+              setFilters((prev) => ({ ...prev, frequency: "weekly" }));
+              setFilters((prev) => ({ ...prev, selectedRoutes: ["DEL-BOM"] }));
             }}
           >
             update both
           </button>
-          <span data-testid="origin">{filters.origin}</span>
-          <span data-testid="destination">{filters.destination}</span>
+          <span data-testid="selected-routes">{filters.selectedRoutes.join(",")}</span>
+          <span data-testid="frequency">{filters.frequency}</span>
         </div>
       );
     }
@@ -65,7 +65,7 @@ describe("FilterContext", () => {
 
     await userEvent.click(screen.getByText("update both"));
 
-    expect(screen.getByTestId("origin").textContent).toBe("DEL");
-    expect(screen.getByTestId("destination").textContent).toBe("BOM");
+    expect(screen.getByTestId("selected-routes").textContent).toBe("DEL-BOM");
+    expect(screen.getByTestId("frequency").textContent).toBe("weekly");
   });
 });

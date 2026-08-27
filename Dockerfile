@@ -8,6 +8,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 COPY api/ api/
 COPY db/ db/
 COPY index/ index/
+COPY models/ models/
 COPY pipeline/ pipeline/
 COPY scraper/ scraper/
 COPY config/ config/
