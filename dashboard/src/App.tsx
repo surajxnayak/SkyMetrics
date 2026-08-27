@@ -9,29 +9,29 @@ import RawListView from "./components/RawListView";
 
 type Tab = "trend" | "heatmap" | "elasticity" | "list";
 
-const TABS: { id: Tab; label: string }[] = [
-  { id: "trend", label: "Trend" },
-  { id: "heatmap", label: "Heatmap" },
-  { id: "elasticity", label: "Elasticity" },
-  { id: "list", label: "List" },
+const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: "trend", label: "Trend Analysis", icon: "show_chart" },
+  { id: "heatmap", label: "Sector Heatmap", icon: "grid_view" },
+  { id: "elasticity", label: "Elasticity", icon: "analytics" },
+  { id: "list", label: "Data Drill-down", icon: "database" },
 ];
 
 export default function App() {
   const [tab, setTab] = useState<Tab>("trend");
+  const activeLabel = TABS.find((item) => item.id === tab)?.label ?? "";
 
   return (
     <FilterProvider>
       <div className="flex min-h-screen bg-page text-primary">
-        <div className="w-72 shrink-0 border-r border-line bg-panel p-6">
-          <h1 className="mb-6 text-lg font-semibold tracking-tight">SkyMetrics APIx Dashboard</h1>
-          <Sidebar />
-          <div className="mt-6 border-t border-line pt-6">
-            <DataQualityPanel />
+        <aside className="group fixed left-0 top-0 z-40 flex h-screen w-14 flex-col overflow-hidden border-r border-outline-variant bg-surface-container transition-[width] duration-200 hover:w-60">
+          <div className="flex h-12 shrink-0 items-center gap-3 border-b border-outline-variant px-4">
+            <span className="shrink-0 font-mono text-lg font-bold text-accent">S</span>
+            <span className="whitespace-nowrap text-sm font-bold tracking-tight text-accent opacity-0 transition-opacity group-hover:opacity-100">
+              SkyMetrics
+            </span>
           </div>
-        </div>
-        <main className="flex-1 p-8">
-          <div role="tablist" className="mb-6 flex gap-1 border-b border-line">
-            {TABS.map(({ id, label }) => (
+          <nav role="tablist" className="flex flex-1 flex-col gap-1 overflow-y-auto py-2">
+            {TABS.map(({ id, label, icon }) => (
               <button
                 key={id}
                 role="tab"
@@ -39,21 +39,45 @@ export default function App() {
                 onClick={() => setTab(id)}
                 className={
                   tab === id
-                    ? "border-b-2 border-accent px-4 py-2 text-sm font-medium text-primary"
-                    : "border-b-2 border-transparent px-4 py-2 text-sm font-medium text-secondary hover:text-primary"
+                    ? "flex items-center gap-3 border-l-2 border-accent bg-surface-container-high px-4 py-2 text-accent"
+                    : "flex items-center gap-3 border-l-2 border-transparent px-4 py-2 text-secondary hover:bg-surface-container-highest hover:text-primary"
                 }
               >
-                {label}
+                <span aria-hidden="true" className="material-symbols-outlined shrink-0 text-[20px]">
+                  {icon}
+                </span>
+                <span className="whitespace-nowrap text-sm opacity-0 transition-opacity group-hover:opacity-100">
+                  {label}
+                </span>
               </button>
             ))}
+          </nav>
+        </aside>
+
+        <div className="ml-14 flex min-h-screen flex-1 flex-col">
+          <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center border-b border-outline-variant bg-surface-container px-4">
+            <h1 className="font-mono text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+              {activeLabel}
+            </h1>
+          </header>
+
+          <div className="flex flex-1 gap-4 p-4">
+            <div className="w-72 shrink-0 rounded-sm border border-outline-variant bg-panel p-4">
+              <Sidebar />
+              <div className="mt-6 border-t border-outline-variant pt-6">
+                <DataQualityPanel />
+              </div>
+            </div>
+            <main className="flex-1">
+              <div role="tabpanel">
+                {tab === "trend" && <TrendView />}
+                {tab === "heatmap" && <SectorHeatmap />}
+                {tab === "elasticity" && <LeadTimeElasticity />}
+                {tab === "list" && <RawListView />}
+              </div>
+            </main>
           </div>
-          <div role="tabpanel">
-            {tab === "trend" && <TrendView />}
-            {tab === "heatmap" && <SectorHeatmap />}
-            {tab === "elasticity" && <LeadTimeElasticity />}
-            {tab === "list" && <RawListView />}
-          </div>
-        </main>
+        </div>
       </div>
     </FilterProvider>
   );

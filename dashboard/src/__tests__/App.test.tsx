@@ -59,7 +59,7 @@ describe("App", () => {
   it("renders the dashboard title and defaults to the trend tab", async () => {
     render(<App />);
 
-    expect(screen.getByText("SkyMetrics APIx Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("SkyMetrics")).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
   });
 
@@ -67,7 +67,7 @@ describe("App", () => {
     render(<App />);
     await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByText("Heatmap"));
+    await userEvent.click(screen.getByText("Sector Heatmap"));
 
     await waitFor(() => expect(screen.getByText("Sector heatmap")).toBeInTheDocument());
   });
@@ -85,7 +85,7 @@ describe("App", () => {
     render(<App />);
     await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByText("List"));
+    await userEvent.click(screen.getByText("Data Drill-down"));
 
     await waitFor(() => expect(screen.getByText("List view")).toBeInTheDocument());
   });
@@ -95,8 +95,8 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
 
     expect(screen.getByRole("tablist")).toBeInTheDocument();
-    const trendTab = screen.getByRole("tab", { name: "Trend" });
-    const heatmapTab = screen.getByRole("tab", { name: "Heatmap" });
+    const trendTab = screen.getByRole("tab", { name: "Trend Analysis" });
+    const heatmapTab = screen.getByRole("tab", { name: "Sector Heatmap" });
     expect(trendTab).toHaveAttribute("aria-selected", "true");
     expect(heatmapTab).toHaveAttribute("aria-selected", "false");
 
