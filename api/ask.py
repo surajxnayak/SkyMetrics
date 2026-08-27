@@ -23,7 +23,10 @@ from api.data_access import (
 )
 
 GEMINI_MODEL = "gemini-2.0-flash"
-MAX_TOOL_ROUNDS = 3
+# ponytail: budgets N tool calls + 1 final-text round <= MAX_TOOL_ROUNDS, so this
+# allows at most 3 tool calls before a final answer is required. Raise if a
+# real question needs to call all 3 tools AND still get a final-text round.
+MAX_TOOL_ROUNDS = 4
 FALLBACK_MESSAGE = (
     "I can only answer using real fare data, and couldn't find a grounded way to "
     "answer that question. Try asking about a specific route (DEL-BOM, DEL-BLR, or "
@@ -161,7 +164,12 @@ def _tool_get_fare_records(args: dict, conn) -> dict:
             start=args.get("start"),
             end=args.get("end"),
         )
-    except ValueError as exc:
+    except (ValueError, TypeError) as exc:
+        # TypeError, not just ValueError: datetime.fromisoformat (inside
+        # load_fare_record_table -> load_fare_records -> _parse_datetime)
+        # raises TypeError, not ValueError, when given a non-string value --
+        # a real possibility since Gemini's JSON output isn't a fully
+        # enforced contract, just a schema hint.
         return {"error": str(exc)}
 
 
@@ -192,12 +200,18 @@ def _execute_tool(name: str, args: dict, conn) -> dict:
     return handler(args, conn)
 
 
+_ROLE_MAP = {"user": "user", "assistant": "model"}
+
+
 def _history_to_contents(history: list[dict]) -> list:
-    role_map = {"user": "user", "assistant": "model"}
     contents = []
     for turn in history:
-        role = role_map.get(turn["role"], "user")
-        contents.append(types.Content(role=role, parts=[types.Part(text=turn["text"])]))
+        role = turn["role"]
+        if role not in _ROLE_MAP:
+            raise ValueError(
+                f"Unknown chat history role: {role!r}. Expected 'user' or 'assistant'."
+            )
+        contents.append(types.Content(role=_ROLE_MAP[role], parts=[types.Part(text=turn["text"])]))
     return contents
 
 
@@ -211,7 +225,9 @@ def _get_client() -> genai.Client:
     return genai.Client(api_key=api_key)
 
 
-def answer_question(question: str, history: list[dict], conn, client: genai.Client | None = None) -> dict:
+def answer_question(
+    question: str, history: list[dict], conn, client: genai.Client | None = None
+) -> dict:
     """Answer a question using only real data. Returns
     {"answer": str, "tool_calls": [{"name": str, "args": dict, "result": dict}, ...]}.
 

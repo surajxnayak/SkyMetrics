@@ -73,17 +73,25 @@ def test_supports_multiple_tool_calls_in_one_turn():
 
 
 def test_gives_up_after_max_tool_rounds_without_a_final_answer():
+    from api.ask import MAX_TOOL_ROUNDS
+
     client = MagicMock()
     client.models.generate_content.side_effect = [
-        _function_call_response("get_metadata", {}),
-        _function_call_response("get_metadata", {}),
-        _function_call_response("get_metadata", {}),
+        _function_call_response("get_metadata", {}) for _ in range(MAX_TOOL_ROUNDS)
     ]
 
     result = answer_question("loop forever", [], conn=MagicMock(), client=client)
 
     assert result["answer"] == FALLBACK_MESSAGE
-    assert len(result["tool_calls"]) == 3
+    assert len(result["tool_calls"]) == MAX_TOOL_ROUNDS
+
+
+def test_execute_tool_reports_an_unknown_tool_name_instead_of_crashing():
+    from api.ask import _execute_tool
+
+    result = _execute_tool("delete_all_data", {}, conn=MagicMock())
+
+    assert result == {"error": "Unknown tool: 'delete_all_data'"}
 
 
 def test_tool_get_index_rejects_an_invalid_frequency():
@@ -108,6 +116,20 @@ def test_tool_get_index_returns_real_snapshot_data(conn=None):
         result = _tool_get_index({"frequency": "daily"}, real_conn)
         assert "error" not in result
         assert "series" in result
+    finally:
+        real_conn.rollback()
+        real_conn.close()
+
+
+def test_tool_get_fare_records_returns_real_fare_data_for_a_valid_route():
+    from api.db import get_connection
+
+    real_conn = get_connection()
+    try:
+        result = _tool_get_fare_records({"route": ["DEL-BOM"]}, real_conn)
+        assert "error" not in result
+        assert "mean_total_fare" in result
+        assert "records" in result
     finally:
         real_conn.rollback()
         real_conn.close()
