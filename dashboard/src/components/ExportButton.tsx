@@ -44,9 +44,12 @@ export default function ExportButton<T extends Record<string, unknown>>({
     <button
       onClick={handleClick}
       disabled={data.length === 0}
-      className="rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-page hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-accent/40 disabled:text-secondary"
+      className="flex items-center gap-1.5 rounded-md bg-accent px-3 py-1.5 text-sm font-medium text-page hover:bg-accent-hover disabled:cursor-not-allowed disabled:bg-accent/40 disabled:text-secondary"
     >
-      Export CSV
+      <span aria-hidden="true" className="material-symbols-outlined text-[16px]">
+        download
+      </span>
+      <span>Export CSV</span>
     </button>
   );
 }
