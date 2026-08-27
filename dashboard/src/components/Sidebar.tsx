@@ -9,9 +9,10 @@ import {
   datesForTimePreset,
 } from "../config/filters";
 
-const LABEL_CLASS = "mb-1 mt-4 block text-xs font-medium uppercase tracking-wide text-secondary first:mt-0";
+const LABEL_CLASS =
+  "mb-1 mt-4 block font-mono text-[11px] font-medium uppercase tracking-wide text-on-surface-variant first:mt-0";
 const INPUT_CLASS =
-  "w-full rounded-md border border-line bg-inset px-3 py-1.5 text-sm text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent";
+  "w-full rounded-md border border-outline-variant bg-inset px-3 py-1.5 text-sm text-primary outline-none focus:border-accent focus:ring-1 focus:ring-accent";
 const SELECT_CLASS = INPUT_CLASS + " appearance-none";
 
 export default function Sidebar() {
@@ -64,7 +65,7 @@ export default function Sidebar() {
   }
 
   return (
-    <aside>
+    <aside aria-label="Filters">
       <label htmlFor="frequency" className={LABEL_CLASS}>
         Frequency
       </label>
@@ -98,8 +99,11 @@ export default function Sidebar() {
       </select>
 
       {filters.timePreset === "custom" && (
-        <div className="mt-3 rounded-md border border-line bg-inset p-3">
-          <label htmlFor="start-date" className="mb-1 block text-xs font-medium uppercase tracking-wide text-secondary">
+        <div className="mt-3 rounded-md border border-outline-variant bg-inset p-3">
+          <label
+            htmlFor="start-date"
+            className="mb-1 block font-mono text-[11px] font-medium uppercase tracking-wide text-on-surface-variant"
+          >
             Start
           </label>
           <input
@@ -110,7 +114,10 @@ export default function Sidebar() {
             className={INPUT_CLASS}
           />
 
-          <label htmlFor="end-date" className="mb-1 mt-3 block text-xs font-medium uppercase tracking-wide text-secondary">
+          <label
+            htmlFor="end-date"
+            className="mb-1 mt-3 block font-mono text-[11px] font-medium uppercase tracking-wide text-on-surface-variant"
+          >
             End
           </label>
           <input
@@ -132,7 +139,7 @@ export default function Sidebar() {
                 type="checkbox"
                 checked={filters.selectedRoutes.includes(route.id)}
                 onChange={() => toggleRoute(route.id)}
-                className="h-4 w-4 rounded border-line bg-inset accent-accent"
+                className="h-4 w-4 rounded border-outline-variant bg-inset accent-accent"
               />
               <span>{route.label}</span>
             </label>
@@ -149,7 +156,7 @@ export default function Sidebar() {
                 type="checkbox"
                 checked={filters.sources.includes(source.id)}
                 onChange={() => toggleSource(source.id)}
-                className="h-4 w-4 rounded border-line bg-inset accent-accent"
+                className="h-4 w-4 rounded border-outline-variant bg-inset accent-accent"
               />
               <span>{source.label}</span>
             </label>
@@ -213,7 +220,7 @@ export default function Sidebar() {
       >
         {hasPendingChanges ? "Search changes" : searchFeedback === "Search sent" ? "Search sent" : "Search"}
       </button>
-      <p className="mt-2 min-h-5 text-sm text-secondary">
+      <p className="mt-2 min-h-5 text-sm text-on-surface-variant">
         {searchFeedback ?? (hasPendingChanges ? "Filters changed. Search to refresh." : "Showing current search.")}
       </p>
     </aside>

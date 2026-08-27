@@ -23,7 +23,10 @@ export default function App() {
   return (
     <FilterProvider>
       <div className="flex min-h-screen bg-page text-primary">
-        <aside className="group fixed left-0 top-0 z-40 flex h-screen w-14 flex-col overflow-hidden border-r border-outline-variant bg-surface-container transition-[width] duration-200 hover:w-60 focus-within:w-60">
+        <aside
+          aria-label="Primary navigation"
+          className="group fixed left-0 top-0 z-40 flex h-screen w-14 flex-col overflow-hidden border-r border-outline-variant bg-surface-container transition-[width] duration-200 hover:w-60 focus-within:w-60"
+        >
           <div className="flex h-12 shrink-0 items-center gap-3 border-b border-outline-variant px-4">
             <span className="shrink-0 font-mono text-lg font-bold text-accent">S</span>
             <span className="whitespace-nowrap text-sm font-bold tracking-tight text-accent opacity-0 transition-opacity group-hover:opacity-100 group-focus-within:opacity-100">
