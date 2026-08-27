@@ -59,3 +59,41 @@ scraper logic, no data collection, no writes to any target site.
 - Adding Playwright or any browser-automation library as a permanent project dependency —
   this is a one-off verification pass using this session's interactive browser tool, not
   new scraper infrastructure.
+
+## Results (2026-08-27)
+
+All 10 sources remain blocked, identical to the 2026-08-23/24 audit. Nothing has changed.
+
+**`blocked_by_robots` (re-checked via plain HTTP `robots.txt` fetch):**
+
+| Source | Disallow rule still present? |
+|---|---|
+| SpiceJet | Yes — `Disallow: https://www.spicejet.com/api/v1` unchanged |
+| Air India Express | Yes — `Disallow: /flight-availability` unchanged |
+| Cleartrip | Yes — `Disallow: /flights/search*` unchanged |
+| EaseMyTrip | Yes — `Disallow: /flight-search/listing*` unchanged |
+| Ixigo | Yes — `Disallow: /flights/search`, `/flights/review` unchanged |
+
+**`blocked_by_waf` (re-checked with a real Chromium browser via Playwright, launched
+temporarily for this check only — not added as a project dependency):**
+
+| Source | Result |
+|---|---|
+| IndiGo | `robots.txt` returns HTTP 200 but renders an app-level "Something went wrong / contact customer support" error page — identical selective block to before, not a connection failure |
+| Air India | `net::ERR_HTTP2_PROTOCOL_ERROR` on `robots.txt` — identical connection-level block |
+| MakeMyTrip | `net::ERR_HTTP2_PROTOCOL_ERROR` on `robots.txt` — identical connection-level block |
+| Goibibo | `net::ERR_HTTP2_PROTOCOL_ERROR` on `robots.txt` — identical connection-level block |
+| Yatra | `net::ERR_HTTP2_PROTOCOL_ERROR` on `robots.txt` — identical connection-level block |
+
+**Conclusion:** no source has become newly compliant since the last audit. Per this
+sub-project's scope, no scraper work follows from this result — `config/sources.json`'s
+`checked_at` dates were updated to 2026-08-27 to record that the audit is current as of
+today. The original design (`docs/superpowers/specs/2026-08-23-repo-scaffold-and-phase1-
+scraper-design.md`) already framed `config/sources.json` as "a live-checked, extensible
+registry... re-verified on every run" rather than a one-time finding — this result
+confirms that framing is still accurate, and the registry itself needed no structural
+changes, only fresher timestamps.
+
+The only currently-scrapable source remains Akasa Air. Real expansion of scraper coverage
+requires one of the two paths not pursued in this sub-project: an official partner/
+developer API, or genuinely new sources beyond the original 11 PRD-named ones.
