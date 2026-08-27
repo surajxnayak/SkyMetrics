@@ -17,8 +17,11 @@ const TOOLTIP_ITEM_STYLE = { fontFamily: MONO_FONT };
 // signature, which breaks ExportButton's generic constraint.
 export type ElasticityPoint = {
   advance_window: string;
+  route: string;
   meanFare: number;
 };
+
+export type ElasticityChartPoint = Record<string, string | number>;
 
 export interface ElasticityDrilldownFilters {
   carrier: string;
@@ -33,21 +36,38 @@ export function aggregate(records: FareRecord[], drilldown: ElasticityDrilldownF
     if (drilldown.sources.length > 0 && !drilldown.sources.includes(record.source)) continue;
     if (drilldown.carrier && record.carrier !== drilldown.carrier) continue;
     if (drilldown.fareClass && record.fare_class !== drilldown.fareClass) continue;
-    const existing = groups.get(record.advance_window) ?? { sum: 0, count: 0 };
+    const route = `${record.origin}-${record.destination}`;
+    const key = `${record.advance_window}|${route}`;
+    const existing = groups.get(key) ?? { sum: 0, count: 0 };
     existing.sum += record.total_fare;
     existing.count += 1;
-    groups.set(record.advance_window, existing);
+    groups.set(key, existing);
   }
-  return WINDOW_ORDER.filter((window) => groups.has(window)).map((window) => {
-    const { sum, count } = groups.get(window)!;
-    return { advance_window: window, meanFare: sum / count };
+  const points = Array.from(groups.entries()).map(([key, { sum, count }]) => {
+    const [advance_window, route] = key.split("|");
+    return { advance_window, route, meanFare: sum / count };
   });
+  return points.sort(
+    (a, b) =>
+      WINDOW_ORDER.indexOf(a.advance_window) - WINDOW_ORDER.indexOf(b.advance_window) ||
+      a.route.localeCompare(b.route)
+  );
+}
+
+export function pivotElasticity(points: ElasticityPoint[]): ElasticityChartPoint[] {
+  const rows = new Map<string, ElasticityChartPoint>();
+  for (const point of points) {
+    const row = rows.get(point.advance_window) ?? { advance_window: point.advance_window };
+    row[point.route] = point.meanFare;
+    rows.set(point.advance_window, row);
+  }
+  return WINDOW_ORDER.filter((window) => rows.has(window)).map((window) => rows.get(window)!);
 }
 
 export default function LeadTimeElasticity() {
   const { appliedFilters: filters } = useFilters();
   const { data, loading, error } = useFares({
-    routes: [filters.elasticityRoute],
+    routes: filters.selectedRoutes,
     sources: filters.sources,
     carrier: filters.carrier,
     fareClass: filters.fareClass,
@@ -69,6 +89,9 @@ export default function LeadTimeElasticity() {
     sources: filters.sources,
   });
   if (points.length === 0) return <p className="text-sm text-secondary">No non-outlier fare data available yet.</p>;
+  const routes = filters.selectedRoutes.filter((route) => points.some((point) => point.route === route));
+  const chartData = pivotElasticity(points);
+  const colors = ["#a78bfa", "#4ade80", "#f0b429", "#f87171"];
 
   return (
     <div>
@@ -78,15 +101,23 @@ export default function LeadTimeElasticity() {
         </p>
       )}
       <h2 className="mb-4 text-base font-semibold text-primary">Lead-time elasticity</h2>
-      <p className="mb-4 font-mono text-sm text-secondary">Route: {filters.elasticityRoute}</p>
+      <p className="mb-4 font-mono text-sm text-secondary">Routes: {routes.join(", ")}</p>
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={points}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />
           <XAxis dataKey="advance_window" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
           <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12, fontFamily: MONO_FONT }} />
           <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} />
           <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
-          <Line type="monotone" dataKey="meanFare" stroke="#a78bfa" name="Mean fare" />
+          {routes.map((route, index) => (
+            <Line
+              key={route}
+              type="monotone"
+              dataKey={route}
+              stroke={colors[index % colors.length]}
+              name={route}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
       <div className="mt-4">

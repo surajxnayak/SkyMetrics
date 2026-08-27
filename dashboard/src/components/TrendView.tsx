@@ -14,8 +14,11 @@ const TOOLTIP_ITEM_STYLE = { fontFamily: MONO_FONT };
 
 export type TrendPoint = {
   period: string;
+  route: string;
   meanFare: number;
 };
+
+export type TrendChartPoint = Record<string, string | number>;
 
 function isoWeekOf(date: Date): string {
   const target = new Date(Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate()));
@@ -37,21 +40,36 @@ export function aggregateTrend(records: FareRecord[], frequency: string): TrendP
   const groups = new Map<string, { sum: number; count: number }>();
   for (const record of records) {
     if (record.status !== "available" || record.is_outlier || record.total_fare === null) continue;
+    const route = `${record.origin}-${record.destination}`;
     const period = periodOf(record.collected_at, frequency);
-    const existing = groups.get(period) ?? { sum: 0, count: 0 };
+    const key = `${period}|${route}`;
+    const existing = groups.get(key) ?? { sum: 0, count: 0 };
     existing.sum += record.total_fare;
     existing.count += 1;
-    groups.set(period, existing);
+    groups.set(key, existing);
   }
   return Array.from(groups.entries())
-    .map(([period, { sum, count }]) => ({ period, meanFare: sum / count }))
-    .sort((a, b) => a.period.localeCompare(b.period));
+    .map(([key, { sum, count }]) => {
+      const [period, route] = key.split("|");
+      return { period, route, meanFare: sum / count };
+    })
+    .sort((a, b) => a.period.localeCompare(b.period) || a.route.localeCompare(b.route));
+}
+
+export function pivotTrend(points: TrendPoint[], routes: string[]): TrendChartPoint[] {
+  const rows = new Map<string, TrendChartPoint>();
+  for (const point of points) {
+    const row = rows.get(point.period) ?? { period: point.period };
+    row[point.route] = point.meanFare;
+    rows.set(point.period, row);
+  }
+  return Array.from(rows.values()).sort((a, b) => String(a.period).localeCompare(String(b.period)));
 }
 
 export default function TrendView() {
   const { appliedFilters: filters } = useFilters();
   const { data, loading, error } = useFares({
-    routes: [filters.trendRoute],
+    routes: filters.selectedRoutes,
     sources: filters.sources,
     carrier: filters.carrier,
     advanceWindow: filters.advanceWindow,
@@ -70,6 +88,9 @@ export default function TrendView() {
 
   const points = aggregateTrend(data, filters.frequency);
   if (points.length === 0) return <p className="text-sm text-secondary">No non-outlier fare data available yet.</p>;
+  const routes = filters.selectedRoutes.filter((route) => points.some((point) => point.route === route));
+  const chartData = pivotTrend(points, routes);
+  const colors = ["#a78bfa", "#4ade80", "#f0b429", "#f87171"];
 
   return (
     <div>
@@ -79,15 +100,23 @@ export default function TrendView() {
         </p>
       )}
       <h2 className="mb-1 text-base font-semibold text-primary">Trend view</h2>
-      <p className="mb-4 font-mono text-sm text-secondary">Route: {filters.trendRoute}</p>
+      <p className="mb-4 font-mono text-sm text-secondary">Routes: {routes.join(", ")}</p>
       <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={points}>
+        <LineChart data={chartData}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />
           <XAxis dataKey="period" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
           <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12, fontFamily: MONO_FONT }} />
           <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} />
           <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
-          <Line type="monotone" dataKey="meanFare" stroke="#a78bfa" name="Mean fare" />
+          {routes.map((route, index) => (
+            <Line
+              key={route}
+              type="monotone"
+              dataKey={route}
+              stroke={colors[index % colors.length]}
+              name={route}
+            />
+          ))}
         </LineChart>
       </ResponsiveContainer>
       <div className="mt-4">

@@ -14,8 +14,7 @@ export interface Filters {
   frequency: Frequency;
   startDate: string;
   endDate: string;
-  trendRoute: string;
-  elasticityRoute: string;
+  timePreset: string;
   selectedRoutes: string[];
   sources: string[];
   carrier: string;
@@ -27,7 +26,8 @@ interface FilterContextValue {
   filters: Filters;
   setFilters: Dispatch<SetStateAction<Filters>>;
   appliedFilters: Filters;
-  applyFilters: () => void;
+  hasPendingChanges: boolean;
+  applyFilters: () => boolean;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
@@ -35,14 +35,20 @@ const FilterContext = createContext<FilterContextValue | null>(null);
 export function FilterProvider({ children }: { children: ReactNode }) {
   const [filters, setFilters] = useState<Filters>(() => getDefaultFilters());
   const [appliedFilters, setAppliedFilters] = useState<Filters>(() => getDefaultFilters());
+  const hasPendingChanges = JSON.stringify(filters) !== JSON.stringify(appliedFilters);
   const value = useMemo(
     () => ({
       filters,
       setFilters,
       appliedFilters,
-      applyFilters: () => setAppliedFilters(filters),
+      hasPendingChanges,
+      applyFilters: () => {
+        if (!hasPendingChanges) return false;
+        setAppliedFilters(filters);
+        return true;
+      },
     }),
-    [appliedFilters, filters]
+    [appliedFilters, filters, hasPendingChanges]
   );
   return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }

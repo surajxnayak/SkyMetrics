@@ -29,11 +29,23 @@ vi.mock("../api/client", () => ({
       is_outlier: false,
       collected_at: "2026-08-24T11:00:00+00:00",
     },
+    {
+      origin: "DEL",
+      destination: "BLR",
+      carrier: "QP",
+      source: "akasaair",
+      advance_window: "T+1",
+      fare_class: "U1",
+      total_fare: 6000,
+      status: "available",
+      is_outlier: false,
+      collected_at: "2026-08-24T10:00:00+00:00",
+    },
   ]),
 }));
 
 describe("TrendView", () => {
-  it("shows the selected route once data loads", async () => {
+  it("shows selected routes once data loads", async () => {
     render(
       <FilterProvider>
         <TrendView />
@@ -41,7 +53,7 @@ describe("TrendView", () => {
     );
 
     expect(screen.getByText("Loading trend data...")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText(/Route: DEL-BOM/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Routes: DEL-BOM, DEL-BLR/)).toBeInTheDocument());
   });
 
   it("renders an export button once data loads", async () => {
@@ -54,7 +66,7 @@ describe("TrendView", () => {
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
   });
 
-  it("plots the mean fare trend line", async () => {
+  it("plots one mean fare trend line per route", async () => {
     const { container } = render(
       <FilterProvider>
         <TrendView />
@@ -63,7 +75,8 @@ describe("TrendView", () => {
 
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
 
-    expect(screen.getByText("Mean fare")).toBeInTheDocument();
-    expect(container.querySelectorAll(".recharts-line")).toHaveLength(1);
+    expect(screen.getByText("DEL-BOM")).toBeInTheDocument();
+    expect(screen.getByText("DEL-BLR")).toBeInTheDocument();
+    expect(container.querySelectorAll(".recharts-line")).toHaveLength(2);
   });
 });

@@ -1,5 +1,13 @@
+import { useEffect, useState } from "react";
 import { useFilters, type Filters } from "../context/FilterContext";
-import { ADVANCE_WINDOWS, CARRIERS, ROUTES, SOURCES } from "../config/filters";
+import {
+  ADVANCE_WINDOWS,
+  CARRIERS,
+  ROUTES,
+  SOURCES,
+  TIME_PRESETS,
+  datesForTimePreset,
+} from "../config/filters";
 
 const LABEL_CLASS = "mb-1 mt-4 block text-xs font-medium uppercase tracking-wide text-secondary first:mt-0";
 const INPUT_CLASS =
@@ -7,7 +15,12 @@ const INPUT_CLASS =
 const SELECT_CLASS = INPUT_CLASS + " appearance-none";
 
 export default function Sidebar() {
-  const { filters, setFilters, applyFilters } = useFilters();
+  const { filters, setFilters, applyFilters, hasPendingChanges } = useFilters();
+  const [searchFeedback, setSearchFeedback] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (hasPendingChanges) setSearchFeedback(null);
+  }, [hasPendingChanges]);
 
   function toggleSource(source: string) {
     setFilters((prev) => {
@@ -24,6 +37,7 @@ export default function Sidebar() {
   function toggleRoute(route: string) {
     setFilters((prev) => {
       const selected = prev.selectedRoutes.includes(route);
+      if (selected && prev.selectedRoutes.length === 1) return prev;
       return {
         ...prev,
         selectedRoutes: selected
@@ -31,6 +45,22 @@ export default function Sidebar() {
           : [...prev.selectedRoutes, route],
       };
     });
+  }
+
+  function changeTimePreset(presetId: string) {
+    setFilters((prev) => {
+      const dates = datesForTimePreset(presetId);
+      return {
+        ...prev,
+        timePreset: presetId,
+        ...(dates ?? {}),
+      };
+    });
+  }
+
+  function handleSearch() {
+    const changed = applyFilters();
+    setSearchFeedback(changed ? "Search sent" : "No filter changes");
   }
 
   return (
@@ -51,62 +81,50 @@ export default function Sidebar() {
         <option value="monthly">Monthly</option>
       </select>
 
-      <label htmlFor="start-date" className={LABEL_CLASS}>
-        Start
-      </label>
-      <input
-        id="start-date"
-        type="date"
-        value={filters.startDate}
-        onChange={(e) => setFilters((prev) => ({ ...prev, startDate: e.target.value }))}
-        className={INPUT_CLASS}
-      />
-
-      <label htmlFor="end-date" className={LABEL_CLASS}>
-        End
-      </label>
-      <input
-        id="end-date"
-        type="date"
-        value={filters.endDate}
-        onChange={(e) => setFilters((prev) => ({ ...prev, endDate: e.target.value }))}
-        className={INPUT_CLASS}
-      />
-
-      <label htmlFor="trend-route" className={LABEL_CLASS}>
-        Trend route
+      <label htmlFor="time-preset" className={LABEL_CLASS}>
+        Time range
       </label>
       <select
-        id="trend-route"
-        value={filters.trendRoute}
-        onChange={(e) => setFilters((prev) => ({ ...prev, trendRoute: e.target.value }))}
+        id="time-preset"
+        value={filters.timePreset}
+        onChange={(e) => changeTimePreset(e.target.value)}
         className={SELECT_CLASS}
       >
-        {ROUTES.map((route) => (
-          <option key={route.id} value={route.id}>
-            {route.label}
+        {TIME_PRESETS.map((preset) => (
+          <option key={preset.id} value={preset.id}>
+            {preset.label}
           </option>
         ))}
       </select>
 
-      <label htmlFor="elasticity-route" className={LABEL_CLASS}>
-        Elasticity route
-      </label>
-      <select
-        id="elasticity-route"
-        value={filters.elasticityRoute}
-        onChange={(e) => setFilters((prev) => ({ ...prev, elasticityRoute: e.target.value }))}
-        className={SELECT_CLASS}
-      >
-        {ROUTES.map((route) => (
-          <option key={route.id} value={route.id}>
-            {route.label}
-          </option>
-        ))}
-      </select>
+      {filters.timePreset === "custom" && (
+        <div className="mt-3 rounded-md border border-line bg-inset p-3">
+          <label htmlFor="start-date" className="mb-1 block text-xs font-medium uppercase tracking-wide text-secondary">
+            Start
+          </label>
+          <input
+            id="start-date"
+            type="date"
+            value={filters.startDate}
+            onChange={(e) => setFilters((prev) => ({ ...prev, startDate: e.target.value }))}
+            className={INPUT_CLASS}
+          />
+
+          <label htmlFor="end-date" className="mb-1 mt-3 block text-xs font-medium uppercase tracking-wide text-secondary">
+            End
+          </label>
+          <input
+            id="end-date"
+            type="date"
+            value={filters.endDate}
+            onChange={(e) => setFilters((prev) => ({ ...prev, endDate: e.target.value }))}
+            className={INPUT_CLASS}
+          />
+        </div>
+      )}
 
       <fieldset>
-        <legend className={LABEL_CLASS}>Heatmap/List routes</legend>
+        <legend className={LABEL_CLASS}>Routes</legend>
         <div className="space-y-2">
           {ROUTES.map((route) => (
             <label key={route.id} className="flex items-center gap-2 text-sm text-primary">
@@ -186,11 +204,18 @@ export default function Sidebar() {
 
       <button
         type="button"
-        onClick={applyFilters}
-        className="mt-6 w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-page hover:bg-accent-hover"
+        onClick={handleSearch}
+        className={
+          hasPendingChanges
+            ? "mt-6 w-full rounded-md bg-warning px-3 py-2 text-sm font-medium text-page hover:bg-accent-hover"
+            : "mt-6 w-full rounded-md bg-accent px-3 py-2 text-sm font-medium text-page hover:bg-accent-hover"
+        }
       >
-        Search
+        {hasPendingChanges ? "Search changes" : searchFeedback === "Search sent" ? "Search sent" : "Search"}
       </button>
+      <p className="mt-2 min-h-5 text-sm text-secondary">
+        {searchFeedback ?? (hasPendingChanges ? "Filters changed. Search to refresh." : "Showing current search.")}
+      </p>
     </aside>
   );
 }
