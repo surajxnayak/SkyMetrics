@@ -14,6 +14,7 @@ vi.mock("../api/client", () => ({
       origin: "DEL",
       destination: "BOM",
       carrier: "QP",
+      source: "akasaair",
       advance_window: "T+1",
       fare_class: "U1",
       total_fare: 7000,
@@ -22,6 +23,26 @@ vi.mock("../api/client", () => ({
       collected_at: "2026-08-24T10:00:00+00:00",
     },
   ]),
+  getFareRecords: vi.fn().mockResolvedValue({
+    mean_total_fare: 7000,
+    records: [
+      {
+        quote_id: "q1",
+        collected_at: "2026-08-24T10:00:00+00:00",
+        travel_date: "2026-09-01",
+        route: "DEL-BOM",
+        source: "akasaair",
+        carrier: "QP",
+        advance_window: "T+1",
+        fare_class: "U1",
+        routing: null,
+        status: "available",
+        is_outlier: false,
+        total_fare: 7000,
+        delta_from_mean: 0,
+      },
+    ],
+  }),
   getMetadata: vi.fn().mockResolvedValue({
     weights: {
       source: "test",
@@ -58,6 +79,15 @@ describe("App", () => {
     await userEvent.click(screen.getByText("Elasticity"));
 
     await waitFor(() => expect(screen.getByText("Lead-time elasticity")).toBeInTheDocument());
+  });
+
+  it("switches to the list tab when clicked", async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+
+    await userEvent.click(screen.getByText("List"));
+
+    await waitFor(() => expect(screen.getByText("List view")).toBeInTheDocument());
   });
 
   it("uses the correct ARIA tab pattern", async () => {

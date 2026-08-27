@@ -23,12 +23,14 @@ export type ElasticityPoint = {
 export interface ElasticityDrilldownFilters {
   carrier: string;
   fareClass: string;
+  sources: string[];
 }
 
 export function aggregate(records: FareRecord[], drilldown: ElasticityDrilldownFilters): ElasticityPoint[] {
   const groups = new Map<string, { sum: number; count: number }>();
   for (const record of records) {
     if (record.status !== "available" || record.is_outlier || record.total_fare === null) continue;
+    if (drilldown.sources.length > 0 && !drilldown.sources.includes(record.source)) continue;
     if (drilldown.carrier && record.carrier !== drilldown.carrier) continue;
     if (drilldown.fareClass && record.fare_class !== drilldown.fareClass) continue;
     const existing = groups.get(record.advance_window) ?? { sum: 0, count: 0 };
@@ -43,28 +45,40 @@ export function aggregate(records: FareRecord[], drilldown: ElasticityDrilldownF
 }
 
 export default function LeadTimeElasticity() {
-  const { filters } = useFilters();
+  const { appliedFilters: filters } = useFilters();
   const { data, loading, error } = useFares({
-    origin: filters.origin,
-    destination: filters.destination,
+    routes: [filters.elasticityRoute],
+    sources: filters.sources,
+    carrier: filters.carrier,
+    fareClass: filters.fareClass,
     start: filters.startDate,
     end: filters.endDate,
   });
 
-  if (loading) return <p className="text-sm text-secondary">Loading elasticity data...</p>;
-  if (error) return (
+  if (loading && !data) return <p className="text-sm text-secondary">Loading elasticity data...</p>;
+  if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load elasticity data: {error}
     </p>
   );
   if (!data || data.length === 0) return <p className="text-sm text-secondary">No fare data available yet.</p>;
 
-  const points = aggregate(data, { carrier: filters.carrier, fareClass: filters.fareClass });
+  const points = aggregate(data, {
+    carrier: filters.carrier,
+    fareClass: filters.fareClass,
+    sources: filters.sources,
+  });
   if (points.length === 0) return <p className="text-sm text-secondary">No non-outlier fare data available yet.</p>;
 
   return (
     <div>
+      {error && (
+        <p role="alert" className="mb-3 text-sm text-error">
+          Search failed: {error}
+        </p>
+      )}
       <h2 className="mb-4 text-base font-semibold text-primary">Lead-time elasticity</h2>
+      <p className="mb-4 font-mono text-sm text-secondary">Route: {filters.elasticityRoute}</p>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={points}>
           <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />

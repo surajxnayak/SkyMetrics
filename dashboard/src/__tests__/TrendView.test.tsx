@@ -4,26 +4,36 @@ import { FilterProvider } from "../context/FilterContext";
 import TrendView from "../components/TrendView";
 
 vi.mock("../api/client", () => ({
-  getIndex: vi.fn().mockResolvedValue({
-    comparison_id: "abc123",
-    frequency: "daily",
-    series: [
-      { period: "2026-08-24", base_period: "2026-08-24", routes: ["DEL-BOM"], simple_relative: 100.0 },
-      {
-        period: "2026-08-25",
-        base_period: "2026-08-24",
-        routes: ["DEL-BOM"],
-        simple_relative: 106.7,
-        laspeyres: 106.9,
-        paasche: 106.7,
-        fisher: 106.8,
-      },
-    ],
-  }),
+  getFares: vi.fn().mockResolvedValue([
+    {
+      origin: "DEL",
+      destination: "BOM",
+      carrier: "QP",
+      source: "akasaair",
+      advance_window: "T+1",
+      fare_class: "U1",
+      total_fare: 7000,
+      status: "available",
+      is_outlier: false,
+      collected_at: "2026-08-24T10:00:00+00:00",
+    },
+    {
+      origin: "DEL",
+      destination: "BOM",
+      carrier: "QP",
+      source: "akasaair",
+      advance_window: "T+7",
+      fare_class: "U1",
+      total_fare: 9000,
+      status: "available",
+      is_outlier: false,
+      collected_at: "2026-08-24T11:00:00+00:00",
+    },
+  ]),
 }));
 
 describe("TrendView", () => {
-  it("shows the base period once data loads", async () => {
+  it("shows the selected route once data loads", async () => {
     render(
       <FilterProvider>
         <TrendView />
@@ -31,7 +41,7 @@ describe("TrendView", () => {
     );
 
     expect(screen.getByText("Loading trend data...")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText(/Base period: 2026-08-24/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Route: DEL-BOM/)).toBeInTheDocument());
   });
 
   it("renders an export button once data loads", async () => {
@@ -44,7 +54,7 @@ describe("TrendView", () => {
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
   });
 
-  it("plots a line for each index series key", async () => {
+  it("plots the mean fare trend line", async () => {
     const { container } = render(
       <FilterProvider>
         <TrendView />
@@ -53,12 +63,7 @@ describe("TrendView", () => {
 
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
 
-    // Recharts' Line uses its dataKey as the legend label when no `name` is
-    // given, so a mistyped dataKey (e.g. laspeyres -> laspeyeres) shows up
-    // here as a wrong label rather than passing silently.
-    for (const key of ["simple_relative", "laspeyres", "paasche", "fisher"]) {
-      expect(screen.getByText(key)).toBeInTheDocument();
-    }
-    expect(container.querySelectorAll(".recharts-line")).toHaveLength(4);
+    expect(screen.getByText("Mean fare")).toBeInTheDocument();
+    expect(container.querySelectorAll(".recharts-line")).toHaveLength(1);
   });
 });

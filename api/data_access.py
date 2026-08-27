@@ -126,6 +126,11 @@ def load_fare_records(
     conn,
     origin: str | None = None,
     destination: str | None = None,
+    routes: list[str] | None = None,
+    sources: list[str] | None = None,
+    carrier: str | None = None,
+    advance_window: str | None = None,
+    fare_class: str | None = None,
     start: str | None = None,
     end: str | None = None,
 ) -> list[dict]:
@@ -137,6 +142,21 @@ def load_fare_records(
     if destination is not None:
         query += " AND destination = %s"
         params.append(destination)
+    if routes:
+        query += " AND origin || '-' || destination = ANY(%s)"
+        params.append(routes)
+    if sources:
+        query += " AND source = ANY(%s)"
+        params.append(sources)
+    if carrier is not None:
+        query += " AND carrier = %s"
+        params.append(carrier)
+    if advance_window is not None:
+        query += " AND advance_window = %s"
+        params.append(advance_window)
+    if fare_class is not None:
+        query += " AND fare_class = %s"
+        params.append(fare_class)
     if start is not None:
         query += " AND collected_at >= %s"
         params.append(_parse_datetime(start))
@@ -155,6 +175,80 @@ def load_fare_records(
         record["collected_at"] = record["collected_at"].isoformat()
         records.append(record)
     return records
+
+
+def load_fare_record_table(
+    conn,
+    routes: list[str] | None = None,
+    sources: list[str] | None = None,
+    carrier: str | None = None,
+    advance_window: str | None = None,
+    fare_class: str | None = None,
+    start: str | None = None,
+    end: str | None = None,
+) -> dict:
+    records = load_fare_records(
+        conn,
+        routes=routes,
+        sources=sources,
+        carrier=carrier,
+        advance_window=advance_window,
+        fare_class=fare_class,
+        start=start,
+        end=end,
+    )
+    priced_records = [
+        record
+        for record in records
+        if record["status"] == "available"
+        and not record["is_outlier"]
+        and record["total_fare"] is not None
+    ]
+    mean_total_fare = (
+        sum(record["total_fare"] for record in priced_records) / len(priced_records)
+        if priced_records
+        else None
+    )
+
+    table_records = []
+    for record in records:
+        total_fare = record["total_fare"]
+        delta_from_mean = (
+            total_fare - mean_total_fare
+            if mean_total_fare is not None
+            and total_fare is not None
+            and record["status"] == "available"
+            and not record["is_outlier"]
+            else None
+        )
+        table_records.append(
+            {
+                "quote_id": record["quote_id"],
+                "collected_at": record["collected_at"],
+                "travel_date": record["travel_date"],
+                "route": f"{record['origin']}-{record['destination']}",
+                "source": record["source"],
+                "carrier": record["carrier"],
+                "advance_window": record["advance_window"],
+                "fare_class": record["fare_class"],
+                "routing": record["routing"],
+                "status": record["status"],
+                "is_outlier": record["is_outlier"],
+                "total_fare": total_fare,
+                "delta_from_mean": delta_from_mean,
+            }
+        )
+
+    table_records.sort(
+        key=lambda record: (
+            record["collected_at"],
+            record["route"],
+            record["carrier"],
+            record["total_fare"] is None,
+            record["total_fare"] or 0,
+        )
+    )
+    return {"mean_total_fare": mean_total_fare, "records": table_records}
 
 
 def load_weights_metadata(weights_path: Path = WEIGHTS_PATH) -> dict:

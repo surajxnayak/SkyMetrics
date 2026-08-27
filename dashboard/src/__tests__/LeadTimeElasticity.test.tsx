@@ -10,6 +10,7 @@ const RECORDS = vi.hoisted(() => [
     origin: "DEL",
     destination: "BOM",
     carrier: "QP",
+    source: "akasaair",
     advance_window: "T+1",
     fare_class: "U1",
     total_fare: 9000,
@@ -21,6 +22,7 @@ const RECORDS = vi.hoisted(() => [
     origin: "DEL",
     destination: "BOM",
     carrier: "QP",
+    source: "akasaair",
     advance_window: "T+45",
     fare_class: "U1",
     total_fare: 5000,
@@ -34,7 +36,7 @@ vi.mock("../api/client", () => ({
   getFares: vi.fn().mockResolvedValue(RECORDS),
 }));
 
-const NO_DRILLDOWN = { carrier: "", fareClass: "" };
+const NO_DRILLDOWN = { carrier: "", fareClass: "", sources: ["akasaair"] };
 
 describe("aggregate", () => {
   it("orders points from farthest to nearest advance window", () => {
@@ -46,7 +48,7 @@ describe("aggregate", () => {
   });
 
   it("excludes records that don't match the given carrier or fare class", () => {
-    const points = aggregate(RECORDS, { carrier: "6E", fareClass: "" });
+    const points = aggregate(RECORDS, { carrier: "6E", fareClass: "", sources: ["akasaair"] });
 
     expect(points).toHaveLength(0);
   });

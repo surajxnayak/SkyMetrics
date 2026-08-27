@@ -15,12 +15,14 @@ export interface DrilldownFilters {
   carrier: string;
   advanceWindow: string;
   fareClass: string;
+  sources: string[];
 }
 
 export function aggregate(records: FareRecord[], drilldown: DrilldownFilters): Cell[] {
   const groups = new Map<string, { sum: number; count: number }>();
   for (const record of records) {
     if (record.status !== "available" || record.is_outlier || record.total_fare === null) continue;
+    if (drilldown.sources.length > 0 && !drilldown.sources.includes(record.source)) continue;
     if (drilldown.carrier && record.carrier !== drilldown.carrier) continue;
     if (drilldown.advanceWindow && record.advance_window !== drilldown.advanceWindow) continue;
     if (drilldown.fareClass && record.fare_class !== drilldown.fareClass) continue;
@@ -52,16 +54,19 @@ function colorFor(value: number, min: number, max: number): string {
 }
 
 export default function SectorHeatmap() {
-  const { filters } = useFilters();
+  const { appliedFilters: filters } = useFilters();
   const { data, loading, error } = useFares({
-    origin: filters.origin,
-    destination: filters.destination,
+    routes: filters.selectedRoutes,
+    sources: filters.sources,
+    carrier: filters.carrier,
+    advanceWindow: filters.advanceWindow,
+    fareClass: filters.fareClass,
     start: filters.startDate,
     end: filters.endDate,
   });
 
-  if (loading) return <p className="text-sm text-secondary">Loading heatmap data...</p>;
-  if (error) return (
+  if (loading && !data) return <p className="text-sm text-secondary">Loading heatmap data...</p>;
+  if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load heatmap data: {error}
     </p>
@@ -72,6 +77,7 @@ export default function SectorHeatmap() {
     carrier: filters.carrier,
     advanceWindow: filters.advanceWindow,
     fareClass: filters.fareClass,
+    sources: filters.sources,
   });
   if (cells.length === 0) return <p className="text-sm text-secondary">No non-outlier fare data available yet.</p>;
 
@@ -84,6 +90,11 @@ export default function SectorHeatmap() {
 
   return (
     <div>
+      {error && (
+        <p role="alert" className="mb-3 text-sm text-error">
+          Search failed: {error}
+        </p>
+      )}
       <h2 className="mb-4 text-base font-semibold text-primary">Sector heatmap</h2>
       <table className="border-collapse text-sm">
         <thead>

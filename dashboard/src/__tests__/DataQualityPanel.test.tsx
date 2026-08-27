@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
+import { FilterProvider } from "../context/FilterContext";
 import DataQualityPanel, { computeStats } from "../components/DataQualityPanel";
 
 const RECORDS = vi.hoisted(() => [
@@ -7,6 +8,7 @@ const RECORDS = vi.hoisted(() => [
     origin: "DEL",
     destination: "BOM",
     carrier: "QP",
+    source: "akasaair",
     advance_window: "T+1",
     fare_class: "U1",
     total_fare: 7000,
@@ -18,6 +20,7 @@ const RECORDS = vi.hoisted(() => [
     origin: "DEL",
     destination: "BOM",
     carrier: "QP",
+    source: "akasaair",
     advance_window: "T+1",
     fare_class: "U1",
     total_fare: 999999,
@@ -29,6 +32,7 @@ const RECORDS = vi.hoisted(() => [
     origin: "DEL",
     destination: "BLR",
     carrier: "QP",
+    source: "akasaair",
     advance_window: "T+7",
     fare_class: "U1",
     total_fare: null,
@@ -75,7 +79,11 @@ vi.mock("../api/client", () => ({
 
 describe("DataQualityPanel", () => {
   it("renders the computed coverage once data loads", async () => {
-    render(<DataQualityPanel />);
+    render(
+      <FilterProvider>
+        <DataQualityPanel />
+      </FilterProvider>
+    );
 
     await waitFor(() => expect(screen.getByText(/Coverage:/)).toBeInTheDocument());
   });

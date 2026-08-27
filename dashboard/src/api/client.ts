@@ -1,4 +1,4 @@
-import type { FareRecord, IndexResponse, MetadataResponse } from "./types";
+import type { FareRecord, FareRecordsResponse, IndexResponse, MetadataResponse } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
@@ -12,17 +12,30 @@ export class ApiError extends Error {
   }
 }
 
-async function get<T>(path: string, params: Record<string, string | undefined> = {}): Promise<T> {
+type QueryValue = string | string[] | undefined;
+
+async function get<T>(path: string, params: Record<string, QueryValue> = {}): Promise<T> {
   const query = new URLSearchParams();
   for (const [key, value] of Object.entries(params)) {
-    if (value !== undefined) query.set(key, value);
+    if (Array.isArray(value)) {
+      for (const item of value) query.append(key, item);
+    } else if (value !== undefined) {
+      query.set(key, value);
+    }
   }
   const queryString = query.toString();
   const url = `${BASE_URL}${path}${queryString ? `?${queryString}` : ""}`;
 
   const response = await fetch(url, { headers: { "X-API-Key": API_KEY } });
   if (!response.ok) {
-    throw new ApiError(response.status, `${path} failed with status ${response.status}`);
+    let message = `${path} failed with status ${response.status}`;
+    try {
+      const body = await response.json();
+      if (typeof body.detail === "string") message = body.detail;
+    } catch {
+      // Fall back to the generic status message when the response is not JSON.
+    }
+    throw new ApiError(response.status, message);
   }
   return response.json() as Promise<T>;
 }
@@ -42,9 +55,51 @@ export function getIndex(params: {
 }
 
 export function getFares(
-  params: { origin?: string; destination?: string; start?: string; end?: string } = {}
+  params: {
+    routes?: string[];
+    origin?: string;
+    destination?: string;
+    sources?: string[];
+    carrier?: string;
+    advanceWindow?: string;
+    fareClass?: string;
+    start?: string;
+    end?: string;
+  } = {}
 ): Promise<FareRecord[]> {
-  return get<FareRecord[]>("/api/v1/fares", params);
+  return get<FareRecord[]>("/api/v1/fares", {
+    route: params.routes,
+    origin: params.origin,
+    destination: params.destination,
+    source: params.sources,
+    carrier: params.carrier,
+    advance_window: params.advanceWindow,
+    fare_class: params.fareClass,
+    start: params.start,
+    end: params.end,
+  });
+}
+
+export function getFareRecords(
+  params: {
+    routes?: string[];
+    sources?: string[];
+    carrier?: string;
+    advanceWindow?: string;
+    fareClass?: string;
+    start?: string;
+    end?: string;
+  } = {}
+): Promise<FareRecordsResponse> {
+  return get<FareRecordsResponse>("/api/v1/fare-records", {
+    route: params.routes,
+    source: params.sources,
+    carrier: params.carrier,
+    advance_window: params.advanceWindow,
+    fare_class: params.fareClass,
+    start: params.start,
+    end: params.end,
+  });
 }
 
 export function getMetadata(): Promise<MetadataResponse> {

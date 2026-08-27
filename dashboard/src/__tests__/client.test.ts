@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, getFares, getIndex, getMetadata } from "../api/client";
+import { ApiError, getFareRecords, getFares, getIndex, getMetadata } from "../api/client";
 
 function mockFetchOnce(body: unknown, status = 200) {
   vi.stubGlobal(
@@ -58,6 +58,38 @@ describe("getFares", () => {
     const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
     expect(url).toContain("origin=DEL");
     expect(url).not.toContain("destination");
+  });
+
+  it("serializes source filters as repeated query params", async () => {
+    mockFetchOnce([]);
+
+    await getFares({ sources: ["akasaair", "other"] });
+
+    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toContain("source=akasaair");
+    expect(url).toContain("source=other");
+  });
+
+  it("serializes route filters as repeated query params", async () => {
+    mockFetchOnce([]);
+
+    await getFares({ routes: ["DEL-BOM", "DEL-BLR"] });
+
+    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toContain("route=DEL-BOM");
+    expect(url).toContain("route=DEL-BLR");
+  });
+});
+
+describe("getFareRecords", () => {
+  it("calls the raw fare-records endpoint", async () => {
+    mockFetchOnce({ mean_total_fare: null, records: [] });
+
+    await getFareRecords({ routes: ["DEL-BOM"] });
+
+    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toContain("/api/v1/fare-records");
+    expect(url).toContain("route=DEL-BOM");
   });
 });
 

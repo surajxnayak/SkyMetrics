@@ -4,9 +4,9 @@ import userEvent from "@testing-library/user-event";
 import { FilterProvider, useFilters } from "../context/FilterContext";
 import Sidebar from "../components/Sidebar";
 
-function OriginProbe() {
+function TrendRouteProbe() {
   const { filters } = useFilters();
-  return <span data-testid="origin-value">{filters.origin}</span>;
+  return <span data-testid="trend-route-value">{filters.trendRoute}</span>;
 }
 
 function FrequencyProbe() {
@@ -15,17 +15,17 @@ function FrequencyProbe() {
 }
 
 describe("Sidebar", () => {
-  it("updates the shared filter state when the origin input changes", async () => {
+  it("updates the shared filter state when the trend route select changes", async () => {
     render(
       <FilterProvider>
         <Sidebar />
-        <OriginProbe />
+        <TrendRouteProbe />
       </FilterProvider>
     );
 
-    await userEvent.type(screen.getByLabelText("Origin"), "DEL");
+    await userEvent.selectOptions(screen.getByLabelText("Trend route"), "DEL-BLR");
 
-    expect(screen.getByTestId("origin-value").textContent).toBe("DEL");
+    expect(screen.getByTestId("trend-route-value").textContent).toBe("DEL-BLR");
   });
 
   it("updates the shared filter state when the frequency select changes", async () => {
@@ -53,18 +53,35 @@ describe("Sidebar", () => {
     expect(values).toEqual(["", "T+1", "T+7", "T+15", "T+30", "T+45"]);
   });
 
-  it("does not uppercase the origin field until it loses focus", async () => {
+  it("shows full names alongside route codes", () => {
     render(
       <FilterProvider>
         <Sidebar />
       </FilterProvider>
     );
 
-    const input = screen.getByLabelText("Origin") as HTMLInputElement;
-    await userEvent.type(input, "del");
-    expect(input.value).toBe("del");
+    expect(screen.getAllByText("Delhi (DEL) - Mumbai (BOM)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Delhi (DEL) - Bengaluru (BLR)").length).toBeGreaterThan(0);
+    expect(screen.getAllByText("Mumbai (BOM) - Bengaluru (BLR)").length).toBeGreaterThan(0);
+  });
 
-    await userEvent.click(document.body);
-    expect(input.value).toBe("DEL");
+  it("renders source filters as checkboxes", () => {
+    render(
+      <FilterProvider>
+        <Sidebar />
+      </FilterProvider>
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Akasa Air" })).toBeChecked();
+  });
+
+  it("shows carrier names alongside carrier codes", () => {
+    render(
+      <FilterProvider>
+        <Sidebar />
+      </FilterProvider>
+    );
+
+    expect(screen.getByText("Akasa Air (QP)")).toBeInTheDocument();
   });
 });

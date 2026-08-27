@@ -1,8 +1,8 @@
 import { useFares } from "../hooks/useFares";
 import { useMetadata } from "../hooks/useMetadata";
 import type { FareRecord } from "../api/types";
-
-const ADVANCE_WINDOWS = ["T+1", "T+7", "T+15", "T+30", "T+45"];
+import { useFilters } from "../context/FilterContext";
+import { ADVANCE_WINDOWS } from "../config/filters";
 
 export interface DataQualityStats {
   coveragePercent: number;
@@ -45,11 +45,22 @@ export function computeStats(records: FareRecord[], routes: string[]): DataQuali
 }
 
 export default function DataQualityPanel() {
-  const fares = useFares();
+  const { appliedFilters: filters } = useFilters();
+  const fares = useFares({
+    routes: filters.selectedRoutes,
+    sources: filters.sources,
+    carrier: filters.carrier,
+    advanceWindow: filters.advanceWindow,
+    fareClass: filters.fareClass,
+    start: filters.startDate,
+    end: filters.endDate,
+  });
   const metadata = useMetadata();
 
-  if (fares.loading || metadata.loading) return <p className="text-sm text-secondary">Loading data quality...</p>;
-  if (fares.error) return (
+  if ((fares.loading && !fares.data) || metadata.loading) {
+    return <p className="text-sm text-secondary">Loading data quality...</p>;
+  }
+  if (fares.error && !fares.data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load data quality: {fares.error}
     </p>
@@ -62,12 +73,19 @@ export default function DataQualityPanel() {
   if (!metadata.data) return <p className="text-sm text-secondary">No data quality information available yet.</p>;
   if (!fares.data) return <p className="text-sm text-secondary">No data quality information available yet.</p>;
 
-  const routes = Object.keys(metadata.data.weights.weights);
+  const routes = filters.selectedRoutes.length > 0
+    ? filters.selectedRoutes
+    : Object.keys(metadata.data.weights.weights);
   const stats = computeStats(fares.data, routes);
 
   return (
     <div>
       <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-secondary">Data quality</h3>
+      {fares.error && (
+        <p role="alert" className="mb-2 text-sm text-error">
+          Search failed: {fares.error}
+        </p>
+      )}
       <p className="mb-1 text-sm text-primary">
         Coverage: <span className="font-mono text-accent">{stats.coveragePercent.toFixed(0)}%</span>
       </p>

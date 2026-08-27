@@ -8,39 +8,42 @@ import {
   type SetStateAction,
 } from "react";
 import type { Frequency } from "../api/types";
+import { getDefaultFilters } from "../config/filters";
 
 export interface Filters {
   frequency: Frequency;
   startDate: string;
   endDate: string;
-  origin: string;
-  destination: string;
+  trendRoute: string;
+  elasticityRoute: string;
+  selectedRoutes: string[];
+  sources: string[];
   carrier: string;
   advanceWindow: string;
   fareClass: string;
 }
 
-export const DEFAULT_FILTERS: Filters = {
-  frequency: "daily",
-  startDate: "",
-  endDate: "",
-  origin: "",
-  destination: "",
-  carrier: "",
-  advanceWindow: "",
-  fareClass: "",
-};
-
 interface FilterContextValue {
   filters: Filters;
   setFilters: Dispatch<SetStateAction<Filters>>;
+  appliedFilters: Filters;
+  applyFilters: () => void;
 }
 
 const FilterContext = createContext<FilterContextValue | null>(null);
 
 export function FilterProvider({ children }: { children: ReactNode }) {
-  const [filters, setFilters] = useState<Filters>(DEFAULT_FILTERS);
-  const value = useMemo(() => ({ filters, setFilters }), [filters]);
+  const [filters, setFilters] = useState<Filters>(() => getDefaultFilters());
+  const [appliedFilters, setAppliedFilters] = useState<Filters>(() => getDefaultFilters());
+  const value = useMemo(
+    () => ({
+      filters,
+      setFilters,
+      appliedFilters,
+      applyFilters: () => setAppliedFilters(filters),
+    }),
+    [appliedFilters, filters]
+  );
   return <FilterContext.Provider value={value}>{children}</FilterContext.Provider>;
 }
 

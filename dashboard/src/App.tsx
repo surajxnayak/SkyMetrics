@@ -5,13 +5,15 @@ import DataQualityPanel from "./components/DataQualityPanel";
 import TrendView from "./components/TrendView";
 import SectorHeatmap from "./components/SectorHeatmap";
 import LeadTimeElasticity from "./components/LeadTimeElasticity";
+import RawListView from "./components/RawListView";
 
-type Tab = "trend" | "heatmap" | "elasticity";
+type Tab = "trend" | "heatmap" | "elasticity" | "list";
 
 const TABS: { id: Tab; label: string }[] = [
   { id: "trend", label: "Trend" },
   { id: "heatmap", label: "Heatmap" },
   { id: "elasticity", label: "Elasticity" },
+  { id: "list", label: "List" },
 ];
 
 export default function App() {
@@ -49,6 +51,7 @@ export default function App() {
             {tab === "trend" && <TrendView />}
             {tab === "heatmap" && <SectorHeatmap />}
             {tab === "elasticity" && <LeadTimeElasticity />}
+            {tab === "list" && <RawListView />}
           </div>
         </main>
       </div>
