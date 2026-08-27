@@ -69,3 +69,19 @@ export interface MetadataResponse {
   formulas: Record<string, string>;
   snapshots: SnapshotSummary[];
 }
+
+export interface ChatTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
+export interface ToolCall {
+  name: string;
+  args: Record<string, unknown>;
+  result: Record<string, unknown>;
+}
+
+export interface AskResponse {
+  answer: string;
+  tool_calls: ToolCall[];
+}

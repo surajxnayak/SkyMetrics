@@ -1,4 +1,4 @@
-import type { FareRecord, FareRecordsResponse, IndexResponse, MetadataResponse } from "./types";
+import type { AskResponse, ChatTurn, FareRecord, FareRecordsResponse, IndexResponse, MetadataResponse } from "./types";
 
 const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
@@ -32,6 +32,26 @@ async function get<T>(path: string, params: Record<string, QueryValue> = {}): Pr
     try {
       const body = await response.json();
       if (typeof body.detail === "string") message = body.detail;
+    } catch {
+      // Fall back to the generic status message when the response is not JSON.
+    }
+    throw new ApiError(response.status, message);
+  }
+  return response.json() as Promise<T>;
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const url = `${BASE_URL}${path}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "X-API-Key": API_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    let message = `${path} failed with status ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      if (typeof errorBody.detail === "string") message = errorBody.detail;
     } catch {
       // Fall back to the generic status message when the response is not JSON.
     }
@@ -104,4 +124,8 @@ export function getFareRecords(
 
 export function getMetadata(): Promise<MetadataResponse> {
   return get<MetadataResponse>("/api/v1/metadata");
+}
+
+export function askQuestion(question: string, history: ChatTurn[]): Promise<AskResponse> {
+  return post<AskResponse>("/api/v1/ask", { question, history });
 }

@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { ApiError, getFareRecords, getFares, getIndex, getMetadata } from "../api/client";
+import { ApiError, askQuestion, getFareRecords, getFares, getIndex, getMetadata } from "../api/client";
 
 function mockFetchOnce(body: unknown, status = 200) {
   vi.stubGlobal(
@@ -98,5 +98,27 @@ describe("getMetadata", () => {
     mockFetchOnce({ detail: "invalid or missing API key" }, 401);
 
     await expect(getMetadata()).rejects.toBeInstanceOf(ApiError);
+  });
+});
+
+describe("askQuestion", () => {
+  it("posts the question and history and returns the parsed answer", async () => {
+    const fetchMock = vi.fn().mockResolvedValue({
+      ok: true,
+      json: async () => ({
+        answer: "DEL-BOM's mean fare is Rs 8000.",
+        tool_calls: [{ name: "get_fare_records", args: { route: ["DEL-BOM"] }, result: { mean_total_fare: 8000 } }],
+      }),
+    });
+    vi.stubGlobal("fetch", fetchMock);
+
+    const result = await askQuestion("What's the DEL-BOM fare?", []);
+
+    expect(result.answer).toBe("DEL-BOM's mean fare is Rs 8000.");
+    expect(result.tool_calls[0].name).toBe("get_fare_records");
+    const [url, options] = fetchMock.mock.calls[0];
+    expect(url).toContain("/api/v1/ask");
+    expect(options.method).toBe("POST");
+    expect(JSON.parse(options.body)).toEqual({ question: "What's the DEL-BOM fare?", history: [] });
   });
 });
