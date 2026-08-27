@@ -40,6 +40,12 @@ def representative_prices(
         route = route_key(record["origin"], record["destination"])
         collected_at = datetime.fromisoformat(record["collected_at"])
         period = period_of(collected_at, frequency)
-        buckets.setdefault((route, period), []).append(record["total_fare"])
+        # float(), not the raw value: a record built from a flat JSON file
+        # already has total_fare as a float, but one built straight from a
+        # raw DB row (e.g. the daily-scrape workflow's index-rebuild step)
+        # has it as decimal.Decimal (psycopg3's mapping for Postgres
+        # NUMERIC) -- mixing Decimal into this average breaks
+        # index/formulas.py's `100.0 * sum(relatives)` arithmetic later.
+        buckets.setdefault((route, period), []).append(float(record["total_fare"]))
 
     return {key: sum(values) / len(values) for key, values in buckets.items()}

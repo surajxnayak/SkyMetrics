@@ -1,6 +1,7 @@
 import json
 import os
 from datetime import datetime, timezone
+from decimal import Decimal
 
 import pytest
 
@@ -42,6 +43,33 @@ def test_build_series_first_period_is_its_own_base():
     assert series[0]["simple_relative"] == pytest.approx(100.0)
     assert series[0]["laspeyres"] == pytest.approx(100.0)
     assert series[0]["paasche"] == pytest.approx(100.0)
+
+
+def test_build_series_handles_decimal_total_fare_from_a_raw_db_row():
+    # Regression test: the daily-scrape workflow's index-rebuild step reads
+    # fare_quotes directly via raw SQL and builds records as plain dicts
+    # (dict(zip(columns, row))) -- unlike build_and_write_series's flat-file
+    # path (where JSON always deserializes total_fare as float), a raw
+    # psycopg3 row returns NUMERIC columns as decimal.Decimal. Before this
+    # fix, representative_prices() passed that Decimal straight through,
+    # and index/formulas.py's `100.0 * sum(relatives)` raised
+    # `TypeError: unsupported operand type(s) for *: 'float' and
+    # 'decimal.Decimal'` -- this broke every real production cron run once
+    # the API's earlier Decimal->float fix (in api/data_access.py) turned
+    # out not to cover this second, separate DB-read code path.
+    records = [
+        _record("DEL", "BOM", Decimal("6000.00"), DAY1),
+        _record("DEL", "BLR", Decimal("7000.00"), DAY1),
+        _record("BOM", "BLR", Decimal("5000.00"), DAY1),
+    ]
+
+    series = build_series(records, "daily", WEIGHTS)
+
+    assert len(series) == 1
+    assert series[0]["simple_relative"] == pytest.approx(100.0)
+    assert series[0]["laspeyres"] == pytest.approx(100.0)
+    assert series[0]["paasche"] == pytest.approx(100.0)
+    assert series[0]["fisher"] == pytest.approx(100.0)
 
 
 def test_build_series_computes_a_real_second_point():
