@@ -48,7 +48,12 @@ def _insert_index_point(conn, comparison_id, frequency, period, simple_relative=
 
 
 def _insert_fare_quote(
-    conn, quote_id, origin="ZZZ", destination="YYY", collected_at="2026-08-24T10:00:00+00:00"
+    conn,
+    quote_id,
+    origin="ZZZ",
+    destination="YYY",
+    collected_at="2026-08-24T10:00:00+00:00",
+    total_fare=None,
 ):
     # ZZZ/YYY (not real routes like DEL/BOM) deliberately -- the real
     # committed migration data (see db/migrate_existing_data.py) has real
@@ -59,12 +64,24 @@ def _insert_fare_quote(
             """
             INSERT INTO fare_quotes
                 (quote_id, origin, destination, carrier, source, travel_date, collected_at,
-                 advance_window, status, run_id, is_outlier, source_quote_ids)
+                 advance_window, status, run_id, is_outlier, source_quote_ids, base_fare, taxes,
+                 udf, convenience_fee, total_fare)
             VALUES
                 (%s, %s, %s, 'QP', 'akasaair', '2026-09-01', %s, 'T+1', 'available', 'run1',
-                 false, %s)
+                 false, %s, %s, %s, %s, %s, %s)
             """,
-            (quote_id, origin, destination, collected_at, [quote_id]),
+            (
+                quote_id,
+                origin,
+                destination,
+                collected_at,
+                [quote_id],
+                total_fare,
+                total_fare,
+                total_fare,
+                total_fare,
+                total_fare,
+            ),
         )
 
 
@@ -144,6 +161,26 @@ def test_load_snapshot_includes_laspeyres_only_when_present(conn):
     assert result["series"][0]["laspeyres"] == 105.0
 
 
+def test_load_snapshot_returns_plain_floats_not_decimals(conn):
+    # Postgres NUMERIC columns come back from psycopg3 as decimal.Decimal.
+    # FastAPI's bare `-> dict` return annotation on get_index makes Pydantic
+    # serialize an unrecognized type like Decimal as a JSON STRING instead of
+    # a number (to avoid silent precision loss on an Any-typed field) --
+    # `result["series"][0]["laspeyres"] == 105.0` above still passes even
+    # when the value is a Decimal, because Decimal.__eq__ compares
+    # numerically against float. Only a type check catches this.
+    cid = "deadbeefdeadbeefdeadbeefdeadbeef"
+    _insert_index_point(
+        conn, cid, "daily", "2026-08-01", laspeyres=105.0, paasche=104.0, fisher=104.5
+    )
+
+    result = load_snapshot(conn, "daily", comparison_id=cid)
+    point = result["series"][0]
+
+    for key in ("simple_relative", "laspeyres", "paasche", "fisher"):
+        assert isinstance(point[key], float), f"{key} is {type(point[key])}, expected float"
+
+
 def test_load_fare_records_filters_by_origin_and_destination(conn):
     _insert_fare_quote(conn, "q1", origin="ZZZ", destination="YYY")
     _insert_fare_quote(conn, "q2", origin="ZZZ", destination="XXX")
@@ -182,6 +219,21 @@ def test_load_fare_records_accepts_a_naive_date_bound_widening_to_end_of_day(con
 def test_load_fare_records_rejects_a_malformed_date(conn):
     with pytest.raises(ValueError):
         load_fare_records(conn, start="not-a-date")
+
+
+def test_load_fare_records_returns_plain_floats_not_decimals(conn):
+    # Same Decimal-vs-float issue as test_load_snapshot_returns_plain_floats_
+    # not_decimals above, but on fare_quotes' NUMERIC columns -- these feed
+    # dashboard aggregations like `existing.sum += record.total_fare` in
+    # SectorHeatmap.tsx/LeadTimeElasticity.tsx, which do string concatenation
+    # instead of addition if total_fare arrives as a JSON string.
+    _insert_fare_quote(conn, "q1", total_fare=7388.0)
+
+    result = load_fare_records(conn, origin="ZZZ", destination="YYY")
+    record = result[0]
+
+    for key in ("base_fare", "taxes", "udf", "convenience_fee", "total_fare"):
+        assert isinstance(record[key], float), f"{key} is {type(record[key])}, expected float"
 
 
 def test_load_weights_metadata_returns_full_payload(tmp_path):

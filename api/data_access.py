@@ -98,6 +98,13 @@ def load_snapshot(
     series = []
     for row in rows:
         point = dict(zip(_SERIES_COLUMNS, row[:-1]))
+        # NUMERIC columns come back from psycopg3 as decimal.Decimal, which
+        # FastAPI's bare `-> dict` return annotation serializes as a JSON
+        # string rather than a number -- cast to float here, once, at the DB
+        # boundary, so every consumer (API JSON, tests) gets real numbers.
+        for numeric_key in ("simple_relative", "laspeyres", "paasche", "fisher"):
+            if point[numeric_key] is not None:
+                point[numeric_key] = float(point[numeric_key])
         for formula_key in ("laspeyres", "paasche", "fisher"):
             if point[formula_key] is None:
                 del point[formula_key]
@@ -153,6 +160,12 @@ def load_fare_records(
         record = dict(zip(_FARE_COLUMNS, row))
         record["travel_date"] = record["travel_date"].isoformat()
         record["collected_at"] = record["collected_at"].isoformat()
+        # See the matching comment in load_snapshot above: NUMERIC columns
+        # come back as Decimal, which serializes as a JSON string under this
+        # endpoint's bare `-> list[dict]` return annotation unless cast here.
+        for numeric_key in ("base_fare", "taxes", "udf", "convenience_fee", "total_fare"):
+            if record[numeric_key] is not None:
+                record[numeric_key] = float(record[numeric_key])
         records.append(record)
     return records
 
