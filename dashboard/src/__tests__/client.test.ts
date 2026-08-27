@@ -121,4 +121,16 @@ describe("askQuestion", () => {
     expect(options.method).toBe("POST");
     expect(JSON.parse(options.body)).toEqual({ question: "What's the DEL-BOM fare?", history: [] });
   });
+
+  it("throws an ApiError with the real detail message when the response is not ok", async () => {
+    mockFetchOnce({ detail: "GEMINI_API_KEY environment variable is not set." }, 503);
+
+    await expect(askQuestion("What's the DEL-BOM fare?", [])).rejects.toBeInstanceOf(ApiError);
+    try {
+      await askQuestion("What's the DEL-BOM fare?", []);
+    } catch (err) {
+      expect((err as ApiError).message).toBe("GEMINI_API_KEY environment variable is not set.");
+      expect((err as ApiError).status).toBe(503);
+    }
+  });
 });
