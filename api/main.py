@@ -8,11 +8,13 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from google.genai.errors import APIError
 from pydantic import BaseModel
 
 from api.ask import answer_question
@@ -36,8 +38,11 @@ app = FastAPI(title="SkyMetrics APIx API", version="1.0.0")
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["http://localhost:5173"],
-    allow_methods=["GET"],
-    allow_headers=["X-API-Key"],
+    # GET for every existing read endpoint; POST for /ask (Ask APIx), the
+    # first non-GET route in this app. Content-Type is required for POST's
+    # JSON body, alongside the existing X-API-Key auth header.
+    allow_methods=["GET", "POST"],
+    allow_headers=["X-API-Key", "Content-Type"],
 )
 
 
@@ -268,7 +273,7 @@ def get_metadata(
 
 
 class ChatTurn(BaseModel):
-    role: str
+    role: Literal["user", "assistant"]
     text: str
 
 
@@ -290,9 +295,24 @@ class AskResponse(BaseModel):
 
 @router.post("/ask")
 def post_ask(body: AskRequest, conn=Depends(get_db_connection)) -> AskResponse:
-    result = answer_question(
-        body.question, [turn.model_dump() for turn in body.history], conn
-    )
+    try:
+        result = answer_question(
+            body.question, [turn.model_dump() for turn in body.history], conn
+        )
+    except RuntimeError as exc:
+        # _get_client() raises this when GEMINI_API_KEY is unset -- a
+        # deployment/config problem, not something the caller can fix.
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        # _history_to_contents() raises this on an unrecognized chat role --
+        # shouldn't happen given ChatTurn's Literal type, but kept as a
+        # second line of defense against malformed history.
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except APIError as exc:
+        # A real failure from Gemini itself (bad key, rate limit, outage) --
+        # 502, since SkyMetrics' own request was valid but the upstream
+        # service failed.
+        raise HTTPException(status_code=502, detail=f"Gemini API error: {exc.message}") from exc
     return AskResponse(**result)
 
 
