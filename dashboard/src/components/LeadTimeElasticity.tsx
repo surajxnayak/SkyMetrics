@@ -5,13 +5,14 @@ import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
 
 const WINDOW_ORDER = ["T+45", "T+30", "T+15", "T+7", "T+1"];
-const TOOLTIP_STYLE = { backgroundColor: "#12161f", border: "1px solid #1e2530", borderRadius: 6 };
+const TOOLTIP_STYLE = { backgroundColor: "#1c2025", border: "1px solid #3c494c", borderRadius: 4 };
 const TOOLTIP_LABEL_STYLE = { color: "#e5e7eb" };
 // Numeric values (Y-axis ticks, tooltip line values) get the mono font, per
 // the design spec's "all numeric data" rule -- text labels (X-axis windows,
 // legend series names) stay in the default sans font.
 const MONO_FONT = "'JetBrains Mono', ui-monospace, monospace";
 const TOOLTIP_ITEM_STYLE = { fontFamily: MONO_FONT };
+const CHART_COLORS = ["#a78bfa", "#4ade80", "#f0b429", "#f87171"];
 
 // `type`, not `interface` -- interfaces don't get an implicit index
 // signature, which breaks ExportButton's generic constraint.
@@ -91,30 +92,29 @@ export default function LeadTimeElasticity() {
   if (points.length === 0) return <p className="text-sm text-secondary">No non-outlier fare data available yet.</p>;
   const routes = filters.selectedRoutes.filter((route) => points.some((point) => point.route === route));
   const chartData = pivotElasticity(points);
-  const colors = ["#a78bfa", "#4ade80", "#f0b429", "#f87171"];
 
   return (
-    <div>
+    <div className="rounded-sm border border-outline-variant bg-surface-container-low p-4">
       {error && (
         <p role="alert" className="mb-3 text-sm text-error">
           Search failed: {error}
         </p>
       )}
       <h2 className="mb-4 text-base font-semibold text-primary">Lead-time elasticity</h2>
-      <p className="mb-4 font-mono text-sm text-secondary">Routes: {routes.join(", ")}</p>
+      <p className="mb-4 font-mono text-sm text-on-surface-variant">Routes: {routes.join(", ")}</p>
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />
-          <XAxis dataKey="advance_window" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-          <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12, fontFamily: MONO_FONT }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#3c494c" />
+          <XAxis dataKey="advance_window" stroke="#bbc9cd" tick={{ fill: "#bbc9cd", fontSize: 12 }} />
+          <YAxis stroke="#bbc9cd" tick={{ fill: "#bbc9cd", fontSize: 12, fontFamily: MONO_FONT }} />
           <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} />
-          <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
+          <Legend wrapperStyle={{ color: "#bbc9cd", fontSize: 12 }} />
           {routes.map((route, index) => (
             <Line
               key={route}
               type="monotone"
               dataKey={route}
-              stroke={colors[index % colors.length]}
+              stroke={CHART_COLORS[index % CHART_COLORS.length]}
               name={route}
             />
           ))}
