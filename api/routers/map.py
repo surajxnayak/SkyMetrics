@@ -45,6 +45,10 @@ def get_map_routes(
     period: str | None = None,
     origin_city: str | None = None,
     route: list[str] | None = Query(None),
+    # Explicit opt-in only: when true, illustrative/seeded snapshots (see
+    # db/seed_map_dummy.sql) are included and the response's is_preview flag
+    # is set so the caller can (and must) label them -- never the default.
+    preview: bool = False,
     conn=Depends(get_db_connection),
 ) -> dict:
     _validate_map_routes(route)
@@ -56,4 +60,5 @@ def get_map_routes(
         period=period,
         routes=route,
         origin_city=origin_city,
+        preview=preview,
     )

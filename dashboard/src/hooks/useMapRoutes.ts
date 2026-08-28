@@ -16,11 +16,12 @@ export function useMapRoutes(params: {
   originCity?: string;
   period?: string;
   snapshotId?: string;
+  preview?: boolean;
 }): UseMapRoutesResult {
   const [data, setData] = useState<MapRoutesResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const { frequency, routes = EMPTY_ROUTES, originCity, period, snapshotId } = params;
+  const { frequency, routes = EMPTY_ROUTES, originCity, period, snapshotId, preview } = params;
 
   useEffect(() => {
     let cancelled = false;
@@ -32,6 +33,7 @@ export function useMapRoutes(params: {
       originCity: originCity || undefined,
       period: period || undefined,
       snapshotId: snapshotId || undefined,
+      preview,
     })
       .then((result) => {
         if (!cancelled) setData(result);
@@ -45,7 +47,7 @@ export function useMapRoutes(params: {
     return () => {
       cancelled = true;
     };
-  }, [frequency, routes, originCity, period, snapshotId]);
+  }, [frequency, routes, originCity, period, snapshotId, preview]);
 
   return { data, loading, error };
 }

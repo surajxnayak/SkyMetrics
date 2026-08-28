@@ -27,7 +27,7 @@ class FakeCursor:
             self.row = None
         elif query.startswith("SELECT snapshot_id, period"):
             self.rows = []
-            self.row = ("snapshot-1", "2026-08-24")
+            self.row = self.conn.snapshot_row
         else:
             self.conn.route_query = query
             self.conn.route_params = params
@@ -79,6 +79,7 @@ class FakeConn:
         self.route_params = None
         self.route_query = ""
         self.written_at = datetime(2026, 8, 24, tzinfo=timezone.utc)
+        self.snapshot_row = ("snapshot-1", "2026-08-24")
 
     def cursor(self):
         return FakeCursor(self)
@@ -91,11 +92,21 @@ def test_load_map_routes_groups_bidirectional_cpi_edges():
 
     assert "nodes" not in result
     assert conn.route_params[-1] == ["AAA-BBB", "BBB-AAA"]
+    assert result["is_preview"] is False
     edge = result["edges"][0]
     assert edge["edge_key"] == "AAA|BBB"
     assert edge["city_a_to_b"]["origin_city_code"] == "AAA"
     assert edge["city_b_to_a"]["origin_city_code"] == "BBB"
     assert isinstance(edge["city_a_to_b"]["cpi"], float)
+
+
+def test_load_map_routes_flags_a_demo_snapshot_as_preview():
+    conn = FakeConn()
+    conn.snapshot_row = ("demo-map-daily-2026-08-27", "2026-08-27")
+
+    result = load_map_routes(conn, "daily", preview=True)
+
+    assert result["is_preview"] is True
 
 
 def test_load_map_routes_can_filter_by_clicked_origin_city():
@@ -134,8 +145,28 @@ def test_load_map_routes_never_serves_a_demo_snapshot():
     conn = get_connection()
     for frequency in ("daily", "weekly", "monthly"):
         result = load_map_routes(conn, frequency)
+        assert result["is_preview"] is False
         assert result["snapshot_id"] is None or not result["snapshot_id"].startswith("demo-")
         for edge in result["edges"]:
             for direction in (edge["city_a_to_b"], edge["city_b_to_a"]):
                 if direction is not None:
                     assert not direction["snapshot_id"].startswith("demo-")
+
+
+@pytest.mark.skipif(
+    "DATABASE_URL" not in os.environ, reason="DATABASE_URL not set in this environment"
+)
+def test_load_map_routes_preview_true_surfaces_the_real_demo_seed_labeled():
+    # preview=True is the one explicit opt-in that's allowed to surface the
+    # shared DB's illustrative demo-map-* seed (db/seed_map_dummy.sql) --
+    # this only verifies it comes back correctly flagged, never that a
+    # caller may present it as real without that flag.
+    from api.db import get_connection
+
+    conn = get_connection()
+    result = load_map_routes(conn, "daily", preview=True)
+
+    assert result["snapshot_id"] is not None
+    assert result["snapshot_id"].startswith("demo-")
+    assert result["is_preview"] is True
+    assert len(result["edges"]) > 0

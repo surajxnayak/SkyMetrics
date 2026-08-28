@@ -84,6 +84,7 @@ export interface MapEdge {
 }
 
 export interface MapRoutesResponse {
+  is_preview: boolean;
   snapshot_id: string | null;
   frequency: Frequency;
   period: string | null;

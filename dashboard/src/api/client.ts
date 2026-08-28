@@ -151,6 +151,7 @@ export function getMapRoutes(params: {
   originCity?: string;
   period?: string;
   snapshotId?: string;
+  preview?: boolean;
 }): Promise<MapRoutesResponse> {
   return get<MapRoutesResponse>("/api/v1/map/routes", {
     frequency: params.frequency,
@@ -158,5 +159,6 @@ export function getMapRoutes(params: {
     origin_city: params.originCity,
     period: params.period,
     snapshot_id: params.snapshotId,
+    preview: params.preview ? "true" : undefined,
   });
 }

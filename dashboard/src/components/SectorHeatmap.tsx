@@ -2,6 +2,7 @@ import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
 import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
+import LoadingSpinner from "./LoadingSpinner";
 
 // `type`, not `interface` -- interfaces don't get an implicit index
 // signature, which breaks ExportButton's generic constraint.
@@ -65,7 +66,7 @@ export default function SectorHeatmap() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <p className="text-sm text-secondary">Loading heatmap data...</p>;
+  if (loading && !data) return <LoadingSpinner label="Loading heatmap data..." />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load heatmap data: {error}

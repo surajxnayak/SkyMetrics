@@ -317,17 +317,19 @@ def _reverse_route(route: str) -> str:
 
 
 def _resolve_map_snapshot(
-    conn, frequency: str, snapshot_id: str | None, period: str | None
+    conn, frequency: str, snapshot_id: str | None, period: str | None, preview: bool = False
 ) -> tuple[str | None, str | None]:
-    # Excludes snapshot_id LIKE 'demo-%' unconditionally, even if explicitly
+    # Excludes snapshot_id LIKE 'demo-%' by default, even if explicitly
     # requested: this table can hold illustrative/seeded snapshots (see
     # db/seed_map_dummy.sql) used for local UI development, and this is the
     # one chokepoint that keeps them from ever being served through the real
-    # API as if they were a genuine computed snapshot.
-    query = (
-        "SELECT snapshot_id, period FROM map_route_cpi_edges "
-        "WHERE frequency = %s AND snapshot_id NOT LIKE 'demo-%%'"
-    )
+    # API as if they were a genuine computed snapshot. preview=True is the
+    # one deliberate, explicitly-opted-into exception -- callers use it only
+    # to show clearly-labeled placeholder data when no real snapshot exists
+    # yet (see api/routers/map.py's preview param), never silently.
+    query = "SELECT snapshot_id, period FROM map_route_cpi_edges WHERE frequency = %s"
+    if not preview:
+        query += " AND snapshot_id NOT LIKE 'demo-%%'"
     params: list = [frequency]
     if snapshot_id is not None:
         query += " AND snapshot_id = %s"
@@ -350,10 +352,12 @@ def load_map_routes(
     period: str | None = None,
     routes: list[str] | None = None,
     origin_city: str | None = None,
+    preview: bool = False,
 ) -> dict:
     resolved_snapshot_id, resolved_period = _resolve_map_snapshot(
-        conn, frequency, snapshot_id, period
+        conn, frequency, snapshot_id, period, preview=preview
     )
+    is_preview = bool(resolved_snapshot_id and resolved_snapshot_id.startswith("demo-"))
 
     if resolved_snapshot_id is None or resolved_period is None:
         return {
@@ -361,6 +365,7 @@ def load_map_routes(
             "frequency": frequency,
             "period": resolved_period,
             "edges": [],
+            "is_preview": is_preview,
         }
 
     query = """
@@ -438,6 +443,7 @@ def load_map_routes(
         "frequency": frequency,
         "period": resolved_period,
         "edges": list(edge_groups.values()),
+        "is_preview": is_preview,
     }
 
 

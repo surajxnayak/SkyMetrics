@@ -5,6 +5,7 @@ import { useFilters } from "../context/FilterContext";
 import { useMapRoutes } from "../hooks/useMapRoutes";
 import airportCitiesConfig from "../config/airportCities.json";
 import type { MapDirection, MapEdge } from "../api/types";
+import LoadingSpinner from "./LoadingSpinner";
 
 const GEO_URL = "/maps/india-states-simplified.geojson";
 
@@ -61,7 +62,18 @@ function nodeRadius(code: string, isSelected: boolean): number {
 
 export default function MapView() {
   const { appliedFilters } = useFilters();
-  const { data, loading, error } = useMapRoutes({ frequency: appliedFilters.frequency });
+  // Real and preview both fetch in parallel; preview (explicitly-flagged
+  // illustrative seed data, db/seed_map_dummy.sql) is only ever *displayed*
+  // once real data is confirmed empty, and only with the visible "Preview
+  // data" label below -- never silently substituted for the real thing.
+  const real = useMapRoutes({ frequency: appliedFilters.frequency });
+  const preview = useMapRoutes({ frequency: appliedFilters.frequency, preview: true });
+  const realIsEmpty = !real.loading && (real.data?.edges.length ?? 0) === 0;
+  const usingPreview = realIsEmpty && (preview.data?.edges.length ?? 0) > 0;
+
+  const data = usingPreview ? preview.data : real.data;
+  const loading = real.loading || (realIsEmpty && preview.loading);
+  const error = real.error;
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
 
   const edges = data?.edges ?? [];
@@ -78,9 +90,21 @@ export default function MapView() {
         </p>
       )}
 
-      <div className="relative h-[75vh] min-h-[520px] w-full overflow-hidden" style={{ background: "#050308" }}>
+      <div className="relative h-[75vh] min-h-[520px] w-full overflow-hidden bg-page">
+        {usingPreview && (
+          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center p-3">
+            <span className="flex items-center gap-2 rounded-full border border-warning/40 bg-panel/95 px-3 py-1 font-mono text-[11px] uppercase tracking-wide text-warning">
+              <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
+                info
+              </span>
+              Preview data -- illustrative, not yet live
+            </span>
+          </div>
+        )}
         {loading && !data ? (
-          <p className="p-4 text-sm text-secondary">Loading map...</p>
+          <div className="flex h-full items-center justify-center">
+            <LoadingSpinner label="Loading map..." />
+          </div>
         ) : (
           <ComposableMap
             projection="geoMercator"
@@ -97,12 +121,12 @@ export default function MapView() {
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill="#160f26"
-                    stroke="#3a2a5c"
+                    fill="var(--color-panel)"
+                    stroke="var(--color-outline-variant)"
                     strokeWidth={0.6}
                     style={{
                       default: { outline: "none" },
-                      hover: { outline: "none", fill: "#1d1433" },
+                      hover: { outline: "none", fill: "var(--color-surface-container-high)" },
                       pressed: { outline: "none" },
                     }}
                   />
@@ -157,7 +181,7 @@ export default function MapView() {
                   <circle
                     r={r}
                     fill={isSelected ? "var(--color-accent-hover)" : "var(--color-accent)"}
-                    stroke="#050308"
+                    stroke="var(--color-page)"
                     strokeWidth={1.5}
                     className="cursor-pointer"
                   />

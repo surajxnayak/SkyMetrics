@@ -3,6 +3,7 @@ import { useMetadata } from "../hooks/useMetadata";
 import type { FareRecord } from "../api/types";
 import { useFilters } from "../context/FilterContext";
 import { ADVANCE_WINDOWS } from "../config/filters";
+import LoadingSpinner from "./LoadingSpinner";
 
 export interface DataQualityStats {
   coveragePercent: number;
@@ -58,7 +59,7 @@ export default function DataQualityPanel() {
   const metadata = useMetadata();
 
   if ((fares.loading && !fares.data) || metadata.loading) {
-    return <p className="text-sm text-secondary">Loading data quality...</p>;
+    return <LoadingSpinner label="Loading data quality..." />;
   }
   if (fares.error && !fares.data) return (
     <p role="alert" className="text-sm text-error">
