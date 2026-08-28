@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { render, screen, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App";
@@ -60,55 +60,71 @@ vi.mock("../api/client", () => ({
 }));
 
 describe("App", () => {
-  it("renders the dashboard title and defaults to the map tab", async () => {
-    render(<App />);
-
-    expect(screen.getByText("SkyMetrics APIx Dashboard")).toBeInTheDocument();
-    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
+  beforeEach(() => {
+    vi.stubGlobal("scrollTo", vi.fn());
   });
 
-  it("switches to the heatmap tab when clicked", async () => {
+  it("renders the landing title and interactive map", async () => {
     render(<App />);
+
+    expect(screen.getAllByText("SkyMetrics").length).toBeGreaterThan(0);
     await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
-
-    await userEvent.click(screen.getByText("Heatmap"));
-
-    await waitFor(() => expect(screen.getByText("Sector heatmap")).toBeInTheDocument());
+    expect(screen.getByText("When Airfare Changes, Data Should Know")).toBeInTheDocument();
   });
 
-  it("switches to the elasticity tab when clicked", async () => {
+  it("opens heatmap in the separate analytics screen when its dashboard card is clicked", async () => {
     render(<App />);
     await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByText("Elasticity"));
+    await userEvent.click(screen.getByRole("tab", { name: "Heatmap" }));
 
-    await waitFor(() => expect(screen.getByText("Lead-time elasticity")).toBeInTheDocument());
+    expect(screen.queryByText("Route CPI map")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "FILTER" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.getByRole("heading", { name: "HEATMAP" })).toBeInTheDocument());
   });
 
-  it("switches to the list tab when clicked", async () => {
+  it("opens elasticity in the separate analytics screen when its dashboard card is clicked", async () => {
     render(<App />);
     await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
 
-    await userEvent.click(screen.getByText("List"));
+    await userEvent.click(screen.getByRole("tab", { name: "Elasticity" }));
 
-    await waitFor(() => expect(screen.getByText("List view")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Lead Time Elasticity")).toBeInTheDocument());
   });
 
-  it("uses the correct ARIA tab pattern", async () => {
+  it("rotates dashboard cards before opening the list analytics screen", async () => {
     render(<App />);
     await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
 
-    expect(screen.getByRole("tablist")).toBeInTheDocument();
-    const mapTab = screen.getByRole("tab", { name: "Map" });
-    const trendTab = screen.getByRole("tab", { name: "Trend" });
-    const heatmapTab = screen.getByRole("tab", { name: "Heatmap" });
-    expect(mapTab).toHaveAttribute("aria-selected", "true");
-    expect(trendTab).toHaveAttribute("aria-selected", "false");
-    expect(heatmapTab).toHaveAttribute("aria-selected", "false");
+    await userEvent.click(screen.getByRole("button", { name: "Next dashboard card" }));
+    await waitFor(() => expect(screen.getByRole("tab", { name: "List" })).toBeInTheDocument());
+    await userEvent.click(screen.getByRole("tab", { name: "List" }));
 
-    await userEvent.click(heatmapTab);
+    await waitFor(() => expect(screen.getByText("List Time")).toBeInTheDocument());
+  });
 
-    expect(trendTab).toHaveAttribute("aria-selected", "false");
-    expect(heatmapTab).toHaveAttribute("aria-selected", "true");
+  it("cycles between analytical views with the extreme side arrows", async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole("tab", { name: "Trends" }));
+    await waitFor(() => expect(screen.getByText("Trend View")).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole("button", { name: "Next analytical view" }));
+
+    await waitFor(() => expect(screen.getByRole("status", { name: "Loading Heatmap" })).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("heading", { name: "HEATMAP" })).toBeInTheDocument(), { timeout: 1000 });
+  });
+
+  it("expands the analytics filter dock from the top-left filter button", async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole("tab", { name: "Trends" }));
+    await userEvent.click(screen.getByRole("button", { name: "FILTER" }));
+
+    expect(screen.getByLabelText("Expanded filters")).toBeInTheDocument();
+    expect(screen.getByLabelText("Frequency")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Apply" })).toBeInTheDocument();
   });
 });

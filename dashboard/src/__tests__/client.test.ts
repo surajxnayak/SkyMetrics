@@ -104,6 +104,16 @@ describe("getMapRoutes", () => {
     expect(url).toContain("frequency=daily");
     expect(url).toContain("route=DEL-BOM");
   });
+
+  it("serializes the clicked origin city for adjacent route requests", async () => {
+    mockFetchOnce({ snapshot_id: null, frequency: "daily", period: null, edges: [] });
+
+    await getMapRoutes({ frequency: "daily", originCity: "DEL" });
+
+    const [url] = (fetch as unknown as ReturnType<typeof vi.fn>).mock.calls[0];
+    expect(url).toContain("frequency=daily");
+    expect(url).toContain("origin_city=DEL");
+  });
 });
 
 describe("getMetadata", () => {

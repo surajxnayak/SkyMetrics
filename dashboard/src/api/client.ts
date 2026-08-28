@@ -116,6 +116,7 @@ export function getMapRoutes(
   params: {
     frequency: string;
     routes?: string[];
+    originCity?: string;
     period?: string;
     snapshotId?: string;
   }
@@ -123,6 +124,7 @@ export function getMapRoutes(
   return get<MapRoutesResponse>("/api/v1/map/routes", {
     frequency: params.frequency,
     route: params.routes,
+    origin_city: params.originCity,
     period: params.period,
     snapshot_id: params.snapshotId,
   });

@@ -335,6 +335,20 @@ def test_cors_preflight_from_configured_origin_succeeds():
     assert response.headers["access-control-allow-origin"] == "http://localhost:5173"
 
 
+def test_cors_preflight_from_127_dev_port_succeeds():
+    response = client.options(
+        "/api/v1/metadata",
+        headers={
+            "Origin": "http://127.0.0.1:5174",
+            "Access-Control-Request-Method": "GET",
+            "Access-Control-Request-Headers": "X-API-Key",
+        },
+    )
+
+    assert response.status_code == 200
+    assert response.headers["access-control-allow-origin"] == "http://127.0.0.1:5174"
+
+
 def test_cors_preflight_from_other_origin_is_not_allowed():
     response = client.options(
         "/api/v1/metadata",

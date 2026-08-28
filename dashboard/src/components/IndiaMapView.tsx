@@ -1,16 +1,57 @@
-import { useMemo, useState } from "react";
+import { useMemo, useState, type MouseEventHandler } from "react";
 import { scaleThreshold } from "d3-scale";
-import { ComposableMap, Geographies, Geography, Line, Marker } from "react-simple-maps";
-import type { MapDirection, MapEdge, MapNode } from "../api/types";
+import { ComposableMap, Marker, useMapContext } from "react-simple-maps";
+import type { Frequency, MapDirection, MapEdge, MapNode } from "../api/types";
 import airportCities from "../config/airportCities.json";
-import { useFilters } from "../context/FilterContext";
 import { useMapRoutes } from "../hooks/useMapRoutes";
 
-const INDIA_GEO_URL = "/maps/india-states-simplified.geojson";
-const MAJOR_CITY_CODES = new Set(["DEL", "BOM", "BLR", "MAA", "HYD", "CCU", "AMD", "GOI"]);
+const MAJOR_CITY_CODES = new Set([
+  "DEL",
+  "BOM",
+  "BLR",
+  "MAA",
+  "HYD",
+  "CCU",
+  "AMD",
+  "GOI",
+  "PNQ",
+  "JAI",
+  "LKO",
+  "PAT",
+  "GAU",
+  "BBI",
+  "VTZ",
+  "NAG",
+]);
+
+const FALLBACK_DESTINATION_CODES = [
+  "BOM",
+  "BLR",
+  "MAA",
+  "HYD",
+  "CCU",
+  "AMD",
+  "GOI",
+  "PNQ",
+  "JAI",
+  "LKO",
+  "PAT",
+  "GAU",
+  "BBI",
+  "VTZ",
+  "NAG",
+  "IXC",
+  "IXB",
+  "TRV",
+  "IXM",
+];
+
+const FALLBACK_ROUTE_COUNT = 6;
+type GeoPoint = [number, number];
+
 const CPI_COLOR = scaleThreshold<number, string>()
   .domain([98, 102])
-  .range(["#4ade80", "#f0b429", "#f87171"]);
+  .range(["#6dffb0", "#d7b15f", "#ff7a9b"]);
 
 const MAP_NODES = airportCities.cities.map((city) => ({
   city_code: city.city_code,
@@ -29,9 +70,27 @@ type TooltipState = {
   reverse: MapDirection | null;
 } | null;
 
-function canonicalEdgeKey(a: string, b: string): string {
-  return [a, b].sort().join("|");
-}
+type RenderedRoute = {
+  key: string;
+  origin: string;
+  destination: string;
+  originNode: MapNode;
+  destinationNode: MapNode;
+  forward: MapDirection | null;
+  reverse: MapDirection | null;
+  fallback: boolean;
+};
+
+type RouteArcProps = {
+  route: RenderedRoute;
+  index: number;
+  color: string;
+  strokeWidth: number;
+  strokeOpacity: number;
+  onEnter: MouseEventHandler<SVGPathElement>;
+  onMove: MouseEventHandler<SVGPathElement>;
+  onLeave: MouseEventHandler<SVGPathElement>;
+};
 
 function directionFor(edge: MapEdge | undefined, origin: string, destination: string) {
   if (!edge) return null;
@@ -53,8 +112,8 @@ function edgeCpi(forward: MapDirection | null, reverse: MapDirection | null): nu
   return values.reduce((sum, value) => sum + value, 0) / values.length;
 }
 
-function colorForCpi(cpi: number | null): string {
-  if (cpi === null) return "#3b4454";
+function colorForCpi(cpi: number | null, fallback: boolean): string {
+  if (fallback || cpi === null) return "#c58cff";
   return CPI_COLOR(cpi);
 }
 
@@ -62,10 +121,123 @@ function formatCpi(value: number | null): string {
   return value === null ? "-" : value.toFixed(1);
 }
 
+function routeTarget(edge: MapEdge, origin: string): string | null {
+  if (edge.city_a === origin) return edge.city_b;
+  if (edge.city_b === origin) return edge.city_a;
+  if (edge.city_a_to_b?.origin_city_code === origin) return edge.city_a_to_b.destination_city_code;
+  if (edge.city_b_to_a?.origin_city_code === origin) return edge.city_b_to_a.destination_city_code;
+  if (edge.city_a_to_b?.destination_city_code === origin) return edge.city_a_to_b.origin_city_code;
+  if (edge.city_b_to_a?.destination_city_code === origin) return edge.city_b_to_a.origin_city_code;
+  return null;
+}
+
+function distanceSquared(origin: MapNode, destination: MapNode): number {
+  const longitudeDelta = origin.longitude - destination.longitude;
+  const latitudeDelta = origin.latitude - destination.latitude;
+  return longitudeDelta * longitudeDelta + latitudeDelta * latitudeDelta;
+}
+
+function routeHash(origin: string, destination: string): number {
+  const value = `${origin}-${destination}`;
+  let hash = 0;
+  for (let index = 0; index < value.length; index += 1) {
+    hash = (hash * 31 + value.charCodeAt(index)) % 997;
+  }
+  return hash;
+}
+
+function fallbackDestinationNodes(
+  origin: string,
+  originNode: MapNode,
+  nodesByCode: Map<string, MapNode>
+): MapNode[] {
+  const preferredNodes = FALLBACK_DESTINATION_CODES.map((code) => nodesByCode.get(code)).filter(
+    (node): node is MapNode => node !== undefined && node.city_code !== origin
+  );
+
+  const nearestPreferred = preferredNodes
+    .map((node) => ({ node, distance: distanceSquared(originNode, node) }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, 12)
+    .sort(
+      (a, b) =>
+        routeHash(origin, a.node.city_code) - routeHash(origin, b.node.city_code) ||
+        a.distance - b.distance
+    )
+    .slice(0, FALLBACK_ROUTE_COUNT)
+    .map(({ node }) => node);
+
+  if (nearestPreferred.length >= FALLBACK_ROUTE_COUNT) return nearestPreferred;
+
+  const used = new Set(nearestPreferred.map((node) => node.city_code));
+  const fillNodes = MAP_NODES.filter(
+    (node) => node.city_code !== origin && !used.has(node.city_code)
+  )
+    .map((node) => ({ node, distance: distanceSquared(originNode, node) }))
+    .sort((a, b) => a.distance - b.distance)
+    .slice(0, FALLBACK_ROUTE_COUNT - nearestPreferred.length)
+    .map(({ node }) => node);
+
+  return [...nearestPreferred, ...fillNodes];
+}
+
+function RouteArc({
+  route,
+  index,
+  color,
+  strokeWidth,
+  strokeOpacity,
+  onEnter,
+  onMove,
+  onLeave,
+}: RouteArcProps) {
+  const { projection } = useMapContext();
+  const from = projection([route.originNode.longitude, route.originNode.latitude]) as GeoPoint | null;
+  const to = projection([route.destinationNode.longitude, route.destinationNode.latitude]) as GeoPoint | null;
+
+  if (!from || !to) return null;
+
+  const deltaX = to[0] - from[0];
+  const deltaY = to[1] - from[1];
+  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  const bend = Math.min(210, Math.max(54, distance * 0.24));
+  const stagger = ((index % 3) - 1) * 18;
+  const controlX = (from[0] + to[0]) / 2 + stagger;
+  const controlY = (from[1] + to[1]) / 2 - bend;
+  const pathData = `M ${from[0].toFixed(2)} ${from[1].toFixed(2)} Q ${controlX.toFixed(
+    2
+  )} ${controlY.toFixed(2)} ${to[0].toFixed(2)} ${to[1].toFixed(2)}`;
+
+  return (
+    <g>
+      <path
+        d={pathData}
+        stroke="transparent"
+        strokeWidth={20}
+        strokeLinecap="round"
+        strokeOpacity={0}
+        className="landing-map__route-hitbox"
+        onMouseEnter={onEnter}
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
+      />
+      <path
+        d={pathData}
+        stroke={color}
+        strokeWidth={strokeWidth}
+        strokeLinecap="round"
+        strokeOpacity={strokeOpacity}
+        className="landing-map__route"
+        style={{ animationDelay: `${Math.min(index * 45, 900)}ms` }}
+      />
+    </g>
+  );
+}
+
 function DirectionPanel({ title, direction }: { title: string; direction: MapDirection | null }) {
   return (
     <div className="min-w-40 flex-1">
-      <h3 className="mb-2 text-xs font-medium uppercase tracking-wide text-secondary">{title}</h3>
+      <h3 className="mb-2 text-xs font-medium uppercase text-secondary">{title}</h3>
       {direction ? (
         <dl className="space-y-1 text-sm">
           <div className="flex justify-between gap-4">
@@ -80,29 +252,21 @@ function DirectionPanel({ title, direction }: { title: string; direction: MapDir
             <dt className="text-secondary">Available</dt>
             <dd className="font-mono text-primary">{direction.available_count}</dd>
           </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-secondary">No-flight</dt>
-            <dd className="font-mono text-primary">{direction.no_flight_count}</dd>
-          </div>
-          <div className="flex justify-between gap-4">
-            <dt className="text-secondary">Base</dt>
-            <dd className="font-mono text-primary">{direction.base_period}</dd>
-          </div>
         </dl>
       ) : (
-        <div className="h-28 rounded border border-line bg-inset" />
+        <p className="text-sm text-secondary">No CPI payload loaded.</p>
       )}
     </div>
   );
 }
 
 export default function IndiaMapView() {
-  const { appliedFilters: filters } = useFilters();
-  const { data, loading, error } = useMapRoutes({
-    frequency: filters.frequency,
-    routes: filters.selectedRoutes,
-  });
+  const [selectedCity, setSelectedCity] = useState("DEL");
   const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const { data, loading, error } = useMapRoutes({
+    frequency: "daily" satisfies Frequency,
+    originCity: selectedCity,
+  });
 
   const nodesByCode = useMemo(() => {
     const nodes = new Map<string, MapNode>();
@@ -110,97 +274,128 @@ export default function IndiaMapView() {
     return nodes;
   }, []);
 
-  const edgesByKey = useMemo(() => {
-    const edges = new Map<string, MapEdge>();
-    for (const edge of data?.edges ?? []) edges.set(edge.edge_key, edge);
-    return edges;
-  }, [data]);
+  const selectedNode = nodesByCode.get(selectedCity) ?? nodesByCode.get("DEL") ?? MAP_NODES[0];
 
-  const selectedEdges = useMemo(() => {
-    return filters.selectedRoutes
-      .map((route) => {
-        const [origin, destination] = route.split("-");
-        const originNode = nodesByCode.get(origin);
-        const destinationNode = nodesByCode.get(destination);
-        if (!originNode || !destinationNode) return null;
-        const edge = edgesByKey.get(canonicalEdgeKey(origin, destination));
-        const forward = directionFor(edge, origin, destination);
-        const reverse = directionFor(edge, destination, origin);
-        return { origin, destination, originNode, destinationNode, forward, reverse };
+  const renderedRoutes = useMemo<RenderedRoute[]>(() => {
+    const routes = (data?.edges ?? [])
+      .map((edge) => {
+        const destination = routeTarget(edge, selectedCity);
+        const destinationNode = destination ? nodesByCode.get(destination) : undefined;
+        if (!selectedNode || !destination || !destinationNode) return null;
+        return {
+          key: edge.edge_key,
+          origin: selectedCity,
+          destination,
+          originNode: selectedNode,
+          destinationNode,
+          forward: directionFor(edge, selectedCity, destination),
+          reverse: directionFor(edge, destination, selectedCity),
+          fallback: false,
+        };
       })
-      .filter((edge): edge is NonNullable<typeof edge> => edge !== null);
-  }, [edgesByKey, filters.selectedRoutes, nodesByCode]);
+      .filter((route): route is RenderedRoute => route !== null);
+
+    if (routes.length > 0) return routes;
+
+    if (!selectedNode) return [];
+
+    const fallbackRoutes: RenderedRoute[] = [];
+    for (const destinationNode of fallbackDestinationNodes(selectedCity, selectedNode, nodesByCode)) {
+      fallbackRoutes.push({
+        key: `${selectedCity}-${destinationNode.city_code}-fallback`,
+        origin: selectedCity,
+        destination: destinationNode.city_code,
+        originNode: selectedNode,
+        destinationNode,
+        forward: null,
+        reverse: null,
+        fallback: true,
+      });
+    }
+    return fallbackRoutes;
+  }, [data, nodesByCode, selectedCity, selectedNode]);
+
+  const availableDirections = useMemo(
+    () =>
+      renderedRoutes.reduce(
+        (total, route) => total + Number(route.forward !== null) + Number(route.reverse !== null),
+        0
+      ),
+    [renderedRoutes]
+  );
+
+  function selectNode(nodeCode: string) {
+    setSelectedCity(nodeCode);
+    setTooltip(null);
+  }
 
   return (
-    <div>
-      {error && (
-        <p role="alert" className="mb-3 text-sm text-error">
-          CPI overlay unavailable: {error}. Showing the map without fetched CPI data.
-        </p>
-      )}
-      <div className="mb-4 flex items-end justify-between gap-4">
-        <div>
-          <h2 className="mb-1 text-base font-semibold text-primary">Route CPI map</h2>
-          <p className="font-mono text-sm text-secondary">
-            {data?.period
-              ? `CPI period: ${data.period}`
-              : loading
-                ? "Fetching CPI overlay..."
-                : "No CPI overlay loaded"}{" "}
-            / Nodes: {MAP_NODES.length}
-          </p>
-        </div>
-        <div className="flex gap-3 text-xs text-secondary">
-          <span><span className="mr-1 inline-block h-2 w-6 rounded bg-up" />Below 98</span>
-          <span><span className="mr-1 inline-block h-2 w-6 rounded bg-warning" />98-102</span>
-          <span><span className="mr-1 inline-block h-2 w-6 rounded bg-down" />Above 102</span>
-        </div>
-      </div>
-      <div className="relative overflow-hidden rounded-md border border-line bg-inset">
+    <section className="landing-map" aria-label="Route CPI map">
+      <div className="landing-map__media">
+        <img
+          src="/design-assets/landing-2.png"
+          alt=""
+          className="landing-map__image"
+          draggable={false}
+        />
         <ComposableMap
           projection="geoMercator"
-          projectionConfig={{ center: [82.8, 22.5], scale: 1050 }}
-          width={900}
-          height={760}
-          className="h-[680px] w-full"
+          projectionConfig={{ center: [82.4, 22.7], scale: 1510 }}
+          width={1440}
+          height={840}
+          className="landing-map__overlay"
         >
-          <Geographies geography={INDIA_GEO_URL}>
-            {({ geographies }) =>
-              geographies.map((geo) => (
-                <Geography
-                  key={geo.rsmKey}
-                  geography={geo}
-                  fill="#12161f"
-                  stroke="#334155"
-                  strokeWidth={0.6}
-                  style={{
-                    default: { outline: "none" },
-                    hover: { fill: "#171d28", outline: "none" },
-                    pressed: { outline: "none" },
-                  }}
-                />
-              ))
-            }
-          </Geographies>
-          {selectedEdges.map(({ origin, destination, originNode, destinationNode, forward, reverse }) => {
-            const cpi = edgeCpi(forward, reverse);
+          {renderedRoutes.map((route, index) => {
+            const cpi = edgeCpi(route.forward, route.reverse);
             return (
-              <Line
-                key={`${origin}-${destination}`}
-                from={[originNode.longitude, originNode.latitude]}
-                to={[destinationNode.longitude, destinationNode.latitude]}
-                stroke={colorForCpi(cpi)}
-                strokeWidth={2.5}
-                strokeLinecap="round"
-                strokeOpacity={cpi === null ? 0.55 : 0.9}
+              <RouteArc
+                key={route.key}
+                route={route}
+                index={index}
+                color={colorForCpi(cpi, route.fallback)}
+                strokeWidth={route.fallback ? 1.55 : 2.35}
+                strokeOpacity={route.fallback ? 0.42 : 0.86}
+                onEnter={(event) =>
+                  setTooltip({
+                    x: event.clientX,
+                    y: event.clientY,
+                    origin: route.origin,
+                    destination: route.destination,
+                    forward: route.forward,
+                    reverse: route.reverse,
+                  })
+                }
+                onMove={(event) =>
+                  setTooltip((current) =>
+                    current ? { ...current, x: event.clientX, y: event.clientY } : current
+                  )
+                }
+                onLeave={() => setTooltip(null)}
+              />
+            );
+          })}
+          {MAP_NODES.map((node) => {
+            const isMajor = MAJOR_CITY_CODES.has(node.city_code);
+            const isSelected = node.city_code === selectedCity;
+            return (
+              <Marker
+                key={node.city_code}
+                coordinates={[node.longitude, node.latitude]}
+                role="button"
+                tabIndex={0}
+                aria-label={`Show routes from ${node.city_name}`}
+                onClick={() => selectNode(node.city_code)}
+                onKeyDown={(event) => {
+                  if (event.key === "Enter" || event.key === " ") selectNode(node.city_code);
+                }}
                 onMouseEnter={(event) =>
                   setTooltip({
                     x: event.clientX,
                     y: event.clientY,
-                    origin,
-                    destination,
-                    forward,
-                    reverse,
+                    origin: node.city_code,
+                    destination: node.city_code,
+                    forward: null,
+                    reverse: null,
                   })
                 }
                 onMouseMove={(event) =>
@@ -209,70 +404,69 @@ export default function IndiaMapView() {
                   )
                 }
                 onMouseLeave={() => setTooltip(null)}
-              />
+              >
+                <circle
+                  r={isSelected ? 8 : isMajor ? 4.5 : 2.8}
+                  className={isSelected ? "landing-map__node landing-map__node--active" : "landing-map__node"}
+                />
+                {isMajor && (
+                  <text
+                    y={isSelected ? -14 : -8}
+                    textAnchor="middle"
+                    className="landing-map__label"
+                  >
+                    {node.city_code}
+                  </text>
+                )}
+              </Marker>
             );
           })}
-          {MAP_NODES.map((node) => (
-            <Marker
-              key={node.city_code}
-              coordinates={[node.longitude, node.latitude]}
-              onMouseEnter={(event) =>
-                setTooltip({
-                  x: event.clientX,
-                  y: event.clientY,
-                  origin: node.city_code,
-                  destination: node.city_code,
-                  forward: null,
-                  reverse: null,
-                })
-              }
-              onMouseMove={(event) =>
-                setTooltip((current) =>
-                  current ? { ...current, x: event.clientX, y: event.clientY } : current
-                )
-              }
-              onMouseLeave={() => setTooltip(null)}
-            >
-              <circle r={MAJOR_CITY_CODES.has(node.city_code) ? 3.5 : 2} fill="#e5e7eb" />
-              {MAJOR_CITY_CODES.has(node.city_code) && (
-                <text y={-6} textAnchor="middle" className="fill-primary text-[10px] font-medium">
-                  {node.city_code}
-                </text>
-              )}
-            </Marker>
-          ))}
         </ComposableMap>
-        {tooltip && (
-          <div
-            className="pointer-events-none fixed z-50 max-w-xl rounded-md border border-line bg-panel p-4 shadow-xl"
-            style={{ left: tooltip.x + 14, top: tooltip.y + 14 }}
-          >
-            {tooltip.origin === tooltip.destination ? (
-              <div>
-                <h3 className="text-sm font-semibold text-primary">{tooltip.origin}</h3>
-                <p className="mt-2 text-sm text-secondary">No route CPI selected for this city.</p>
-              </div>
-            ) : (
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-primary">
-                  {tooltip.origin} - {tooltip.destination}
-                </h3>
-                <div className="flex gap-4">
-                  <DirectionPanel
-                    title={`${tooltip.origin} -> ${tooltip.destination}`}
-                    direction={tooltip.forward}
-                  />
-                  <div className="w-px bg-line" />
-                  <DirectionPanel
-                    title={`${tooltip.destination} -> ${tooltip.origin}`}
-                    direction={tooltip.reverse}
-                  />
-                </div>
-              </div>
-            )}
-          </div>
+      </div>
+
+      <div className="landing-map__hud" aria-live="polite">
+        <p className="landing-map__eyebrow">Selected node</p>
+        <h2>{selectedNode?.city_name ?? selectedCity}</h2>
+        <div className="landing-map__stats">
+          <span>{loading ? "Loading" : `${renderedRoutes.length} routes`}</span>
+          <span>{availableDirections} CPI directions</span>
+        </div>
+        {error && (
+          <p role="alert" className="landing-map__error">
+            API unavailable: {error}. Showing preview routes.
+          </p>
         )}
       </div>
-    </div>
+
+      {tooltip && (
+        <div
+          className="landing-map__tooltip"
+          style={{ left: tooltip.x + 14, top: tooltip.y + 14 }}
+        >
+          {tooltip.origin === tooltip.destination ? (
+            <>
+              <h3>{tooltip.origin}</h3>
+              <p>Click to request adjacent route CPI data.</p>
+            </>
+          ) : (
+            <>
+              <h3>
+                {tooltip.origin} - {tooltip.destination}
+              </h3>
+              <div className="landing-map__tooltip-grid">
+                <DirectionPanel
+                  title={`${tooltip.origin} -> ${tooltip.destination}`}
+                  direction={tooltip.forward}
+                />
+                <DirectionPanel
+                  title={`${tooltip.destination} -> ${tooltip.origin}`}
+                  direction={tooltip.reverse}
+                />
+              </div>
+            </>
+          )}
+        </div>
+      )}
+    </section>
   );
 }

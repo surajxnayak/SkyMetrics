@@ -4,7 +4,7 @@ import pytest
 from fastapi import HTTPException
 
 from api.data_access import load_map_routes
-from api.routers.map import _validate_map_routes
+from api.routers.map import _validate_map_origin_city, _validate_map_routes
 
 
 class FakeCursor:
@@ -28,6 +28,7 @@ class FakeCursor:
             self.rows = []
             self.row = ("snapshot-1", "2026-08-24")
         else:
+            self.conn.route_query = query
             self.conn.route_params = params
             self.rows = [
                 (
@@ -75,6 +76,7 @@ class FakeConn:
         from datetime import datetime, timezone
 
         self.route_params = None
+        self.route_query = ""
         self.written_at = datetime(2026, 8, 24, tzinfo=timezone.utc)
 
     def cursor(self):
@@ -95,8 +97,24 @@ def test_load_map_routes_groups_bidirectional_cpi_edges():
     assert isinstance(edge["city_a_to_b"]["cpi"], float)
 
 
+def test_load_map_routes_can_filter_by_clicked_origin_city():
+    conn = FakeConn()
+
+    load_map_routes(conn, "daily", origin_city="AAA")
+
+    assert "origin_city_code = %s OR destination_city_code = %s" in conn.route_query
+    assert conn.route_params[-2:] == ["AAA", "AAA"]
+
+
 def test_map_route_validator_rejects_malformed_route():
     with pytest.raises(HTTPException) as exc:
         _validate_map_routes(["DEL/BOM"])
+
+    assert exc.value.status_code == 422
+
+
+def test_map_origin_city_validator_rejects_malformed_city_code():
+    with pytest.raises(HTTPException) as exc:
+        _validate_map_origin_city("DELHI")
 
     assert exc.value.status_code == 422

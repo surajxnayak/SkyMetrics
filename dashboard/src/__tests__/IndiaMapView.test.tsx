@@ -1,9 +1,8 @@
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import type React from "react";
-import { describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 import { getMapRoutes } from "../api/client";
 import IndiaMapView from "../components/IndiaMapView";
-import { FilterProvider } from "../context/FilterContext";
 
 vi.mock("react-simple-maps", () => ({
   ComposableMap: ({ children }: { children: React.ReactNode }) => (
@@ -12,35 +11,28 @@ vi.mock("react-simple-maps", () => ({
   Geographies: ({ children }: { children: (args: { geographies: Array<{ rsmKey: string }> }) => React.ReactNode }) =>
     children({ geographies: [{ rsmKey: "india" }] }),
   Geography: () => <path data-testid="geography" />,
-  Line: ({
-    onMouseEnter,
-    onMouseMove,
-    onMouseLeave,
-  }: {
-    onMouseEnter?: React.MouseEventHandler<SVGLineElement>;
-    onMouseMove?: React.MouseEventHandler<SVGLineElement>;
-    onMouseLeave?: React.MouseEventHandler<SVGLineElement>;
-  }) => (
-    <line
-      data-testid="map-line"
-      onMouseEnter={onMouseEnter}
-      onMouseMove={onMouseMove}
-      onMouseLeave={onMouseLeave}
-    />
-  ),
+  useMapContext: () => ({
+    projection: ([longitude, latitude]: [number, number]) => [longitude * 10, latitude * -10],
+  }),
   Marker: ({
     children,
+    onClick,
+    onKeyDown,
     onMouseEnter,
     onMouseMove,
     onMouseLeave,
   }: {
     children: React.ReactNode;
+    onClick?: React.MouseEventHandler<SVGGElement>;
+    onKeyDown?: React.KeyboardEventHandler<SVGGElement>;
     onMouseEnter?: React.MouseEventHandler<SVGGElement>;
     onMouseMove?: React.MouseEventHandler<SVGGElement>;
     onMouseLeave?: React.MouseEventHandler<SVGGElement>;
   }) => (
     <g
       data-testid="map-marker"
+      onClick={onClick}
+      onKeyDown={onKeyDown}
       onMouseEnter={onMouseEnter}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
@@ -96,17 +88,21 @@ vi.mock("../api/client", () => ({
 }));
 
 describe("IndiaMapView", () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
   it("renders airport-city nodes and split bidirectional route CPI tooltip", async () => {
-    render(
-      <FilterProvider>
-        <IndiaMapView />
-      </FilterProvider>
+    const { container } = render(<IndiaMapView />);
+
+    await waitFor(() =>
+      expect(getMapRoutes).toHaveBeenCalledWith(expect.objectContaining({ originCity: "DEL" }))
     );
+    expect(screen.getByLabelText("Route CPI map")).toBeInTheDocument();
 
-    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
-    expect(screen.getByText(/CPI period: 2026-08-24 \/ Nodes: \d+/)).toBeInTheDocument();
-
-    fireEvent.mouseEnter(screen.getAllByTestId("map-line")[0], { clientX: 20, clientY: 30 });
+    const routeHitbox = container.querySelector(".landing-map__route-hitbox");
+    expect(routeHitbox).not.toBeNull();
+    fireEvent.mouseEnter(routeHitbox as Element, { clientX: 20, clientY: 30 });
 
     expect(screen.getByText("DEL - BOM")).toBeInTheDocument();
     expect(screen.getByText("DEL -> BOM")).toBeInTheDocument();
@@ -115,17 +111,28 @@ describe("IndiaMapView", () => {
     expect(screen.getByText("99.0")).toBeInTheDocument();
   });
 
+  it("refetches adjacent routes when a node is clicked", async () => {
+    render(<IndiaMapView />);
+
+    await waitFor(() =>
+      expect(getMapRoutes).toHaveBeenCalledWith(expect.objectContaining({ originCity: "DEL" }))
+    );
+
+    fireEvent.click(screen.getAllByTestId("map-marker")[1]);
+
+    await waitFor(() => expect(getMapRoutes).toHaveBeenCalledTimes(2));
+    expect(vi.mocked(getMapRoutes).mock.calls[1][0]).toEqual(
+      expect.objectContaining({ frequency: "daily", originCity: expect.any(String) })
+    );
+  });
+
   it("keeps the map visible when the CPI fetch fails", async () => {
     vi.mocked(getMapRoutes).mockRejectedValueOnce(new Error("Failed to fetch"));
 
-    render(
-      <FilterProvider>
-        <IndiaMapView />
-      </FilterProvider>
-    );
+    const { container } = render(<IndiaMapView />);
 
     await waitFor(() => expect(screen.getByRole("alert")).toHaveTextContent("Failed to fetch"));
-    expect(screen.getByTestId("india-map")).toBeInTheDocument();
-    expect(screen.getAllByTestId("map-line").length).toBeGreaterThan(0);
+    expect(container.querySelectorAll(".landing-map__route")).toHaveLength(6);
+    expect(container.querySelectorAll(".landing-map__route-hitbox")).toHaveLength(6);
   });
 });

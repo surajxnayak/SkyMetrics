@@ -341,6 +341,7 @@ def load_map_routes(
     snapshot_id: str | None = None,
     period: str | None = None,
     routes: list[str] | None = None,
+    origin_city: str | None = None,
 ) -> dict:
     resolved_snapshot_id, resolved_period = _resolve_map_snapshot(
         conn, frequency, snapshot_id, period
@@ -366,6 +367,9 @@ def load_map_routes(
         expanded_routes = sorted(set(routes) | {_reverse_route(route) for route in routes})
         query += " AND route_key = ANY(%s)"
         params.append(expanded_routes)
+    if origin_city is not None:
+        query += " AND (origin_city_code = %s OR destination_city_code = %s)"
+        params.extend([origin_city, origin_city])
     query += " ORDER BY origin_city_code, destination_city_code"
 
     with conn.cursor() as cur:
