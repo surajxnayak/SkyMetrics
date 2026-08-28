@@ -51,7 +51,7 @@ describe("MapView", () => {
 
     renderMapView();
 
-    await waitFor(() => expect(screen.getByText("India route network")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Selected city")).toBeInTheDocument());
     expect(screen.getByText("Click a city on the map to see its route coverage.")).toBeInTheDocument();
   });
 
@@ -96,7 +96,7 @@ describe("MapView", () => {
     });
 
     renderMapView();
-    await waitFor(() => expect(screen.getByText("India route network")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Selected city")).toBeInTheDocument());
 
     // Clicking Mumbai (city_a of the fixture edge): its direction is
     // city_a_to_b, the one populated with real data in this fixture.
@@ -120,7 +120,7 @@ describe("MapView", () => {
     });
 
     renderMapView();
-    await waitFor(() => expect(screen.getByText("India route network")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Selected city")).toBeInTheDocument());
 
     await userEvent.click(screen.getByText("Chennai"));
 

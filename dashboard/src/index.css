@@ -45,22 +45,18 @@ body {
   vertical-align: middle;
 }
 
-@keyframes hero-hub-pulse {
-  0%, 100% { opacity: 1; filter: drop-shadow(0 0 3px var(--color-accent)); }
-  50% { opacity: 0.7; filter: drop-shadow(0 0 9px var(--color-accent)); }
+@keyframes brand-marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
-@keyframes hero-spoke-flow {
-  0% { stroke-dashoffset: 24; }
-  100% { stroke-dashoffset: 0; }
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
 }
 
 @media (prefers-reduced-motion: no-preference) {
-  .hero-hub {
-    animation: hero-hub-pulse 2.4s ease-in-out infinite;
-  }
-  .hero-spoke {
-    stroke-dasharray: 3 5;
-    animation: hero-spoke-flow 6s linear infinite;
+  .brand-marquee {
+    animation: brand-marquee-scroll 32s linear infinite;
   }
 }

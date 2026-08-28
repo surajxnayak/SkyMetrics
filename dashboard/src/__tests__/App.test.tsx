@@ -80,61 +80,34 @@ vi.mock("../api/client", () => ({
   askQuestion: vi.fn().mockResolvedValue({ answer: "", tool_calls: [] }),
 }));
 
-async function enterDashboard() {
-  render(<App />);
-  await waitFor(() => expect(screen.getByText("Explore the dashboard")).toBeInTheDocument());
-  await userEvent.click(screen.getByText("Explore the dashboard"));
-  await waitFor(() => expect(screen.getByText("India route network")).toBeInTheDocument());
-}
-
-describe("App landing page", () => {
-  it("renders the landing page by default, with the navbar and hero", async () => {
+describe("App", () => {
+  it("renders the persistent left nav and defaults to the map tab -- no redirect", async () => {
     render(<App />);
 
-    expect(screen.getByRole("button", { name: "SkyMetrics home" })).toBeInTheDocument();
+    expect(screen.getByText("SkyMetrics")).toBeInTheDocument();
     await waitFor(() =>
       expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
     );
-  });
-
-  it("enters the dashboard, defaulting to the map tab, when the CTA is clicked", async () => {
-    await enterDashboard();
-
     expect(screen.getByRole("tab", { name: "Route Map" })).toHaveAttribute("aria-selected", "true");
   });
 
-  it("jumps straight to a section from the navbar menu", async () => {
+  it("switches to the trend tab when clicked, same shell, no page change", async () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "SkyMetrics home" })).toBeInTheDocument());
-
-    await userEvent.click(screen.getByRole("button", { name: "Open navigation menu" }));
-    await userEvent.click(screen.getByRole("button", { name: "Sector Heatmap" }));
-
-    await waitFor(() => expect(screen.getByText("Sector heatmap")).toBeInTheDocument());
-  });
-
-  it("returns to the landing page from the dashboard's home button", async () => {
-    await enterDashboard();
-
-    await userEvent.click(screen.getByRole("button", { name: "Back to SkyMetrics home" }));
-
     await waitFor(() =>
       expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
     );
-  });
-});
-
-describe("App dashboard tabs", () => {
-  it("switches to the trend tab when clicked", async () => {
-    await enterDashboard();
 
     await userEvent.click(screen.getByText("Trend Analysis"));
 
     await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
+    expect(screen.getByText("SkyMetrics")).toBeInTheDocument();
   });
 
   it("switches to the heatmap tab when clicked", async () => {
-    await enterDashboard();
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
+    );
 
     await userEvent.click(screen.getByText("Sector Heatmap"));
 
@@ -142,7 +115,10 @@ describe("App dashboard tabs", () => {
   });
 
   it("switches to the elasticity tab when clicked", async () => {
-    await enterDashboard();
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
+    );
 
     await userEvent.click(screen.getByText("Elasticity"));
 
@@ -150,7 +126,10 @@ describe("App dashboard tabs", () => {
   });
 
   it("switches to the list tab when clicked", async () => {
-    await enterDashboard();
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
+    );
 
     await userEvent.click(screen.getByText("Data Drill-down"));
 
@@ -158,7 +137,10 @@ describe("App dashboard tabs", () => {
   });
 
   it("uses the correct ARIA tab pattern", async () => {
-    await enterDashboard();
+    render(<App />);
+    await waitFor(() =>
+      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
+    );
 
     expect(screen.getByRole("tablist")).toBeInTheDocument();
     const mapTab = screen.getByRole("tab", { name: "Route Map" });
@@ -171,12 +153,12 @@ describe("App dashboard tabs", () => {
     expect(mapTab).toHaveAttribute("aria-selected", "false");
     expect(heatmapTab).toHaveAttribute("aria-selected", "true");
   });
-});
 
-describe("App floating Ask APIx widget", () => {
-  it("is available on both the landing page and the dashboard", async () => {
+  it("keeps the floating Ask APIx widget available on every tab", async () => {
     render(<App />);
-    await waitFor(() => expect(screen.getByRole("button", { name: "SkyMetrics home" })).toBeInTheDocument());
+    await waitFor(() =>
+      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
+    );
 
     await userEvent.click(screen.getByRole("button", { name: "Open Ask APIx chat" }));
     await waitFor(() => expect(screen.getByText("Ask APIx")).toBeInTheDocument());

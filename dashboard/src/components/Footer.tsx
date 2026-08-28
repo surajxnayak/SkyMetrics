@@ -59,7 +59,7 @@ export default function Footer() {
       </div>
 
       <p className="mx-auto mt-8 max-w-5xl border-t border-outline-variant pt-4 text-xs text-muted">
-        SkyMetrics -- Smart India Hackathon 2026, problem statement SIH26056 (MoSPI/DIID).
+        SkyMetrics -- real-time airfare intelligence for India.
       </p>
     </footer>
   );

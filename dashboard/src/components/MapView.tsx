@@ -60,118 +60,110 @@ export default function MapView() {
   );
 
   return (
-    <div className="rounded-sm border border-outline-variant bg-surface-container-low p-4">
-      <h2 className="mb-1 text-base font-semibold text-primary">India route network</h2>
-      <p className="mb-4 text-sm text-on-surface-variant">
-        City nodes are the live route basket -- click one to see its coverage. Route lines
-        colour by CPI once live route-level pricing exists for that city pair.
-      </p>
-
+    <div className="w-full">
       {error && (
         <p role="alert" className="mb-3 text-sm text-error">
           Failed to load route data: {error}
         </p>
       )}
 
-      <div className="flex flex-col gap-4 lg:flex-row">
-        <div className="min-w-0 flex-1 overflow-hidden rounded-sm border border-outline-variant bg-inset">
-          {loading && !data ? (
-            <p className="p-4 text-sm text-secondary">Loading map...</p>
-          ) : (
-            <ComposableMap
-              projection="geoMercator"
-              projectionConfig={{ center: [82.8, 23.2], scale: 1150 }}
-              width={760}
-              height={560}
-              style={{ width: "100%", height: "auto", display: "block" }}
-              role="img"
-              aria-label="Map of India showing airport city nodes and route coverage"
-            >
-              <Geographies geography={GEO_URL}>
-                {({ geographies }) =>
-                  geographies.map((geo) => (
-                    <Geography
-                      key={geo.rsmKey}
-                      geography={geo}
-                      fill="var(--color-surface-container)"
-                      stroke="var(--color-outline-variant)"
-                      strokeWidth={0.6}
-                      style={{
-                        default: { outline: "none" },
-                        hover: { outline: "none", fill: "var(--color-surface-container-high)" },
-                        pressed: { outline: "none" },
-                      }}
-                    />
-                  ))
-                }
-              </Geographies>
-
-              {edges.map((edge) => {
-                const cityA = CITY_BY_CODE.get(edge.city_a);
-                const cityB = CITY_BY_CODE.get(edge.city_b);
-                if (!cityA || !cityB) return null;
-                const direction = edge.city_a_to_b ?? edge.city_b_to_a;
-                if (!direction) return null;
-                const isSelected =
-                  selectedCity === null || selectedCity === edge.city_a || selectedCity === edge.city_b;
-                return (
-                  <Line
-                    key={edge.edge_key}
-                    from={[cityA.longitude, cityA.latitude]}
-                    to={[cityB.longitude, cityB.latitude]}
-                    stroke={cpiColor(direction.cpi)}
-                    strokeWidth={isSelected ? 2 : 1}
-                    strokeOpacity={isSelected ? 0.9 : 0.25}
-                    strokeLinecap="round"
+      <div className="relative h-[75vh] min-h-[520px] w-full overflow-hidden bg-inset">
+        {loading && !data ? (
+          <p className="p-4 text-sm text-secondary">Loading map...</p>
+        ) : (
+          <ComposableMap
+            projection="geoMercator"
+            projectionConfig={{ center: [82.8, 23.2], scale: 1500 }}
+            width={900}
+            height={800}
+            style={{ width: "100%", height: "100%" }}
+            role="img"
+            aria-label="Map of India showing airport city nodes and route coverage"
+          >
+            <Geographies geography={GEO_URL}>
+              {({ geographies }) =>
+                geographies.map((geo) => (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill="var(--color-surface-container)"
+                    stroke="var(--color-outline-variant)"
+                    strokeWidth={0.6}
+                    style={{
+                      default: { outline: "none" },
+                      hover: { outline: "none", fill: "var(--color-surface-container-high)" },
+                      pressed: { outline: "none" },
+                    }}
                   />
-                );
-              })}
+                ))
+              }
+            </Geographies>
 
-              {CITY_NODES.map((city) => {
-                const isSelected = selectedCity === city.city_code;
-                return (
-                  <Marker
-                    key={city.city_code}
-                    coordinates={[city.longitude, city.latitude]}
-                    onClick={() => setSelectedCity(isSelected ? null : city.city_code)}
+            {edges.map((edge) => {
+              const cityA = CITY_BY_CODE.get(edge.city_a);
+              const cityB = CITY_BY_CODE.get(edge.city_b);
+              if (!cityA || !cityB) return null;
+              const direction = edge.city_a_to_b ?? edge.city_b_to_a;
+              if (!direction) return null;
+              const isSelected =
+                selectedCity === null || selectedCity === edge.city_a || selectedCity === edge.city_b;
+              return (
+                <Line
+                  key={edge.edge_key}
+                  from={[cityA.longitude, cityA.latitude]}
+                  to={[cityB.longitude, cityB.latitude]}
+                  stroke={cpiColor(direction.cpi)}
+                  strokeWidth={isSelected ? 2 : 1}
+                  strokeOpacity={isSelected ? 0.9 : 0.25}
+                  strokeLinecap="round"
+                />
+              );
+            })}
+
+            {CITY_NODES.map((city) => {
+              const isSelected = selectedCity === city.city_code;
+              return (
+                <Marker
+                  key={city.city_code}
+                  coordinates={[city.longitude, city.latitude]}
+                  onClick={() => setSelectedCity(isSelected ? null : city.city_code)}
+                >
+                  <circle
+                    r={isSelected ? 7 : 5}
+                    fill={isSelected ? "var(--color-accent)" : "var(--color-secondary)"}
+                    stroke="var(--color-inset)"
+                    strokeWidth={1.5}
+                    className="cursor-pointer"
+                  />
+                  <text
+                    textAnchor="middle"
+                    y={-12}
+                    className="pointer-events-none select-none fill-secondary font-mono text-[10px] uppercase tracking-wide"
                   >
-                    <circle
-                      r={isSelected ? 6 : 4}
-                      fill={isSelected ? "var(--color-accent)" : "var(--color-secondary)"}
-                      stroke="var(--color-inset)"
-                      strokeWidth={1.5}
-                      className="cursor-pointer"
-                    />
-                    <text
-                      textAnchor="middle"
-                      y={-10}
-                      className="pointer-events-none select-none fill-secondary font-mono text-[9px] uppercase tracking-wide"
-                    >
-                      {city.city_name}
-                    </text>
-                  </Marker>
-                );
-              })}
-            </ComposableMap>
-          )}
+                    {city.city_name}
+                  </text>
+                </Marker>
+              );
+            })}
+          </ComposableMap>
+        )}
 
-          <div className="flex flex-wrap items-center gap-4 border-t border-outline-variant p-3 font-mono text-[11px] text-on-surface-variant">
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--color-up)" }} />
-              CPI below 98
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--color-warning)" }} />
-              CPI 98-102
-            </span>
-            <span className="flex items-center gap-1.5">
-              <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--color-down)" }} />
-              CPI above 102
-            </span>
-          </div>
+        <div className="pointer-events-none absolute left-4 top-4 flex flex-col gap-1.5 rounded-sm border border-outline-variant bg-panel/90 p-3 font-mono text-[11px] text-on-surface-variant">
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--color-up)" }} />
+            CPI below 98
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--color-warning)" }} />
+            CPI 98-102
+          </span>
+          <span className="flex items-center gap-1.5">
+            <span className="inline-block h-2 w-2 rounded-full" style={{ background: "var(--color-down)" }} />
+            CPI above 102
+          </span>
         </div>
 
-        <div className="w-full shrink-0 rounded-sm border border-outline-variant bg-panel p-4 lg:w-64">
+        <div className="absolute bottom-4 right-4 w-72 max-w-[calc(100%-2rem)] rounded-sm border border-outline-variant bg-panel/95 p-4">
           <h3 className="mb-3 font-mono text-[11px] font-medium uppercase tracking-wide text-on-surface-variant">
             Selected city
           </h3>
