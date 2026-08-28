@@ -2,6 +2,7 @@ import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
 import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
+import LoadingSpinner from "./LoadingSpinner";
 
 // `type`, not `interface` -- interfaces don't get an implicit index
 // signature, which breaks ExportButton's generic constraint.
@@ -65,7 +66,7 @@ export default function SectorHeatmap() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <p className="text-sm text-secondary">Loading heatmap data...</p>;
+  if (loading && !data) return <LoadingSpinner label="Loading heatmap data..." center />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load heatmap data: {error}
@@ -89,44 +90,53 @@ export default function SectorHeatmap() {
   const cellByKey = new Map(cells.map((cell) => [`${cell.route}|${cell.period}`, cell.meanFare]));
 
   return (
-    <div>
+    <div className="rounded-sm border border-outline-variant bg-surface-container-low p-4">
       {error && (
         <p role="alert" className="mb-3 text-sm text-error">
           Search failed: {error}
         </p>
       )}
       <h2 className="mb-4 text-base font-semibold text-primary">Sector heatmap</h2>
-      <table className="border-collapse text-sm">
-        <thead>
-          <tr>
-            <th className="border border-line bg-panel px-3 py-2 text-left font-medium text-secondary">Route</th>
-            {periods.map((period) => (
-              <th key={period} className="border border-line bg-panel px-3 py-2 text-left font-mono font-medium text-secondary">
-                {period}
+      <div className="overflow-x-auto">
+        <table className="border-collapse text-sm">
+          <thead>
+            <tr>
+              <th className="border border-outline-variant bg-panel px-3 py-2 text-left font-mono text-[11px] uppercase tracking-wide text-on-surface-variant">
+                Route
               </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody>
-          {routes.map((route) => (
-            <tr key={route}>
-              <th className="border border-line bg-panel px-3 py-2 text-left font-medium text-primary">{route}</th>
-              {periods.map((period) => {
-                const value = cellByKey.get(`${route}|${period}`);
-                return (
-                  <td
-                    key={period}
-                    className="border border-line px-3 py-2 text-right font-mono text-primary"
-                    style={{ backgroundColor: value !== undefined ? colorFor(value, min, max) : undefined }}
-                  >
-                    {value !== undefined ? Math.round(value) : "-"}
-                  </td>
-                );
-              })}
+              {periods.map((period) => (
+                <th
+                  key={period}
+                  className="border border-outline-variant bg-panel px-3 py-2 text-left font-mono text-[11px] uppercase tracking-wide text-on-surface-variant"
+                >
+                  {period}
+                </th>
+              ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {routes.map((route) => (
+              <tr key={route}>
+                <th className="border border-outline-variant bg-panel px-3 py-2 text-left font-medium text-primary">
+                  {route}
+                </th>
+                {periods.map((period) => {
+                  const value = cellByKey.get(`${route}|${period}`);
+                  return (
+                    <td
+                      key={period}
+                      className="border border-outline-variant px-3 py-2 text-right font-mono text-primary"
+                      style={{ backgroundColor: value !== undefined ? colorFor(value, min, max) : undefined }}
+                    >
+                      {value !== undefined ? Math.round(value) : "-"}
+                    </td>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="mt-4">
         <ExportButton data={cells} filename="heatmap.csv" />
       </div>

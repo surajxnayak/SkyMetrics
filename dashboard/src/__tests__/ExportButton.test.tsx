@@ -10,7 +10,7 @@ describe("ExportButton", () => {
 
   it("is disabled when there is no data", () => {
     render(<ExportButton data={[]} filename="empty.csv" />);
-    expect(screen.getByText("Export CSV")).toBeDisabled();
+    expect(screen.getByRole("button", { name: "Export CSV" })).toBeDisabled();
   });
 
   it("builds a CSV blob and triggers a download when clicked", async () => {

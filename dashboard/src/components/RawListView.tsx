@@ -1,6 +1,7 @@
 import { useFilters } from "../context/FilterContext";
 import { useFareRecords } from "../hooks/useFareRecords";
 import ExportButton from "./ExportButton";
+import LoadingSpinner from "./LoadingSpinner";
 
 function formatCurrency(value: number | null): string {
   if (value === null) return "-";
@@ -30,7 +31,7 @@ export default function RawListView() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <p className="text-sm text-secondary">Loading fare records...</p>;
+  if (loading && !data) return <LoadingSpinner label="Loading fare records..." center />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load fare records: {error}
@@ -41,7 +42,7 @@ export default function RawListView() {
   }
 
   return (
-    <div>
+    <div className="rounded-sm border border-outline-variant bg-surface-container-low p-4">
       {error && (
         <p role="alert" className="mb-3 text-sm text-error">
           Search failed: {error}
@@ -50,7 +51,7 @@ export default function RawListView() {
       <div className="mb-4 flex items-end justify-between gap-4">
         <div>
           <h2 className="mb-1 text-base font-semibold text-primary">List view</h2>
-          <p className="font-mono text-sm text-secondary">
+          <p className="font-mono text-sm text-on-surface-variant">
             Mean fare: {formatCurrency(data.mean_total_fare)} / Records: {data.records.length}
           </p>
         </div>
@@ -75,7 +76,7 @@ export default function RawListView() {
               ].map((heading) => (
                 <th
                   key={heading}
-                  className="border border-line bg-panel px-3 py-2 text-left font-medium text-secondary"
+                  className="border border-outline-variant bg-panel px-3 py-2 text-left font-mono text-[11px] uppercase tracking-wide text-on-surface-variant"
                 >
                   {heading}
                 </th>
@@ -84,32 +85,32 @@ export default function RawListView() {
           </thead>
           <tbody>
             {data.records.map((record) => (
-              <tr key={record.quote_id}>
-                <td className="border border-line px-3 py-2 font-mono text-primary">
+              <tr key={record.quote_id} className="even:bg-surface-container">
+                <td className="border border-outline-variant px-3 py-2 font-mono text-primary">
                   {formatDateTime(record.collected_at)}
                 </td>
-                <td className="border border-line px-3 py-2 font-mono text-primary">
+                <td className="border border-outline-variant px-3 py-2 font-mono text-primary">
                   {record.travel_date}
                 </td>
-                <td className="border border-line px-3 py-2 text-primary">{record.route}</td>
-                <td className="border border-line px-3 py-2 text-primary">{record.source}</td>
-                <td className="border border-line px-3 py-2 font-mono text-primary">
+                <td className="border border-outline-variant px-3 py-2 text-primary">{record.route}</td>
+                <td className="border border-outline-variant px-3 py-2 text-primary">{record.source}</td>
+                <td className="border border-outline-variant px-3 py-2 font-mono text-primary">
                   {record.carrier}
                 </td>
-                <td className="border border-line px-3 py-2 font-mono text-primary">
+                <td className="border border-outline-variant px-3 py-2 font-mono text-primary">
                   {record.advance_window}
                 </td>
-                <td className="border border-line px-3 py-2 font-mono text-primary">
+                <td className="border border-outline-variant px-3 py-2 font-mono text-primary">
                   {record.fare_class ?? "-"}
                 </td>
-                <td className="border border-line px-3 py-2 text-primary">{record.routing ?? "-"}</td>
-                <td className="border border-line px-3 py-2 text-primary">
+                <td className="border border-outline-variant px-3 py-2 text-primary">{record.routing ?? "-"}</td>
+                <td className="border border-outline-variant px-3 py-2 text-primary">
                   {record.is_outlier ? `${record.status} / outlier` : record.status}
                 </td>
-                <td className="border border-line px-3 py-2 text-right font-mono text-primary">
+                <td className="border border-outline-variant px-3 py-2 text-right font-mono text-primary">
                   {formatCurrency(record.total_fare)}
                 </td>
-                <td className="border border-line px-3 py-2 text-right font-mono text-primary">
+                <td className="border border-outline-variant px-3 py-2 text-right font-mono text-primary">
                   {formatDelta(record.delta_from_mean)}
                 </td>
               </tr>

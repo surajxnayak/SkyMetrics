@@ -12,12 +12,35 @@ export const ROUTES = [
   { id: "BOM-BLR", origin: "BOM", destination: "BLR", label: "Mumbai (BOM) - Bengaluru (BLR)" },
 ] as const;
 
+// Real sources with fare data in fare_quotes -- one live scrape, two
+// historical public datasets used to seed the pipeline before Akasa's
+// first live run (see README's data-sources section).
 export const SOURCES = [
-  { id: "akasaair", label: "Akasa Air" },
+  { id: "akasaair", label: "Akasa Air (live)" },
+  { id: "historical_public_airfare_2022", label: "Historical public airfare (2022)" },
+  { id: "goibibo_historical_2023", label: "Goibibo historical (2023)" },
 ] as const;
 
+// Real carrier codes present in fare_quotes -- QP is the only one from the
+// live Akasa scrape; the rest come from the historical datasets above.
 export const CARRIERS = [
   { code: "QP", name: "Akasa Air" },
+  { code: "6E", name: "IndiGo" },
+  { code: "AI", name: "Air India" },
+  { code: "UK", name: "Vistara" },
+  { code: "SG", name: "SpiceJet" },
+  { code: "G8", name: "Go First" },
+  { code: "I5", name: "AirAsia India" },
+] as const;
+
+// The real, distinct fare_class values in fare_quotes today.
+export const FARE_CLASSES = [
+  "business", "economy",
+  "O3", "O4", "P0", "P1", "P2", "P3", "P4",
+  "Q0", "Q1", "Q2", "Q3", "Q4",
+  "R0", "R1", "R2", "R3", "R4",
+  "T0", "T1", "T2", "T3", "T4",
+  "U0", "U1", "U2", "U3", "V0",
 ] as const;
 
 export const ADVANCE_WINDOWS = ["T+1", "T+7", "T+15", "T+30", "T+45"] as const;

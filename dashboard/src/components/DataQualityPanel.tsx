@@ -3,6 +3,7 @@ import { useMetadata } from "../hooks/useMetadata";
 import type { FareRecord } from "../api/types";
 import { useFilters } from "../context/FilterContext";
 import { ADVANCE_WINDOWS } from "../config/filters";
+import LoadingSpinner from "./LoadingSpinner";
 
 export interface DataQualityStats {
   coveragePercent: number;
@@ -58,7 +59,7 @@ export default function DataQualityPanel() {
   const metadata = useMetadata();
 
   if ((fares.loading && !fares.data) || metadata.loading) {
-    return <p className="text-sm text-secondary">Loading data quality...</p>;
+    return <LoadingSpinner label="Loading data quality..." />;
   }
   if (fares.error && !fares.data) return (
     <p role="alert" className="text-sm text-error">
@@ -80,24 +81,30 @@ export default function DataQualityPanel() {
 
   return (
     <div>
-      <h3 className="mb-3 text-xs font-medium uppercase tracking-wide text-secondary">Data quality</h3>
+      <h3 className="mb-3 font-mono text-[11px] font-medium uppercase tracking-wide text-on-surface-variant">
+        Data quality
+      </h3>
       {fares.error && (
         <p role="alert" className="mb-2 text-sm text-error">
           Search failed: {fares.error}
         </p>
       )}
-      <p className="mb-1 text-sm text-primary">
-        Coverage: <span className="font-mono text-accent">{stats.coveragePercent.toFixed(0)}%</span>
-      </p>
-      <p className="mb-1 text-sm text-primary">
-        Outliers flagged: <span className="font-mono text-accent">{stats.outlierPercent.toFixed(1)}%</span>
-      </p>
-      <p className="text-sm text-primary">
-        Source health:{" "}
-        <span className="font-mono">
-          {stats.availableCount} available / {stats.noFlightCount} no-flight
-        </span>
-      </p>
+      <div className="flex flex-col gap-1.5 rounded-sm border border-outline-variant bg-surface-container-low p-3">
+        <p className="flex items-center justify-between text-sm text-primary">
+          <span>Coverage:</span>
+          <span className="font-mono text-accent">{stats.coveragePercent.toFixed(0)}%</span>
+        </p>
+        <p className="flex items-center justify-between text-sm text-primary">
+          <span>Outliers flagged:</span>
+          <span className="font-mono text-accent">{stats.outlierPercent.toFixed(1)}%</span>
+        </p>
+        <p className="flex items-center justify-between text-sm text-primary">
+          <span>Source health:</span>
+          <span className="font-mono">
+            {stats.availableCount} available / {stats.noFlightCount} no-flight
+          </span>
+        </p>
+      </div>
     </div>
   );
 }

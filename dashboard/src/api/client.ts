@@ -1,6 +1,21 @@
-import type { FareRecord, FareRecordsResponse, IndexResponse, MetadataResponse } from "./types";
+import type {
+  AskResponse,
+  ChatTurn,
+  FareRecord,
+  FareRecordsResponse,
+  IndexResponse,
+  MapRoutesResponse,
+  MetadataResponse,
+} from "./types";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const CONFIGURED_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+// In dev, route through Vite's proxy (vite.config.ts) instead of hitting
+// localhost:8000 directly -- avoids CORS entirely rather than relying on
+// the backend's allow-list staying in sync with whatever port Vite picks.
+const USE_DEV_PROXY =
+  import.meta.env.DEV &&
+  /^https?:\/\/(127\.0\.0\.1|localhost):8000\/?$/.test(CONFIGURED_BASE_URL);
+const BASE_URL = USE_DEV_PROXY ? "" : CONFIGURED_BASE_URL.replace(/\/$/, "");
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 
 export class ApiError extends Error {
@@ -32,6 +47,26 @@ async function get<T>(path: string, params: Record<string, QueryValue> = {}): Pr
     try {
       const body = await response.json();
       if (typeof body.detail === "string") message = body.detail;
+    } catch {
+      // Fall back to the generic status message when the response is not JSON.
+    }
+    throw new ApiError(response.status, message);
+  }
+  return response.json() as Promise<T>;
+}
+
+async function post<T>(path: string, body: unknown): Promise<T> {
+  const url = `${BASE_URL}${path}`;
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "X-API-Key": API_KEY, "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+  if (!response.ok) {
+    let message = `${path} failed with status ${response.status}`;
+    try {
+      const errorBody = await response.json();
+      if (typeof errorBody.detail === "string") message = errorBody.detail;
     } catch {
       // Fall back to the generic status message when the response is not JSON.
     }
@@ -104,4 +139,26 @@ export function getFareRecords(
 
 export function getMetadata(): Promise<MetadataResponse> {
   return get<MetadataResponse>("/api/v1/metadata");
+}
+
+export function askQuestion(question: string, history: ChatTurn[]): Promise<AskResponse> {
+  return post<AskResponse>("/api/v1/ask", { question, history });
+}
+
+export function getMapRoutes(params: {
+  frequency: string;
+  routes?: string[];
+  originCity?: string;
+  period?: string;
+  snapshotId?: string;
+  preview?: boolean;
+}): Promise<MapRoutesResponse> {
+  return get<MapRoutesResponse>("/api/v1/map/routes", {
+    frequency: params.frequency,
+    route: params.routes,
+    origin_city: params.originCity,
+    period: params.period,
+    snapshot_id: params.snapshotId,
+    preview: params.preview ? "true" : undefined,
+  });
 }

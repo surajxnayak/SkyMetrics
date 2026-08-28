@@ -51,6 +51,46 @@ export interface FareRecordsResponse {
   records: FareTableRecord[];
 }
 
+export interface MapNode {
+  city_code: string;
+  city_name: string;
+  latitude: number;
+  longitude: number;
+  airport_codes: string[];
+}
+
+export interface MapDirection {
+  snapshot_id: string;
+  frequency: Frequency;
+  period: string;
+  base_period: string;
+  route_key: string;
+  origin_city_code: string;
+  destination_city_code: string;
+  cpi: number;
+  quote_count: number;
+  available_count: number;
+  no_flight_count: number;
+  source_count: number;
+  written_at: string;
+}
+
+export interface MapEdge {
+  edge_key: string;
+  city_a: string;
+  city_b: string;
+  city_a_to_b: MapDirection | null;
+  city_b_to_a: MapDirection | null;
+}
+
+export interface MapRoutesResponse {
+  is_preview: boolean;
+  snapshot_id: string | null;
+  frequency: Frequency;
+  period: string | null;
+  edges: MapEdge[];
+}
+
 export interface WeightsMetadata {
   source: string;
   period: string;
@@ -68,4 +108,20 @@ export interface MetadataResponse {
   weights: WeightsMetadata;
   formulas: Record<string, string>;
   snapshots: SnapshotSummary[];
+}
+
+export interface ChatTurn {
+  role: "user" | "assistant";
+  text: string;
+}
+
+export interface ToolCall {
+  name: string;
+  args: Record<string, unknown>;
+  result: Record<string, unknown>;
+}
+
+export interface AskResponse {
+  answer: string;
+  tool_calls: ToolCall[];
 }

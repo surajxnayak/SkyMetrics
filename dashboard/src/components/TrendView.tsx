@@ -3,14 +3,16 @@ import type { FareRecord } from "../api/types";
 import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
 import ExportButton from "./ExportButton";
+import LoadingSpinner from "./LoadingSpinner";
 
-const TOOLTIP_STYLE = { backgroundColor: "#12161f", border: "1px solid #1e2530", borderRadius: 6 };
+const TOOLTIP_STYLE = { backgroundColor: "#1c2025", border: "1px solid #3c494c", borderRadius: 4 };
 const TOOLTIP_LABEL_STYLE = { color: "#e5e7eb" };
 // Numeric values (Y-axis ticks, tooltip line values) get the mono font, per
 // the design spec's "all numeric data" rule -- text labels (X-axis periods,
 // legend series names) stay in the default sans font.
 const MONO_FONT = "'JetBrains Mono', ui-monospace, monospace";
 const TOOLTIP_ITEM_STYLE = { fontFamily: MONO_FONT };
+const CHART_COLORS = ["#a78bfa", "#4ade80", "#f0b429", "#f87171"];
 
 export type TrendPoint = {
   period: string;
@@ -66,6 +68,11 @@ export function pivotTrend(points: TrendPoint[], routes: string[]): TrendChartPo
   return Array.from(rows.values()).sort((a, b) => String(a.period).localeCompare(String(b.period)));
 }
 
+function formatFare(value: unknown): string {
+  if (typeof value !== "number") return "—";
+  return `₹${Math.round(value).toLocaleString("en-IN")}`;
+}
+
 export default function TrendView() {
   const { appliedFilters: filters } = useFilters();
   const { data, loading, error } = useFares({
@@ -78,7 +85,7 @@ export default function TrendView() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <p className="text-sm text-secondary">Loading trend data...</p>;
+  if (loading && !data) return <LoadingSpinner label="Loading trend data..." center />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load trend data: {error}
@@ -90,30 +97,40 @@ export default function TrendView() {
   if (points.length === 0) return <p className="text-sm text-secondary">No non-outlier fare data available yet.</p>;
   const routes = filters.selectedRoutes.filter((route) => points.some((point) => point.route === route));
   const chartData = pivotTrend(points, routes);
-  const colors = ["#a78bfa", "#4ade80", "#f0b429", "#f87171"];
+  const latestRow = chartData[chartData.length - 1];
 
   return (
-    <div>
+    <div className="rounded-sm border border-outline-variant bg-surface-container-low p-4">
       {error && (
         <p role="alert" className="mb-3 text-sm text-error">
           Search failed: {error}
         </p>
       )}
       <h2 className="mb-1 text-base font-semibold text-primary">Trend view</h2>
-      <p className="mb-4 font-mono text-sm text-secondary">Routes: {routes.join(", ")}</p>
+      <p className="mb-4 font-mono text-sm text-on-surface-variant">Routes: {routes.join(", ")}</p>
+
+      <div className="mb-4 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        {routes.map((route) => (
+          <div key={route} className="rounded-sm border border-outline-variant bg-panel p-2">
+            <p className="font-mono text-[11px] uppercase tracking-wide text-on-surface-variant">{route}</p>
+            <p className="font-mono text-lg font-semibold text-primary">{formatFare(latestRow?.[route])}</p>
+          </div>
+        ))}
+      </div>
+
       <ResponsiveContainer width="100%" height={300}>
         <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />
-          <XAxis dataKey="period" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-          <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12, fontFamily: MONO_FONT }} />
+          <CartesianGrid strokeDasharray="3 3" stroke="#3c494c" />
+          <XAxis dataKey="period" stroke="#bbc9cd" tick={{ fill: "#bbc9cd", fontSize: 12 }} />
+          <YAxis stroke="#bbc9cd" tick={{ fill: "#bbc9cd", fontSize: 12, fontFamily: MONO_FONT }} />
           <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} />
-          <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
+          <Legend wrapperStyle={{ color: "#bbc9cd", fontSize: 12 }} />
           {routes.map((route, index) => (
             <Line
               key={route}
               type="monotone"
               dataKey={route}
-              stroke={colors[index % colors.length]}
+              stroke={CHART_COLORS[index % CHART_COLORS.length]}
               name={route}
             />
           ))}

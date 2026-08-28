@@ -72,10 +72,10 @@ describe("Sidebar", () => {
       </FilterProvider>
     );
 
-    expect(screen.getByRole("checkbox", { name: "Akasa Air" })).toBeChecked();
+    expect(screen.getByRole("checkbox", { name: "Akasa Air (live)" })).toBeChecked();
   });
 
-  it("shows carrier names alongside carrier codes", () => {
+  it("shows carrier names alongside carrier codes, for every real carrier", () => {
     render(
       <FilterProvider>
         <Sidebar />
@@ -83,6 +83,39 @@ describe("Sidebar", () => {
     );
 
     expect(screen.getByText("Akasa Air (QP)")).toBeInTheDocument();
+    expect(screen.getByText("IndiGo (6E)")).toBeInTheDocument();
+    expect(screen.getByText("Air India (AI)")).toBeInTheDocument();
+    expect(screen.getByText("Vistara (UK)")).toBeInTheDocument();
+    expect(screen.getByText("SpiceJet (SG)")).toBeInTheDocument();
+    expect(screen.getByText("Go First (G8)")).toBeInTheDocument();
+    expect(screen.getByText("AirAsia India (I5)")).toBeInTheDocument();
+  });
+
+  it("offers fare class as a dropdown of real values, not free text", () => {
+    render(
+      <FilterProvider>
+        <Sidebar />
+      </FilterProvider>
+    );
+
+    const select = screen.getByLabelText("Fare class") as HTMLSelectElement;
+    expect(select.tagName).toBe("SELECT");
+    const values = Array.from(select.options).map((option) => option.value);
+    expect(values).toContain("business");
+    expect(values).toContain("economy");
+    expect(values).toContain("U1");
+  });
+
+  it("offers all three real historical/live sources as checkboxes", () => {
+    render(
+      <FilterProvider>
+        <Sidebar />
+      </FilterProvider>
+    );
+
+    expect(screen.getByRole("checkbox", { name: "Akasa Air (live)" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Historical public airfare (2022)" })).toBeInTheDocument();
+    expect(screen.getByRole("checkbox", { name: "Goibibo historical (2023)" })).toBeInTheDocument();
   });
 
   it("shows custom date pickers only for the custom time range", async () => {

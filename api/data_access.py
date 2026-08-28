@@ -6,12 +6,14 @@ instead of scanning flat files.
 """
 from __future__ import annotations
 
+import json
 import re
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 from index.weights import WEIGHTS_PATH
 
+AIRPORT_CITIES_PATH = Path("config/airport_cities.json")
 _COMPARISON_ID_PATTERN = re.compile(r"^[0-9a-f]{32}$")
 
 _SERIES_COLUMNS = (
@@ -21,6 +23,10 @@ _SERIES_COLUMNS = (
 
 class SnapshotNotFoundError(Exception):
     pass
+
+
+def _to_float(value):
+    return float(value) if value is not None else None
 
 
 def list_snapshots(conn) -> list[dict]:
@@ -264,7 +270,189 @@ def load_fare_record_table(
     return {"mean_total_fare": mean_total_fare, "records": table_records}
 
 
-def load_weights_metadata(weights_path: Path = WEIGHTS_PATH) -> dict:
-    import json
+def _load_config_city_nodes(cities_path: Path = AIRPORT_CITIES_PATH) -> list[dict]:
+    payload = json.loads(cities_path.read_text(encoding="utf-8"))
+    return [
+        {
+            "city_code": city["city_code"],
+            "city_name": city["city_name"],
+            "latitude": city["latitude"],
+            "longitude": city["longitude"],
+            "airport_codes": city["airport_codes"],
+        }
+        for city in payload["cities"]
+    ]
 
+
+def load_map_city_nodes(conn, cities_path: Path = AIRPORT_CITIES_PATH) -> list[dict]:
+    with conn.cursor() as cur:
+        cur.execute(
+            """
+            SELECT city_code, city_name, latitude, longitude, airport_codes
+            FROM map_city_nodes
+            WHERE is_active
+            ORDER BY city_name
+            """
+        )
+        rows = cur.fetchall()
+
+    if not rows:
+        return _load_config_city_nodes(cities_path)
+
+    return [
+        {
+            "city_code": city_code,
+            "city_name": city_name,
+            "latitude": _to_float(latitude),
+            "longitude": _to_float(longitude),
+            "airport_codes": airport_codes,
+        }
+        for city_code, city_name, latitude, longitude, airport_codes in rows
+    ]
+
+
+def _reverse_route(route: str) -> str:
+    origin, destination = route.split("-", 1)
+    return f"{destination}-{origin}"
+
+
+def _resolve_map_snapshot(
+    conn, frequency: str, snapshot_id: str | None, period: str | None, preview: bool = False
+) -> tuple[str | None, str | None]:
+    # Excludes snapshot_id LIKE 'demo-%' by default, even if explicitly
+    # requested: this table can hold illustrative/seeded snapshots (see
+    # db/seed_map_dummy.sql) used for local UI development, and this is the
+    # one chokepoint that keeps them from ever being served through the real
+    # API as if they were a genuine computed snapshot. preview=True is the
+    # one deliberate, explicitly-opted-into exception -- callers use it only
+    # to show clearly-labeled placeholder data when no real snapshot exists
+    # yet (see api/routers/map.py's preview param), never silently.
+    query = "SELECT snapshot_id, period FROM map_route_cpi_edges WHERE frequency = %s"
+    if not preview:
+        query += " AND snapshot_id NOT LIKE 'demo-%%'"
+    params: list = [frequency]
+    if snapshot_id is not None:
+        query += " AND snapshot_id = %s"
+        params.append(snapshot_id)
+    if period is not None:
+        query += " AND period = %s"
+        params.append(period)
+    query += " ORDER BY written_at DESC LIMIT 1"
+
+    with conn.cursor() as cur:
+        cur.execute(query, params)
+        row = cur.fetchone()
+    if row is not None:
+        return row
+    # (None, None), not (snapshot_id, period): echoing back the caller's
+    # raw, unresolved request here would make a later demo-% check against
+    # resolved_snapshot_id see the caller's *requested* value even when
+    # nothing was actually found/excluded -- is_preview must only ever be
+    # true for a snapshot that was genuinely resolved from a real row.
+    return None, None
+
+
+def load_map_routes(
+    conn,
+    frequency: str,
+    snapshot_id: str | None = None,
+    period: str | None = None,
+    routes: list[str] | None = None,
+    origin_city: str | None = None,
+    preview: bool = False,
+) -> dict:
+    resolved_snapshot_id, resolved_period = _resolve_map_snapshot(
+        conn, frequency, snapshot_id, period, preview=preview
+    )
+    is_preview = bool(resolved_snapshot_id and resolved_snapshot_id.startswith("demo-"))
+
+    if resolved_snapshot_id is None or resolved_period is None:
+        return {
+            "snapshot_id": resolved_snapshot_id,
+            "frequency": frequency,
+            "period": resolved_period,
+            "edges": [],
+            "is_preview": is_preview,
+        }
+
+    query = """
+        SELECT snapshot_id, frequency, period, base_period, origin_city_code,
+               destination_city_code, route_key, cpi, quote_count, available_count,
+               no_flight_count, source_count, written_at
+        FROM map_route_cpi_edges
+        WHERE snapshot_id = %s AND frequency = %s AND period = %s
+    """
+    params: list = [resolved_snapshot_id, frequency, resolved_period]
+    if routes:
+        expanded_routes = sorted(set(routes) | {_reverse_route(route) for route in routes})
+        query += " AND route_key = ANY(%s)"
+        params.append(expanded_routes)
+    if origin_city is not None:
+        query += " AND (origin_city_code = %s OR destination_city_code = %s)"
+        params.extend([origin_city, origin_city])
+    query += " ORDER BY origin_city_code, destination_city_code"
+
+    with conn.cursor() as cur:
+        cur.execute(query, params)
+        rows = cur.fetchall()
+
+    edge_groups: dict[tuple[str, str], dict] = {}
+    for row in rows:
+        (
+            row_snapshot_id,
+            row_frequency,
+            row_period,
+            base_period,
+            origin_city_code,
+            destination_city_code,
+            route_key,
+            cpi,
+            quote_count,
+            available_count,
+            no_flight_count,
+            source_count,
+            written_at,
+        ) = row
+        city_a, city_b = sorted((origin_city_code, destination_city_code))
+        key = (city_a, city_b)
+        group = edge_groups.setdefault(
+            key,
+            {
+                "edge_key": f"{city_a}|{city_b}",
+                "city_a": city_a,
+                "city_b": city_b,
+                "city_a_to_b": None,
+                "city_b_to_a": None,
+            },
+        )
+        direction = {
+            "snapshot_id": row_snapshot_id,
+            "frequency": row_frequency,
+            "period": row_period,
+            "base_period": base_period,
+            "route_key": route_key,
+            "origin_city_code": origin_city_code,
+            "destination_city_code": destination_city_code,
+            "cpi": _to_float(cpi),
+            "quote_count": quote_count,
+            "available_count": available_count,
+            "no_flight_count": no_flight_count,
+            "source_count": source_count,
+            "written_at": written_at.isoformat(),
+        }
+        if origin_city_code == city_a:
+            group["city_a_to_b"] = direction
+        else:
+            group["city_b_to_a"] = direction
+
+    return {
+        "snapshot_id": resolved_snapshot_id,
+        "frequency": frequency,
+        "period": resolved_period,
+        "edges": list(edge_groups.values()),
+        "is_preview": is_preview,
+    }
+
+
+def load_weights_metadata(weights_path: Path = WEIGHTS_PATH) -> dict:
     return json.loads(weights_path.read_text(encoding="utf-8"))

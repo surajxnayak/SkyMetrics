@@ -1,15 +1,21 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&display=swap');
 @import "tailwindcss";
 
 @theme {
-  --color-page: #0a0e14;
-  --color-panel: #12161f;
-  --color-inset: #0d1119;
-  --color-line: #1e2530;
+  /* One consistent violet-black family throughout -- the map no longer
+     sits on a different, hand-picked near-black than the rest of the
+     app. Every dark surface below is a step up from the same --color-page
+     root, and every "variant" text/border token carries the same violet
+     tint instead of the old cyan-leaning grays. */
+  --color-page: #050308;
+  --color-panel: #120c1f;
+  --color-inset: #0a0612;
+  --color-line: #241a38;
 
-  --color-primary: #e5e7eb;
-  --color-secondary: #9ca3af;
-  --color-muted: #6b7280;
+  --color-primary: #ede9f7;
+  --color-secondary: #a89fc2;
+  --color-muted: #6f6485;
 
   --color-accent: #a78bfa;
   --color-accent-hover: #c4b5fd;
@@ -20,6 +26,13 @@
   --color-error: #f87171;
   --color-warning: #f0b429;
 
+  --color-surface-container: #17102a;
+  --color-surface-container-low: #130d22;
+  --color-surface-container-high: #241a38;
+  --color-surface-container-highest: #2f2247;
+  --color-outline-variant: #3a2a5c;
+  --color-on-surface-variant: #b8a9d9;
+
   --font-sans: 'Inter', system-ui, sans-serif;
   --font-mono: 'JetBrains Mono', ui-monospace, monospace;
 }
@@ -28,4 +41,42 @@ body {
   background-color: var(--color-page);
   color: var(--color-primary);
   font-family: var(--font-sans);
+}
+
+.material-symbols-outlined {
+  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 20;
+  font-size: inherit;
+  line-height: 1;
+  vertical-align: middle;
+}
+
+@keyframes brand-marquee-scroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.marquee-mask {
+  mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+  -webkit-mask-image: linear-gradient(to right, transparent, black 8%, black 92%, transparent);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .brand-marquee {
+    animation: brand-marquee-scroll 32s linear infinite;
+  }
+}
+
+@keyframes spinner-rotate {
+  to { transform: rotate(360deg); }
+}
+
+.spinner-ring {
+  animation: spinner-rotate 0.7s linear infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .spinner-ring {
+    animation: none;
+    opacity: 0.6;
+  }
 }

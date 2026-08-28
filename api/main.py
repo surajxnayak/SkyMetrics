@@ -8,12 +8,16 @@ from __future__ import annotations
 import re
 from datetime import datetime
 from pathlib import Path
+from typing import Literal
 
 from fastapi import APIRouter, Depends, FastAPI, HTTPException, Query, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
+from google.genai.errors import APIError
+from pydantic import BaseModel
 
+from api.ask import answer_question
 from api.auth import require_api_key
 from api.data_access import (
     SnapshotNotFoundError,
@@ -25,6 +29,7 @@ from api.data_access import (
 )
 from api.db import get_db_connection
 from api.rate_limit import enforce_rate_limit
+from api.routers.map import router as map_router
 from index.weights import WEIGHTS_PATH
 from models.enums import AirportCode, CarrierCode, Frequency, SourceName
 from scraper.schema import ADVANCE_WINDOWS
@@ -33,9 +38,12 @@ app = FastAPI(title="SkyMetrics APIx API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
-    allow_methods=["GET"],
-    allow_headers=["X-API-Key"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
+    # GET for every existing read endpoint; POST for /ask (Ask APIx), the
+    # first non-GET route in this app. Content-Type is required for POST's
+    # JSON body, alongside the existing X-API-Key auth header.
+    allow_methods=["GET", "POST"],
+    allow_headers=["X-API-Key", "Content-Type"],
 )
 
 
@@ -265,7 +273,56 @@ def get_metadata(
     }
 
 
+class ChatTurn(BaseModel):
+    role: Literal["user", "assistant"]
+    text: str
+
+
+class AskRequest(BaseModel):
+    question: str
+    history: list[ChatTurn] = []
+
+
+class ToolCallOut(BaseModel):
+    name: str
+    args: dict
+    result: dict
+
+
+class AskResponse(BaseModel):
+    answer: str
+    tool_calls: list[ToolCallOut]
+
+
+@router.post("/ask")
+def post_ask(body: AskRequest, conn=Depends(get_db_connection)) -> AskResponse:
+    try:
+        result = answer_question(
+            body.question, [turn.model_dump() for turn in body.history], conn
+        )
+    except RuntimeError as exc:
+        # _get_client() raises this when GEMINI_API_KEY is unset -- a
+        # deployment/config problem, not something the caller can fix.
+        raise HTTPException(status_code=503, detail=str(exc)) from exc
+    except ValueError as exc:
+        # _history_to_contents() raises this on an unrecognized chat role --
+        # shouldn't happen given ChatTurn's Literal type, but kept as a
+        # second line of defense against malformed history.
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+    except APIError as exc:
+        # A real failure from Gemini itself (bad key, rate limit, outage) --
+        # 502, since SkyMetrics' own request was valid but the upstream
+        # service failed.
+        raise HTTPException(status_code=502, detail=f"Gemini API error: {exc.message}") from exc
+    return AskResponse(**result)
+
+
 app.include_router(router)
+app.include_router(
+    map_router,
+    prefix="/api/v1",
+    dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)],
+)
 
 
 @app.exception_handler(RequestValidationError)
