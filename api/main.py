@@ -29,6 +29,7 @@ from api.data_access import (
 )
 from api.db import get_db_connection
 from api.rate_limit import enforce_rate_limit
+from api.routers.map import router as map_router
 from index.weights import WEIGHTS_PATH
 from models.enums import AirportCode, CarrierCode, Frequency, SourceName
 from scraper.schema import ADVANCE_WINDOWS
@@ -37,7 +38,7 @@ app = FastAPI(title="SkyMetrics APIx API", version="1.0.0")
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],
+    allow_origins=["http://localhost:5173", "http://127.0.0.1:5173", "http://127.0.0.1:5174"],
     # GET for every existing read endpoint; POST for /ask (Ask APIx), the
     # first non-GET route in this app. Content-Type is required for POST's
     # JSON body, alongside the existing X-API-Key auth header.
@@ -317,6 +318,11 @@ def post_ask(body: AskRequest, conn=Depends(get_db_connection)) -> AskResponse:
 
 
 app.include_router(router)
+app.include_router(
+    map_router,
+    prefix="/api/v1",
+    dependencies=[Depends(require_api_key), Depends(enforce_rate_limit)],
+)
 
 
 @app.exception_handler(RequestValidationError)

@@ -45,3 +45,40 @@ CREATE TABLE IF NOT EXISTS index_points (
 
 CREATE INDEX IF NOT EXISTS index_points_comparison_id_idx ON index_points (comparison_id);
 CREATE INDEX IF NOT EXISTS index_points_frequency_period_idx ON index_points (frequency, period);
+
+CREATE TABLE IF NOT EXISTS map_city_nodes (
+    city_code TEXT PRIMARY KEY,
+    city_name TEXT NOT NULL,
+    latitude NUMERIC NOT NULL,
+    longitude NUMERIC NOT NULL,
+    airport_codes TEXT[] NOT NULL,
+    is_active BOOLEAN NOT NULL DEFAULT true,
+    metadata JSONB
+);
+
+CREATE TABLE IF NOT EXISTS map_route_cpi_edges (
+    id BIGSERIAL PRIMARY KEY,
+    snapshot_id TEXT NOT NULL,
+    frequency TEXT NOT NULL,
+    period TEXT NOT NULL,
+    base_period TEXT NOT NULL,
+    origin_city_code TEXT NOT NULL REFERENCES map_city_nodes(city_code),
+    destination_city_code TEXT NOT NULL REFERENCES map_city_nodes(city_code),
+    route_key TEXT NOT NULL,
+    cpi NUMERIC NOT NULL,
+    quote_count INTEGER NOT NULL DEFAULT 0,
+    available_count INTEGER NOT NULL DEFAULT 0,
+    no_flight_count INTEGER NOT NULL DEFAULT 0,
+    source_count INTEGER NOT NULL DEFAULT 0,
+    metadata JSONB,
+    written_at TIMESTAMPTZ NOT NULL DEFAULT clock_timestamp()
+);
+
+CREATE INDEX IF NOT EXISTS map_route_cpi_edges_snapshot_idx
+    ON map_route_cpi_edges (snapshot_id);
+CREATE INDEX IF NOT EXISTS map_route_cpi_edges_frequency_period_idx
+    ON map_route_cpi_edges (frequency, period);
+CREATE INDEX IF NOT EXISTS map_route_cpi_edges_origin_destination_idx
+    ON map_route_cpi_edges (origin_city_code, destination_city_code);
+CREATE INDEX IF NOT EXISTS map_route_cpi_edges_written_at_idx
+    ON map_route_cpi_edges (written_at DESC);
