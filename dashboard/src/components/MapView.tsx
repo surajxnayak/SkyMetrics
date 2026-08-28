@@ -16,18 +16,22 @@ interface AirportCity {
   airport_codes: string[];
 }
 
-// The full config lists 161 airports -- rendering all of them as labeled
-// nodes would be unreadable clutter, especially with only 3 routes
-// carrying real data today. This is the set of major metros worth showing
-// on a first pass; expand as real route coverage grows.
+// The set of major metros shown labeled and clickable, sized by real
+// traffic role (Delhi is the biggest hub in our route basket). Every other
+// real airport in the config (145 of them) still renders as a small,
+// unlabeled, non-interactive glow dot below -- real geography used purely
+// for visual texture, not standing in for fare/CPI data anywhere.
 const DISPLAY_CITY_CODES = [
   "DEL", "BOM", "BLR", "MAA", "HYD", "CCU", "AMD", "PNQ",
   "GOI", "COK", "JAI", "LKO", "PAT", "GAU", "IXC", "IDR",
 ];
+const HUB_CODE = "DEL";
+const MID_CODES = new Set(["BOM", "BLR", "CCU", "HYD"]);
 
-const CITY_NODES: AirportCity[] = (
-  airportCitiesConfig as { cities: AirportCity[] }
-).cities.filter((city) => DISPLAY_CITY_CODES.includes(city.city_code));
+const ALL_CITIES: AirportCity[] = (airportCitiesConfig as { cities: AirportCity[] }).cities;
+const DISPLAY_SET = new Set(DISPLAY_CITY_CODES);
+const CITY_NODES: AirportCity[] = ALL_CITIES.filter((city) => DISPLAY_SET.has(city.city_code));
+const BACKGROUND_NODES: AirportCity[] = ALL_CITIES.filter((city) => !DISPLAY_SET.has(city.city_code));
 
 const CITY_BY_CODE = new Map(CITY_NODES.map((city) => [city.city_code, city]));
 
@@ -46,6 +50,13 @@ function directionFor(edge: MapEdge, cityCode: string): MapDirection | null {
 
 function otherCity(edge: MapEdge, cityCode: string): string {
   return edge.city_a === cityCode ? edge.city_b : edge.city_a;
+}
+
+function nodeRadius(code: string, isSelected: boolean): number {
+  if (isSelected) return 9;
+  if (code === HUB_CODE) return 8;
+  if (MID_CODES.has(code)) return 6;
+  return 4.5;
 }
 
 export default function MapView() {
@@ -67,7 +78,7 @@ export default function MapView() {
         </p>
       )}
 
-      <div className="relative h-[75vh] min-h-[520px] w-full overflow-hidden bg-inset">
+      <div className="relative h-[75vh] min-h-[520px] w-full overflow-hidden" style={{ background: "#050308" }}>
         {loading && !data ? (
           <p className="p-4 text-sm text-secondary">Loading map...</p>
         ) : (
@@ -86,18 +97,25 @@ export default function MapView() {
                   <Geography
                     key={geo.rsmKey}
                     geography={geo}
-                    fill="var(--color-surface-container)"
-                    stroke="var(--color-outline-variant)"
+                    fill="#160f26"
+                    stroke="#3a2a5c"
                     strokeWidth={0.6}
                     style={{
                       default: { outline: "none" },
-                      hover: { outline: "none", fill: "var(--color-surface-container-high)" },
+                      hover: { outline: "none", fill: "#1d1433" },
                       pressed: { outline: "none" },
                     }}
                   />
                 ))
               }
             </Geographies>
+
+            {BACKGROUND_NODES.map((city) => (
+              <Marker key={city.city_code} coordinates={[city.longitude, city.latitude]}>
+                <circle r={5} fill="var(--color-accent)" opacity={0.18} style={{ filter: "blur(3px)" }} />
+                <circle r={1.3} fill="var(--color-accent-hover)" opacity={0.75} />
+              </Marker>
+            ))}
 
             {edges.map((edge) => {
               const cityA = CITY_BY_CODE.get(edge.city_a);
@@ -122,6 +140,7 @@ export default function MapView() {
 
             {CITY_NODES.map((city) => {
               const isSelected = selectedCity === city.city_code;
+              const r = nodeRadius(city.city_code, isSelected);
               return (
                 <Marker
                   key={city.city_code}
@@ -129,16 +148,23 @@ export default function MapView() {
                   onClick={() => setSelectedCity(isSelected ? null : city.city_code)}
                 >
                   <circle
-                    r={isSelected ? 7 : 5}
-                    fill={isSelected ? "var(--color-accent)" : "var(--color-secondary)"}
-                    stroke="var(--color-inset)"
+                    r={r * 2.4}
+                    fill={isSelected ? "var(--color-accent-hover)" : "var(--color-accent)"}
+                    opacity={0.35}
+                    style={{ filter: "blur(6px)" }}
+                    className="cursor-pointer"
+                  />
+                  <circle
+                    r={r}
+                    fill={isSelected ? "var(--color-accent-hover)" : "var(--color-accent)"}
+                    stroke="#050308"
                     strokeWidth={1.5}
                     className="cursor-pointer"
                   />
                   <text
                     textAnchor="middle"
-                    y={-12}
-                    className="pointer-events-none select-none fill-secondary font-mono text-[10px] uppercase tracking-wide"
+                    y={-(r + 8)}
+                    className="pointer-events-none select-none fill-primary font-mono text-[10px] uppercase tracking-wide"
                   >
                     {city.city_name}
                   </text>
