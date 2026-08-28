@@ -1,0 +1,77 @@
+- generic [ref=f4e3]:
+  - button "Close menu" [ref=f4e117]
+  - complementary [ref=f4e4]:
+    - generic [ref=f4e5]:
+      - heading "MENU" [level=2] [ref=f4e118]
+      - button "Close menu" [ref=f4e119] [cursor=pointer]: X
+    - navigation "Landing menu" [ref=f4e120]:
+      - button "LOGIN" [ref=f4e121] [cursor=pointer]
+      - button "REGISTER" [ref=f4e122] [cursor=pointer]
+      - button "DASHBOARD" [ref=f4e123] [cursor=pointer]
+      - button "ANALYTICS" [ref=f4e124] [cursor=pointer]
+      - button "SETTINGS" [ref=f4e125] [cursor=pointer]
+      - button "SUPPORT" [ref=f4e126] [cursor=pointer]
+  - main [ref=f4e15]:
+    - generic [ref=f4e16]:
+      - img "SkyMetrics" [ref=f4e17]
+      - region "Route CPI map" [ref=f4e19]:
+        - img [ref=f4e22]:
+          - button "Show routes from Ahmedabad" [ref=f4e30] [cursor=pointer]:
+            - generic: Ahmedabad
+          - button "Show routes from Bengaluru" [ref=f4e33] [cursor=pointer]:
+            - generic: Bengaluru
+          - button "Show routes from Bhubaneswar" [ref=f4e36] [cursor=pointer]
+          - button "Show routes from Chennai" [ref=f4e39] [cursor=pointer]:
+            - generic: Chennai
+          - button "Show routes from Delhi" [ref=f4e42] [cursor=pointer]:
+            - generic: Delhi
+          - button "Show routes from Goa" [ref=f4e45] [cursor=pointer]
+          - button "Show routes from Guwahati" [ref=f4e48] [cursor=pointer]
+          - button "Show routes from Hyderabad" [ref=f4e51] [cursor=pointer]:
+            - generic: Hyderabad
+          - button "Show routes from Jaipur" [ref=f4e54] [cursor=pointer]
+          - button "Show routes from Kolkata" [ref=f4e57] [cursor=pointer]:
+            - generic: Kolkata
+          - button "Show routes from Lucknow" [ref=f4e60] [cursor=pointer]
+          - button "Show routes from Mumbai" [ref=f4e63] [cursor=pointer]:
+            - generic: Mumbai
+          - button "Show routes from Patna" [ref=f4e66] [cursor=pointer]
+          - button "Show routes from Pune" [ref=f4e69] [cursor=pointer]:
+            - generic: Pune
+        - generic [ref=f4e72]:
+          - paragraph [ref=f4e73]: Selected node
+          - heading "Delhi" [level=2] [ref=f4e74]
+          - generic [ref=f4e75]:
+            - generic [ref=f4e76]: 2 routes
+            - generic [ref=f4e77]: 4 CPI directions
+      - link "Reveal dashboard" [ref=f4e78] [cursor=pointer]:
+        - /url: "#dashboard-reveal"
+    - region "SkyMetrics brand" [ref=f4e80]:
+      - heading "SKYMETRICS" [level=1] [ref=f4e81]
+      - paragraph [ref=f4e82]: When Airfare Changes, Data Should Know
+    - generic [ref=f4e85]:
+      - button "Open menu" [active] [ref=f4e86] [cursor=pointer]
+      - heading "Dashboard" [level=2] [ref=f4e90]
+      - tablist "Dashboard views" [ref=f4e91]:
+        - button "Previous dashboard card" [ref=f4e92] [cursor=pointer]: ‹
+        - generic [ref=f4e93]:
+          - tab "Elasticity" [ref=f4e94] [cursor=pointer]:
+            - generic [ref=f4e95]: Sensitivity
+            - text: Elasticity
+          - tab "Trends" [selected] [ref=f4e96] [cursor=pointer]:
+            - generic [ref=f4e97]: Index
+            - text: Trends
+          - tab "Heatmap" [ref=f4e98] [cursor=pointer]:
+            - generic [ref=f4e99]: Sectors
+            - text: Heatmap
+        - button "Next dashboard card" [ref=f4e100] [cursor=pointer]: ›
+      - generic "Data sources" [ref=f4e101]:
+        - generic [ref=f4e102]: AKASA
+        - generic [ref=f4e103]: mmt
+        - generic [ref=f4e104]: ixigo
+        - generic [ref=f4e105]: DGCA
+    - generic [ref=f4e106]:
+      - generic [ref=f4e108]:
+        - heading "SkyMetrics" [level=2] [ref=f4e109]
+        - paragraph [ref=f4e110]: Real-Time Airfare Intelligence | From Fare Data to Economic Insight
+      - paragraph [ref=f4e113]: When Airfare Changes, Data Should Know

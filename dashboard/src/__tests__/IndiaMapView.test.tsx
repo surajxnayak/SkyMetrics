@@ -5,8 +5,25 @@ import { getMapRoutes } from "../api/client";
 import IndiaMapView from "../components/IndiaMapView";
 
 vi.mock("react-simple-maps", () => ({
-  ComposableMap: ({ children }: { children: React.ReactNode }) => (
-    <svg data-testid="india-map">{children}</svg>
+  ComposableMap: ({
+    children,
+    onMouseMove,
+    onMouseUp,
+    onMouseLeave,
+  }: {
+    children: React.ReactNode;
+    onMouseMove?: React.MouseEventHandler<SVGSVGElement>;
+    onMouseUp?: React.MouseEventHandler<SVGSVGElement>;
+    onMouseLeave?: React.MouseEventHandler<SVGSVGElement>;
+  }) => (
+    <svg
+      data-testid="india-map"
+      onMouseMove={onMouseMove}
+      onMouseUp={onMouseUp}
+      onMouseLeave={onMouseLeave}
+    >
+      {children}
+    </svg>
   ),
   Geographies: ({ children }: { children: (args: { geographies: Array<{ rsmKey: string }> }) => React.ReactNode }) =>
     children({ geographies: [{ rsmKey: "india" }] }),
@@ -21,6 +38,8 @@ vi.mock("react-simple-maps", () => ({
     onMouseEnter,
     onMouseMove,
     onMouseLeave,
+    onMouseDown,
+    onMouseUp,
   }: {
     children: React.ReactNode;
     onClick?: React.MouseEventHandler<SVGGElement>;
@@ -28,6 +47,8 @@ vi.mock("react-simple-maps", () => ({
     onMouseEnter?: React.MouseEventHandler<SVGGElement>;
     onMouseMove?: React.MouseEventHandler<SVGGElement>;
     onMouseLeave?: React.MouseEventHandler<SVGGElement>;
+    onMouseDown?: React.MouseEventHandler<SVGGElement>;
+    onMouseUp?: React.MouseEventHandler<SVGGElement>;
   }) => (
     <g
       data-testid="map-marker"
@@ -36,6 +57,8 @@ vi.mock("react-simple-maps", () => ({
       onMouseEnter={onMouseEnter}
       onMouseMove={onMouseMove}
       onMouseLeave={onMouseLeave}
+      onMouseDown={onMouseDown}
+      onMouseUp={onMouseUp}
     >
       {children}
     </g>
@@ -123,6 +146,31 @@ describe("IndiaMapView", () => {
     await waitFor(() => expect(getMapRoutes).toHaveBeenCalledTimes(2));
     expect(vi.mocked(getMapRoutes).mock.calls[1][0]).toEqual(
       expect.objectContaining({ frequency: "daily", originCity: expect.any(String) })
+    );
+  });
+
+  it("shows airport names on hover and creates a custom edge by dragging between dots", async () => {
+    const { container } = render(<IndiaMapView />);
+
+    await waitFor(() =>
+      expect(getMapRoutes).toHaveBeenCalledWith(expect.objectContaining({ originCity: "DEL" }))
+    );
+
+    const markers = screen.getAllByTestId("map-marker");
+    fireEvent.mouseEnter(markers[0], { clientX: 30, clientY: 40 });
+
+    expect(screen.getByText(/Airport/)).toBeInTheDocument();
+
+    const routeCount = container.querySelectorAll(".landing-map__route").length;
+    fireEvent.mouseDown(markers[0], { button: 0, clientX: 30, clientY: 40 });
+    fireEvent.mouseMove(screen.getByTestId("india-map"), { clientX: 90, clientY: 110 });
+
+    expect(container.querySelector(".landing-map__route-draft")).toBeInTheDocument();
+
+    fireEvent.mouseUp(markers[1], { clientX: 90, clientY: 110 });
+
+    await waitFor(() =>
+      expect(container.querySelectorAll(".landing-map__route").length).toBe(routeCount + 1)
     );
   });
 

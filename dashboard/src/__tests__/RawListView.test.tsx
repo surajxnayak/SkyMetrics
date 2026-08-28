@@ -49,6 +49,7 @@ describe("RawListView", () => {
       </FilterProvider>
     );
 
+    expect(screen.getByRole("status", { name: "Loading List view" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("List view")).toBeInTheDocument());
 
     expect(screen.getByText(/Mean fare: INR 8,000/)).toBeInTheDocument();

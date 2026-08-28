@@ -52,6 +52,7 @@ describe("SectorHeatmap", () => {
       </FilterProvider>
     );
 
+    expect(screen.getByRole("status", { name: "Loading Sector heatmap" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("DEL-BOM")).toBeInTheDocument());
     expect(screen.getByText("8000")).toBeInTheDocument();
   });

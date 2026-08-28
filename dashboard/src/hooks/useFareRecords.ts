@@ -38,6 +38,7 @@ export function useFareRecords(
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setData(null);
     getFareRecords({
       routes: routes.length > 0 ? routes : undefined,
       sources: sources.length > 0 ? sources : undefined,

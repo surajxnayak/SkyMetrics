@@ -69,7 +69,18 @@ describe("App", () => {
 
     expect(screen.getAllByText("SkyMetrics").length).toBeGreaterThan(0);
     await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
-    expect(screen.getByText("When Airfare Changes, Data Should Know")).toBeInTheDocument();
+    expect(screen.getAllByText("When Airfare Changes, Data Should Know").length).toBeGreaterThan(0);
+  });
+
+  it("opens the Desktop 5 style menu drawer from the dashboard menu button", async () => {
+    render(<App />);
+    await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
+
+    await userEvent.click(screen.getByRole("button", { name: "Open menu" }));
+
+    expect(screen.getByRole("heading", { name: "MENU" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "DASHBOARD" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "SUPPORT" })).toBeInTheDocument();
   });
 
   it("opens heatmap in the separate analytics screen when its dashboard card is clicked", async () => {
@@ -89,7 +100,7 @@ describe("App", () => {
 
     await userEvent.click(screen.getByRole("tab", { name: "Elasticity" }));
 
-    await waitFor(() => expect(screen.getByText("Lead Time Elasticity")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Lead-time elasticity")).toBeInTheDocument());
   });
 
   it("rotates dashboard cards before opening the list analytics screen", async () => {
@@ -100,7 +111,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByRole("tab", { name: "List" })).toBeInTheDocument());
     await userEvent.click(screen.getByRole("tab", { name: "List" }));
 
-    await waitFor(() => expect(screen.getByText("List Time")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("List view")).toBeInTheDocument());
   });
 
   it("cycles between analytical views with the extreme side arrows", async () => {
@@ -108,7 +119,7 @@ describe("App", () => {
     await waitFor(() => expect(screen.getByText("Route CPI map")).toBeInTheDocument());
 
     await userEvent.click(screen.getByRole("tab", { name: "Trends" }));
-    await waitFor(() => expect(screen.getByText("Trend View")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText("Trend view")).toBeInTheDocument());
 
     await userEvent.click(screen.getByRole("button", { name: "Next analytical view" }));
 

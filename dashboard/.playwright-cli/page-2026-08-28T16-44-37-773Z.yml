@@ -1,0 +1,78 @@
+- generic [active] [ref=f4e1]:
+  - generic [ref=f4e357]:
+    - complementary [ref=f4e358]:
+      - generic [ref=f4e359]:
+        - heading [level=2] [ref=f4e360]: MENU
+        - button [ref=f4e361] [cursor=pointer]: X
+      - navigation [ref=f4e362]:
+        - button [ref=f4e363] [cursor=pointer]: LOGIN
+        - button [ref=f4e364] [cursor=pointer]: REGISTER
+        - button [ref=f4e365] [cursor=pointer]: DASHBOARD
+        - button [ref=f4e366] [cursor=pointer]: ANALYTICS
+        - button [ref=f4e367] [cursor=pointer]: SETTINGS
+        - button [ref=f4e368] [cursor=pointer]: SUPPORT
+    - main [ref=f4e369]:
+      - generic [ref=f4e370]:
+        - img "SkyMetrics" [ref=f4e371]
+        - region "Route CPI map" [ref=f4e373]:
+          - img [ref=f4e376]:
+            - button "Show routes from Ahmedabad" [ref=f4e381] [cursor=pointer]:
+              - generic: Ahmedabad
+            - button "Show routes from Bengaluru" [ref=f4e384] [cursor=pointer]:
+              - generic: Bengaluru
+            - button "Show routes from Bhubaneswar" [ref=f4e387] [cursor=pointer]
+            - button "Show routes from Chennai" [ref=f4e390] [cursor=pointer]:
+              - generic: Chennai
+            - button "Show routes from Delhi" [ref=f4e393] [cursor=pointer]:
+              - generic: Delhi
+            - button "Show routes from Goa" [ref=f4e396] [cursor=pointer]
+            - button "Show routes from Guwahati" [ref=f4e399] [cursor=pointer]
+            - button "Show routes from Hyderabad" [ref=f4e402] [cursor=pointer]:
+              - generic: Hyderabad
+            - button "Show routes from Jaipur" [ref=f4e405] [cursor=pointer]
+            - button "Show routes from Kolkata" [ref=f4e408] [cursor=pointer]:
+              - generic: Kolkata
+            - button "Show routes from Lucknow" [ref=f4e411] [cursor=pointer]
+            - button "Show routes from Mumbai" [ref=f4e414] [cursor=pointer]:
+              - generic: Mumbai
+            - button "Show routes from Patna" [ref=f4e417] [cursor=pointer]
+            - button "Show routes from Pune" [ref=f4e420] [cursor=pointer]:
+              - generic: Pune
+          - generic [ref=f4e423]:
+            - paragraph [ref=f4e424]: Selected node
+            - heading "Delhi" [level=2] [ref=f4e425]
+            - generic [ref=f4e426]:
+              - generic [ref=f4e427]: 2 routes
+              - generic [ref=f4e428]: 4 CPI directions
+        - link "Reveal dashboard" [ref=f4e429] [cursor=pointer]:
+          - /url: "#dashboard-reveal"
+      - region "SkyMetrics brand" [ref=f4e431]:
+        - heading "SKYMETRICS" [level=1] [ref=f4e432]
+        - paragraph [ref=f4e433]: When Airfare Changes, Data Should Know
+      - generic [ref=f4e436]:
+        - button "Open menu" [ref=f4e437] [cursor=pointer]
+        - heading "Dashboard" [level=2] [ref=f4e441]
+        - tablist "Dashboard views" [ref=f4e442]:
+          - button "Previous dashboard card" [ref=f4e443] [cursor=pointer]: ‹
+          - generic [ref=f4e444]:
+            - tab "Elasticity" [ref=f4e445] [cursor=pointer]:
+              - generic [ref=f4e446]: Sensitivity
+              - text: Elasticity
+            - tab "Trends" [selected] [ref=f4e447] [cursor=pointer]:
+              - generic [ref=f4e448]: Index
+              - text: Trends
+            - tab "Heatmap" [ref=f4e449] [cursor=pointer]:
+              - generic [ref=f4e450]: Sectors
+              - text: Heatmap
+          - button "Next dashboard card" [ref=f4e451] [cursor=pointer]: ›
+        - generic "Data sources" [ref=f4e452]:
+          - generic [ref=f4e453]: AKASA
+          - generic [ref=f4e454]: mmt
+          - generic [ref=f4e455]: ixigo
+          - generic [ref=f4e456]: DGCA
+      - generic [ref=f4e457]:
+        - generic [ref=f4e459]:
+          - heading "SkyMetrics" [level=2] [ref=f4e460]
+          - paragraph [ref=f4e461]: Real-Time Airfare Intelligence | From Fare Data to Economic Insight
+        - paragraph [ref=f4e464]: When Airfare Changes, Data Should Know
+  - generic [ref=f4e356]: "0"

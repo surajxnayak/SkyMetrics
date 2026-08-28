@@ -2,6 +2,8 @@ import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, X
 import type { FareRecord } from "../api/types";
 import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
+import DataQualityPanel from "./DataQualityPanel";
 import ExportButton from "./ExportButton";
 
 const TOOLTIP_STYLE = { backgroundColor: "#12161f", border: "1px solid #1e2530", borderRadius: 6 };
@@ -78,7 +80,7 @@ export default function TrendView() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <p className="text-sm text-secondary">Loading trend data...</p>;
+  if (loading && !data) return <AnalyticsLoadingSkeleton title="Trend view" variant="chart" />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load trend data: {error}
@@ -101,26 +103,31 @@ export default function TrendView() {
       )}
       <h2 className="mb-1 text-base font-semibold text-primary">Trend view</h2>
       <p className="mb-4 font-mono text-sm text-secondary">Routes: {routes.join(", ")}</p>
-      <ResponsiveContainer width="100%" height={300}>
-        <LineChart data={chartData}>
-          <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />
-          <XAxis dataKey="period" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
-          <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12, fontFamily: MONO_FONT }} />
-          <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} />
-          <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
-          {routes.map((route, index) => (
-            <Line
-              key={route}
-              type="monotone"
-              dataKey={route}
-              stroke={colors[index % colors.length]}
-              name={route}
-            />
-          ))}
-        </LineChart>
-      </ResponsiveContainer>
-      <div className="mt-4">
-        <ExportButton data={points} filename="trend.csv" />
+      <div className="trend-layout">
+        <div>
+          <ResponsiveContainer width="100%" height={300}>
+            <LineChart data={chartData}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#1e2530" />
+              <XAxis dataKey="period" stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12 }} />
+              <YAxis stroke="#9ca3af" tick={{ fill: "#9ca3af", fontSize: 12, fontFamily: MONO_FONT }} />
+              <Tooltip contentStyle={TOOLTIP_STYLE} labelStyle={TOOLTIP_LABEL_STYLE} itemStyle={TOOLTIP_ITEM_STYLE} />
+              <Legend wrapperStyle={{ color: "#9ca3af", fontSize: 12 }} />
+              {routes.map((route, index) => (
+                <Line
+                  key={route}
+                  type="monotone"
+                  dataKey={route}
+                  stroke={colors[index % colors.length]}
+                  name={route}
+                />
+              ))}
+            </LineChart>
+          </ResponsiveContainer>
+          <div className="mt-4">
+            <ExportButton data={points} filename="trend.csv" />
+          </div>
+        </div>
+        <DataQualityPanel />
       </div>
     </div>
   );

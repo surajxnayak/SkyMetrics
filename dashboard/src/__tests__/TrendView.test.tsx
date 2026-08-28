@@ -4,6 +4,16 @@ import { FilterProvider } from "../context/FilterContext";
 import TrendView from "../components/TrendView";
 
 vi.mock("../api/client", () => ({
+  getMetadata: vi.fn().mockResolvedValue({
+    weights: {
+      source: "test",
+      period: "2025",
+      computed_at: "2026-08-24",
+      weights: { "DEL-BOM": 0.5, "DEL-BLR": 0.3, "BOM-BLR": 0.2 },
+    },
+    formulas: {},
+    snapshots: [],
+  }),
   getFares: vi.fn().mockResolvedValue([
     {
       origin: "DEL",
@@ -52,7 +62,7 @@ describe("TrendView", () => {
       </FilterProvider>
     );
 
-    expect(screen.getByText("Loading trend data...")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading Trend view" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/Routes: DEL-BOM, DEL-BLR/)).toBeInTheDocument());
   });
 

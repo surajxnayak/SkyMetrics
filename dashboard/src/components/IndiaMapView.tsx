@@ -1,11 +1,31 @@
-import { useMemo, useState, type MouseEventHandler } from "react";
+import { useMemo, useRef, useState, type MouseEvent, type MouseEventHandler } from "react";
 import { scaleThreshold } from "d3-scale";
-import { ComposableMap, Marker, useMapContext } from "react-simple-maps";
+import { ComposableMap, Geographies, Geography, Marker, useMapContext } from "react-simple-maps";
 import type { Frequency, MapDirection, MapEdge, MapNode } from "../api/types";
 import airportCities from "../config/airportCities.json";
 import { useMapRoutes } from "../hooks/useMapRoutes";
 
-const MAJOR_CITY_CODES = new Set([
+type CityLabelConfig = {
+  label: string;
+  dx: number;
+  dy: number;
+  anchor: "start" | "end";
+};
+
+const LABELED_CITY_CONFIG: ReadonlyMap<string, CityLabelConfig> = new Map(
+  [
+    ["DEL", { label: "Delhi", dx: 22, dy: -6, anchor: "start" }],
+    ["BOM", { label: "Mumbai", dx: -16, dy: 4, anchor: "end" }],
+    ["BLR", { label: "Bengaluru", dx: -16, dy: 12, anchor: "end" }],
+    ["MAA", { label: "Chennai", dx: 16, dy: 8, anchor: "start" }],
+    ["HYD", { label: "Hyderabad", dx: 18, dy: 0, anchor: "start" }],
+    ["CCU", { label: "Kolkata", dx: 18, dy: -4, anchor: "start" }],
+    ["AMD", { label: "Ahmedabad", dx: -14, dy: 2, anchor: "end" }],
+    ["PNQ", { label: "Pune", dx: 15, dy: 10, anchor: "start" }],
+  ] as const
+);
+
+const DISPLAY_CITY_CODES = new Set([
   "DEL",
   "BOM",
   "BLR",
@@ -13,15 +33,13 @@ const MAJOR_CITY_CODES = new Set([
   "HYD",
   "CCU",
   "AMD",
-  "GOI",
   "PNQ",
+  "GOI",
   "JAI",
   "LKO",
-  "PAT",
   "GAU",
   "BBI",
-  "VTZ",
-  "NAG",
+  "PAT",
 ]);
 
 const FALLBACK_DESTINATION_CODES = [
@@ -38,47 +56,126 @@ const FALLBACK_DESTINATION_CODES = [
   "PAT",
   "GAU",
   "BBI",
-  "VTZ",
-  "NAG",
-  "IXC",
-  "IXB",
-  "TRV",
-  "IXM",
 ];
 
 const FALLBACK_ROUTE_COUNT = 6;
 type GeoPoint = [number, number];
+type LonLatPoint = [number, number];
+
+type AirportCity = MapNode & {
+  primary_airport_name: string;
+};
 
 const CPI_COLOR = scaleThreshold<number, string>()
   .domain([98, 102])
   .range(["#6dffb0", "#d7b15f", "#ff7a9b"]);
 
-const MAP_NODES = airportCities.cities.map((city) => ({
+const REGIONAL_LANDMASSES: { key: string; points: LonLatPoint[] }[] = [
+  {
+    key: "pakistan-afghanistan",
+    points: [
+      [60.8, 35.3],
+      [66.8, 36.2],
+      [73.1, 34.7],
+      [75.1, 31.2],
+      [73.4, 27.2],
+      [69.4, 23.4],
+      [64.7, 24.6],
+      [60.2, 28.8],
+    ],
+  },
+  {
+    key: "himalaya",
+    points: [
+      [73.9, 36.1],
+      [80.1, 34.5],
+      [88.4, 30.1],
+      [93.1, 28.0],
+      [91.6, 25.8],
+      [84.6, 26.6],
+      [78.8, 29.0],
+      [74.0, 32.3],
+    ],
+  },
+  {
+    key: "bangladesh-myanmar",
+    points: [
+      [88.1, 26.5],
+      [94.6, 27.6],
+      [99.8, 23.1],
+      [98.0, 15.6],
+      [94.8, 13.9],
+      [91.2, 20.8],
+      [88.6, 22.0],
+    ],
+  },
+  {
+    key: "sri-lanka",
+    points: [
+      [79.3, 9.8],
+      [81.3, 9.4],
+      [82.2, 7.1],
+      [81.4, 5.7],
+      [79.8, 6.1],
+      [79.1, 8.0],
+    ],
+  },
+];
+
+const MAP_NODES = airportCities.cities.map((city): AirportCity => ({
   city_code: city.city_code,
   city_name: city.city_name,
   latitude: city.latitude,
   longitude: city.longitude,
   airport_codes: city.airport_codes,
-})) satisfies MapNode[];
+  primary_airport_name: city.airports[0]?.airport_name ?? `${city.city_name} Airport`,
+}));
 
-type TooltipState = {
-  x: number;
-  y: number;
+const DISPLAY_NODES = MAP_NODES.filter((node) => DISPLAY_CITY_CODES.has(node.city_code));
+
+type TooltipState =
+  | {
+      kind: "route";
+      x: number;
+      y: number;
+      origin: string;
+      destination: string;
+      forward: MapDirection | null;
+      reverse: MapDirection | null;
+    }
+  | {
+      kind: "node";
+      x: number;
+      y: number;
+      cityCode: string;
+      cityName: string;
+      airportName: string;
+    }
+  | null;
+
+type DragState = {
+  origin: string;
+  start: GeoPoint;
+  current: GeoPoint;
+  hasMoved: boolean;
+} | null;
+
+type CustomEdge = {
+  id: string;
   origin: string;
   destination: string;
-  forward: MapDirection | null;
-  reverse: MapDirection | null;
-} | null;
+};
 
 type RenderedRoute = {
   key: string;
   origin: string;
   destination: string;
-  originNode: MapNode;
-  destinationNode: MapNode;
+  originNode: AirportCity;
+  destinationNode: AirportCity;
   forward: MapDirection | null;
   reverse: MapDirection | null;
   fallback: boolean;
+  custom?: boolean;
 };
 
 type RouteArcProps = {
@@ -131,7 +228,7 @@ function routeTarget(edge: MapEdge, origin: string): string | null {
   return null;
 }
 
-function distanceSquared(origin: MapNode, destination: MapNode): number {
+function distanceSquared(origin: AirportCity, destination: AirportCity): number {
   const longitudeDelta = origin.longitude - destination.longitude;
   const latitudeDelta = origin.latitude - destination.latitude;
   return longitudeDelta * longitudeDelta + latitudeDelta * latitudeDelta;
@@ -148,11 +245,11 @@ function routeHash(origin: string, destination: string): number {
 
 function fallbackDestinationNodes(
   origin: string,
-  originNode: MapNode,
-  nodesByCode: Map<string, MapNode>
-): MapNode[] {
+  originNode: AirportCity,
+  nodesByCode: Map<string, AirportCity>
+): AirportCity[] {
   const preferredNodes = FALLBACK_DESTINATION_CODES.map((code) => nodesByCode.get(code)).filter(
-    (node): node is MapNode => node !== undefined && node.city_code !== origin
+    (node): node is AirportCity => node !== undefined && node.city_code !== origin
   );
 
   const nearestPreferred = preferredNodes
@@ -179,6 +276,64 @@ function fallbackDestinationNodes(
     .map(({ node }) => node);
 
   return [...nearestPreferred, ...fillNodes];
+}
+
+function svgPointFromClient(svg: SVGSVGElement, clientX: number, clientY: number): GeoPoint {
+  const point = svg.createSVGPoint?.();
+  const matrix = svg.getScreenCTM?.();
+
+  if (point && matrix) {
+    point.x = clientX;
+    point.y = clientY;
+    const transformed = point.matrixTransform(matrix.inverse());
+    return [transformed.x, transformed.y];
+  }
+
+  const rect = svg.getBoundingClientRect();
+  if (!rect.width || !rect.height) return [clientX, clientY];
+
+  return [
+    ((clientX - rect.left) / rect.width) * 1440,
+    ((clientY - rect.top) / rect.height) * 840,
+  ];
+}
+
+function svgPointFromMouse(event: MouseEvent<SVGSVGElement>): GeoPoint {
+  return svgPointFromClient(event.currentTarget, event.clientX, event.clientY);
+}
+
+function draftRoutePath(start: GeoPoint, current: GeoPoint): string {
+  const deltaX = current[0] - start[0];
+  const deltaY = current[1] - start[1];
+  const distance = Math.sqrt(deltaX * deltaX + deltaY * deltaY);
+  const bend = Math.min(170, Math.max(36, distance * 0.2));
+  const controlX = (start[0] + current[0]) / 2;
+  const controlY = (start[1] + current[1]) / 2 - bend;
+  return `M ${start[0].toFixed(2)} ${start[1].toFixed(2)} Q ${controlX.toFixed(
+    2
+  )} ${controlY.toFixed(2)} ${current[0].toFixed(2)} ${current[1].toFixed(2)}`;
+}
+
+function RegionalBackdrop() {
+  const { projection } = useMapContext();
+
+  return (
+    <g className="landing-map__regional-layer" aria-hidden="true">
+      {REGIONAL_LANDMASSES.map((landmass) => {
+        const projectedPoints = landmass.points
+          .map((point) => projection(point) as GeoPoint | null)
+          .filter((point): point is GeoPoint => point !== null);
+
+        if (projectedPoints.length === 0) return null;
+
+        const pathData = projectedPoints
+          .map(([x, y], index) => `${index === 0 ? "M" : "L"} ${x.toFixed(2)} ${y.toFixed(2)}`)
+          .join(" ");
+
+        return <path key={landmass.key} d={`${pathData} Z`} className="landing-map__regional-land" />;
+      })}
+    </g>
+  );
 }
 
 function RouteArc({
@@ -229,6 +384,9 @@ function RouteArc({
         strokeOpacity={strokeOpacity}
         className="landing-map__route"
         style={{ animationDelay: `${Math.min(index * 45, 900)}ms` }}
+        onMouseEnter={onEnter}
+        onMouseMove={onMove}
+        onMouseLeave={onLeave}
       />
     </g>
   );
@@ -262,14 +420,18 @@ function DirectionPanel({ title, direction }: { title: string; direction: MapDir
 
 export default function IndiaMapView() {
   const [selectedCity, setSelectedCity] = useState("DEL");
+  const [hasUserSelectedCity, setHasUserSelectedCity] = useState(false);
   const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const [customEdges, setCustomEdges] = useState<CustomEdge[]>([]);
+  const [dragging, setDragging] = useState<DragState>(null);
+  const suppressClickRef = useRef(false);
   const { data, loading, error } = useMapRoutes({
     frequency: "daily" satisfies Frequency,
     originCity: selectedCity,
   });
 
   const nodesByCode = useMemo(() => {
-    const nodes = new Map<string, MapNode>();
+    const nodes = new Map<string, AirportCity>();
     for (const node of MAP_NODES) nodes.set(node.city_code, node);
     return nodes;
   }, []);
@@ -281,7 +443,14 @@ export default function IndiaMapView() {
       .map((edge) => {
         const destination = routeTarget(edge, selectedCity);
         const destinationNode = destination ? nodesByCode.get(destination) : undefined;
-        if (!selectedNode || !destination || !destinationNode) return null;
+        if (
+          !selectedNode ||
+          !destination ||
+          !destinationNode ||
+          !DISPLAY_CITY_CODES.has(destination)
+        ) {
+          return null;
+        }
         return {
           key: edge.edge_key,
           origin: selectedCity,
@@ -315,6 +484,29 @@ export default function IndiaMapView() {
     return fallbackRoutes;
   }, [data, nodesByCode, selectedCity, selectedNode]);
 
+  const customRenderedRoutes = useMemo<RenderedRoute[]>(
+    () =>
+      customEdges
+        .flatMap((edge) => {
+          const originNode = nodesByCode.get(edge.origin);
+          const destinationNode = nodesByCode.get(edge.destination);
+          if (!originNode || !destinationNode) return [];
+
+          return [{
+            key: edge.id,
+            origin: edge.origin,
+            destination: edge.destination,
+            originNode,
+            destinationNode,
+            forward: null,
+            reverse: null,
+            fallback: true,
+            custom: true,
+          }];
+        }),
+    [customEdges, nodesByCode]
+  );
+
   const availableDirections = useMemo(
     () =>
       renderedRoutes.reduce(
@@ -325,38 +517,108 @@ export default function IndiaMapView() {
   );
 
   function selectNode(nodeCode: string) {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+
+    setHasUserSelectedCity(true);
     setSelectedCity(nodeCode);
     setTooltip(null);
+  }
+
+  function startNodeDrag(node: AirportCity, event: MouseEvent<SVGGElement>) {
+    if (event.button !== 0) return;
+    const svg = event.currentTarget.ownerSVGElement;
+
+    if (!svg) return;
+
+    const start = svgPointFromClient(svg, event.clientX, event.clientY);
+
+    setDragging({
+      origin: node.city_code,
+      start,
+      current: start,
+      hasMoved: false,
+    });
+  }
+
+  function updateNodeDrag(event: MouseEvent<SVGSVGElement>) {
+    if (!dragging) return;
+
+    const current = svgPointFromMouse(event);
+    const deltaX = current[0] - dragging.start[0];
+    const deltaY = current[1] - dragging.start[1];
+    const hasMoved = dragging.hasMoved || Math.sqrt(deltaX * deltaX + deltaY * deltaY) > 5;
+
+    if (hasMoved) {
+      suppressClickRef.current = true;
+      setTooltip(null);
+    }
+
+    setDragging({ ...dragging, current, hasMoved });
+  }
+
+  function cancelNodeDrag() {
+    setDragging(null);
+  }
+
+  function completeNodeDrag(destination: string) {
+    if (!dragging?.hasMoved || dragging.origin === destination) {
+      setDragging(null);
+      return;
+    }
+
+    const [origin, target] = [dragging.origin, destination].sort();
+    const id = `${origin}-${target}-custom`;
+
+    setCustomEdges((current) => {
+      if (current.some((edge) => edge.id === id)) return current;
+      return [...current, { id, origin: dragging.origin, destination }];
+    });
+    setDragging(null);
   }
 
   return (
     <section className="landing-map" aria-label="Route CPI map">
       <div className="landing-map__media">
-        <img
-          src="/design-assets/landing-2.png"
-          alt=""
-          className="landing-map__image"
-          draggable={false}
-        />
+        <div className="landing-map__ocean" aria-hidden="true" />
+        <div className="landing-map__india-pop" aria-hidden="true" />
         <ComposableMap
           projection="geoMercator"
-          projectionConfig={{ center: [82.4, 22.7], scale: 1510 }}
+          projectionConfig={{ center: [82.8, 22.7], scale: 1390 }}
           width={1440}
           height={840}
           className="landing-map__overlay"
+          onMouseMove={updateNodeDrag}
+          onMouseUp={cancelNodeDrag}
+          onMouseLeave={cancelNodeDrag}
         >
-          {renderedRoutes.map((route, index) => {
+          <RegionalBackdrop />
+          <Geographies geography="/maps/india-states-simplified.geojson">
+            {({ geographies }) =>
+              geographies.map((geography) => (
+                <Geography
+                  key={geography.rsmKey}
+                  geography={geography}
+                  className="landing-map__india-state"
+                />
+              ))
+            }
+          </Geographies>
+          {[...renderedRoutes, ...customRenderedRoutes].map((route, index) => {
             const cpi = edgeCpi(route.forward, route.reverse);
             return (
               <RouteArc
                 key={route.key}
                 route={route}
                 index={index}
-                color={colorForCpi(cpi, route.fallback)}
-                strokeWidth={route.fallback ? 1.55 : 2.35}
-                strokeOpacity={route.fallback ? 0.42 : 0.86}
+                color={route.custom ? "#7fe8ff" : colorForCpi(cpi, route.fallback)}
+                strokeWidth={route.custom ? 2.45 : route.fallback ? 1.55 : 2.35}
+                strokeOpacity={route.custom ? 0.9 : route.fallback ? 0.42 : 0.86}
                 onEnter={(event) =>
                   setTooltip({
+                    kind: "route",
                     x: event.clientX,
                     y: event.clientY,
                     origin: route.origin,
@@ -374,28 +636,40 @@ export default function IndiaMapView() {
               />
             );
           })}
-          {MAP_NODES.map((node) => {
-            const isMajor = MAJOR_CITY_CODES.has(node.city_code);
-            const isSelected = node.city_code === selectedCity;
+          {dragging?.hasMoved && (
+            <path
+              d={draftRoutePath(dragging.start, dragging.current)}
+              className="landing-map__route-draft"
+            />
+          )}
+          {DISPLAY_NODES.map((node) => {
+            const labelConfig = LABELED_CITY_CONFIG.get(node.city_code);
+            const isSelected = hasUserSelectedCity && node.city_code === selectedCity;
             return (
               <Marker
                 key={node.city_code}
+                className="landing-map__marker"
                 coordinates={[node.longitude, node.latitude]}
                 role="button"
                 tabIndex={0}
                 aria-label={`Show routes from ${node.city_name}`}
                 onClick={() => selectNode(node.city_code)}
+                onMouseDown={(event) => startNodeDrag(node, event)}
+                onMouseUp={(event) => {
+                  event.stopPropagation();
+                  completeNodeDrag(node.city_code);
+                }}
                 onKeyDown={(event) => {
                   if (event.key === "Enter" || event.key === " ") selectNode(node.city_code);
                 }}
                 onMouseEnter={(event) =>
                   setTooltip({
+                    kind: "node",
                     x: event.clientX,
                     y: event.clientY,
-                    origin: node.city_code,
-                    destination: node.city_code,
-                    forward: null,
-                    reverse: null,
+                    cityCode: node.city_code,
+                    cityName: node.city_name,
+                    airportName: node.primary_airport_name,
                   })
                 }
                 onMouseMove={(event) =>
@@ -405,17 +679,19 @@ export default function IndiaMapView() {
                 }
                 onMouseLeave={() => setTooltip(null)}
               >
+                <circle r={11} className="landing-map__node-hitarea" />
                 <circle
-                  r={isSelected ? 8 : isMajor ? 4.5 : 2.8}
+                  r={3.7}
                   className={isSelected ? "landing-map__node landing-map__node--active" : "landing-map__node"}
                 />
-                {isMajor && (
+                {labelConfig && (
                   <text
-                    y={isSelected ? -14 : -8}
-                    textAnchor="middle"
+                    x={labelConfig.dx}
+                    y={labelConfig.dy}
+                    textAnchor={labelConfig.anchor}
                     className="landing-map__label"
                   >
-                    {node.city_code}
+                    {labelConfig.label}
                   </text>
                 )}
               </Marker>
@@ -443,10 +719,16 @@ export default function IndiaMapView() {
           className="landing-map__tooltip"
           style={{ left: tooltip.x + 14, top: tooltip.y + 14 }}
         >
-          {tooltip.origin === tooltip.destination ? (
+          {tooltip.kind === "node" ? (
             <>
-              <h3>{tooltip.origin}</h3>
-              <p>Click to request adjacent route CPI data.</p>
+              <h3 className="landing-map__tooltip-title">
+                <span className="landing-map__tooltip-plane" aria-hidden="true">
+                  &#9992;
+                </span>
+                {tooltip.cityCode}
+              </h3>
+              <p>{tooltip.airportName}</p>
+              <p className="landing-map__tooltip-city">{tooltip.cityName}</p>
             </>
           ) : (
             <>

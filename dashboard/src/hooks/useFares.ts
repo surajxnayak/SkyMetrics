@@ -42,6 +42,7 @@ export function useFares(
     let cancelled = false;
     setLoading(true);
     setError(null);
+    setData(null);
     getFares({
       routes: routes.length > 0 ? routes : undefined,
       origin: origin || undefined,

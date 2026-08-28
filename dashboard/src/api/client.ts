@@ -6,7 +6,11 @@ import type {
   MetadataResponse,
 } from "./types";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const CONFIGURED_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const USE_DEV_PROXY =
+  import.meta.env.DEV &&
+  /^https?:\/\/(127\.0\.0\.1|localhost):8000\/?$/.test(CONFIGURED_BASE_URL);
+const BASE_URL = USE_DEV_PROXY ? "" : CONFIGURED_BASE_URL.replace(/\/$/, "");
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 
 export class ApiError extends Error {

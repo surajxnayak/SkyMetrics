@@ -1,6 +1,10 @@
-import { useEffect, useMemo, useState } from "react";
+import { useState } from "react";
 import { FilterProvider, useFilters, type Filters } from "./context/FilterContext";
 import IndiaMapView from "./components/IndiaMapView";
+import LeadTimeElasticity from "./components/LeadTimeElasticity";
+import RawListView from "./components/RawListView";
+import SectorHeatmap from "./components/SectorHeatmap";
+import TrendView from "./components/TrendView";
 import {
   CARRIERS,
   ROUTES,
@@ -20,55 +24,11 @@ const TABS: { id: Tab; label: string; eyebrow: string; title: string }[] = [
 ];
 
 const SOURCE_TILES = [
-  { label: "Akasa Air", tone: "white" },
+  { label: "AKASA", tone: "white" },
   { label: "mmt", tone: "red" },
   { label: "ixigo", tone: "orange" },
   { label: "DGCA", tone: "blue" },
 ];
-
-const HEATMAP_ROWS = [
-  ["BOM-BLR", "2026-08-24", "58", "7545", "4120", "12980", "+8.2%", "High", "On Time"],
-  ["DEL-BLR", "2026-08-24", "63", "7833", "4380", "13450", "-3.6%", "Very High", "On Time"],
-  ["DEL-BOM", "2026-08-24", "54", "7259", "3980", "11990", "+5.4%", "High", "Delayed"],
-  ["MAA-HYD", "2026-08-24", "49", "6622", "3590", "10990", "-1.8%", "Medium", "On Time"],
-  ["CCU-DEL", "2026-08-24", "45", "6981", "3720", "11250", "+2.7%", "Medium", "On Time"],
-  ["BLR-CCU", "2026-08-24", "52", "6408", "3450", "9980", "+4.1%", "Medium", "On Time"],
-  ["HYD-BOM", "2026-08-24", "47", "7125", "3850", "11680", "-2.3%", "High", "On Time"],
-  ["AMD-DEL", "2026-08-24", "60", "6890", "3650", "10890", "+6.6%", "Very High", "On Time"],
-];
-
-const LIST_ROWS = [
-  ["2026-08-24 07:14", "2026-08-25", "DEL-BOM", "akasaair", "QP", "T+1", "T3", "DEL-BOM", "available", "INR 6,880", "-INR 773"],
-  ["2026-08-24 07:14", "2026-08-25", "DEL-BOM", "akasaair", "QP", "T+1", "U1", "DXN-BOM", "available", "INR 6,968", "-INR 685"],
-  ["2026-08-24 07:14", "2026-08-25", "DEL-BOM", "akasaair", "QP", "T+1", "T3", "DEL-BOM", "available", "INR 7,281", "-INR 372"],
-  ["2026-08-24 07:14", "2026-08-25", "DEL-BOM", "akasaair", "QP", "T+1", "U1", "DXN-BOM", "available", "INR 7,388", "-INR 265"],
-  ["2026-08-24 07:14", "2026-08-31", "DEL-BOM", "akasaair", "QP", "T+7", "T0", "DEL-NMI", "available", "INR 6,804", "-INR 849"],
-  ["2026-08-24 07:14", "2026-08-31", "DEL-BOM", "akasaair", "QP", "T+7", "Q2", "DEL-BOM", "available", "INR 8,321", "+INR 668"],
-  ["2026-08-24 07:14", "2026-09-08", "DEL-BOM", "akasaair", "QP", "T+15", "T3", "DEL-BOM", "available", "INR 6,880", "-INR 773"],
-];
-
-function useScrollProgress() {
-  const [progress, setProgress] = useState(0);
-
-  useEffect(() => {
-    function updateProgress() {
-      const start = window.innerHeight * 0.16;
-      const end = window.innerHeight * 1.28;
-      const next = (window.scrollY - start) / (end - start);
-      setProgress(Math.max(0, Math.min(1, next)));
-    }
-
-    updateProgress();
-    window.addEventListener("scroll", updateProgress, { passive: true });
-    window.addEventListener("resize", updateProgress);
-    return () => {
-      window.removeEventListener("scroll", updateProgress);
-      window.removeEventListener("resize", updateProgress);
-    };
-  }, []);
-
-  return progress;
-}
 
 function nextTab(current: Tab, direction: 1 | -1): Tab {
   const currentIndex = TABS.findIndex((item) => item.id === current);
@@ -121,7 +81,7 @@ function DashboardCardCarousel({ onOpen }: { onOpen: (tab: Tab) => void }) {
             aria-selected={id === "trend"}
             aria-label={label}
             onClick={() => onOpen(id)}
-            className="dashboard-card"
+            className={id === "trend" ? "dashboard-card dashboard-card--featured" : "dashboard-card"}
           >
             <span>{eyebrow}</span>
             {label}
@@ -291,142 +251,11 @@ function ViewSkeleton({ title }: { title: string }) {
   );
 }
 
-function ChartFrame({ variant }: { variant: "trend" | "elasticity" }) {
-  const trendPath = "M70 226 L290 214 L514 206 L738 86 L960 86";
-  const trendPathTwo = "M70 214 L290 202 L514 196 L738 78 L960 84";
-  const trendPathThree = "M70 220 L290 218 L514 212 L738 92 L960 90";
-  const elasticityPath = "M70 70 C210 112 276 156 388 154 C530 150 630 128 738 104 C842 78 902 88 960 98";
-  const elasticityPathTwo = "M70 126 C224 128 332 136 450 132 C570 126 692 76 804 82 C884 84 930 90 960 94";
-  const elasticityPathThree = "M70 176 C240 170 356 150 514 132 C674 114 812 116 960 132";
-
-  return (
-    <div className="mock-chart">
-      <p>Routes: BOM-BLR, DEL-BLR, DEL-BOM</p>
-      <svg viewBox="0 0 1040 280" role="img" aria-label={`${variant} chart skeleton`}>
-        {[44, 92, 140, 188, 236].map((y) => (
-          <line key={y} x1="52" x2="1000" y1={y} y2={y} className="mock-chart__grid" />
-        ))}
-        {[70, 290, 514, 738, 960].map((x) => (
-          <line key={x} x1={x} x2={x} y1="38" y2="244" className="mock-chart__grid" />
-        ))}
-        <line x1="52" x2="1000" y1="244" y2="244" className="mock-chart__axis" />
-        <line x1="52" x2="52" y1="38" y2="244" className="mock-chart__axis" />
-        <path d={variant === "trend" ? trendPath : elasticityPath} className="mock-chart__line mock-chart__line--purple" />
-        <path d={variant === "trend" ? trendPathTwo : elasticityPathTwo} className="mock-chart__line mock-chart__line--green" />
-        <path d={variant === "trend" ? trendPathThree : elasticityPathThree} className="mock-chart__line mock-chart__line--gold" />
-      </svg>
-      <div className="mock-legend">
-        <span>BOM-BLR</span>
-        <span>DEL-BLR</span>
-        <span>DEL-BOM</span>
-      </div>
-    </div>
-  );
-}
-
-function TrendSkeletonView() {
-  return (
-    <div className="mock-view mock-view--trend">
-      <h2>Trend View</h2>
-      <ChartFrame variant="trend" />
-      <div className="data-quality-card">
-        <h3>Data Quality</h3>
-        <p>Coverage: <strong>100%</strong></p>
-        <p>Outliers flagged: <strong>2.8%</strong></p>
-        <p>Source health: <strong>388 available / 0 no-flight</strong></p>
-      </div>
-    </div>
-  );
-}
-
-function HeatmapSkeletonView() {
-  return (
-    <div className="mock-view">
-      <div className="mock-table-wrap">
-        <table className="mock-table">
-          <thead>
-            <tr>
-              {["Route", "Date", "Flights", "Avg Price", "Min Price", "Max Price", "Change", "Demand", "Status"].map((heading) => (
-                <th key={heading}>{heading}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {HEATMAP_ROWS.map((row) => (
-              <tr key={row[0]}>
-                {row.map((cell, index) => (
-                  <td
-                    key={`${row[0]}-${index}`}
-                    className={
-                      index === 6
-                        ? cell.startsWith("+")
-                          ? "mock-table__up"
-                          : "mock-table__down"
-                        : index === 7
-                          ? "mock-table__demand"
-                          : index === 8
-                            ? "mock-table__status"
-                            : undefined
-                    }
-                  >
-                    {cell}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
-function ElasticitySkeletonView() {
-  return (
-    <div className="mock-view">
-      <h2>Lead Time Elasticity</h2>
-      <ChartFrame variant="elasticity" />
-      <button type="button" className="mock-export">Export CSV</button>
-    </div>
-  );
-}
-
-function ListSkeletonView() {
-  return (
-    <div className="mock-view">
-      <div className="list-view-heading">
-        <h2>List Time</h2>
-        <button type="button" className="mock-export">Export CSV</button>
-      </div>
-      <div className="mock-table-wrap">
-        <table className="mock-table mock-table--dense">
-          <thead>
-            <tr>
-              {["Collected", "Travel", "Route", "Source", "Carrier", "Window", "Class", "Routing", "Status", "Price", "Vs mean"].map((heading) => (
-                <th key={heading}>{heading}</th>
-              ))}
-            </tr>
-          </thead>
-          <tbody>
-            {LIST_ROWS.map((row, rowIndex) => (
-              <tr key={`${row[0]}-${rowIndex}`}>
-                {row.map((cell, index) => (
-                  <td key={`${rowIndex}-${index}`}>{cell}</td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    </div>
-  );
-}
-
 function AnalyticsView({ tab }: { tab: Tab }) {
-  if (tab === "trend") return <TrendSkeletonView />;
-  if (tab === "heatmap") return <HeatmapSkeletonView />;
-  if (tab === "elasticity") return <ElasticitySkeletonView />;
-  return <ListSkeletonView />;
+  if (tab === "trend") return <TrendView />;
+  if (tab === "heatmap") return <SectorHeatmap />;
+  if (tab === "elasticity") return <LeadTimeElasticity />;
+  return <RawListView />;
 }
 
 function AnalyticsScreen({
@@ -453,8 +282,9 @@ function AnalyticsScreen({
   return (
     <div className="analytics-screen">
       <FilterDock />
-      <button type="button" className="analytics-home" onClick={onHome}>
-        SkyMetrics
+      <button type="button" className="analytics-home" onClick={onHome} aria-label="Back to SkyMetrics landing">
+        <img src="/design-assets/skymetrics-logo.png" alt="" />
+        <span>SkyMetrics</span>
       </button>
       <button
         type="button"
@@ -486,52 +316,44 @@ function AnalyticsScreen({
   );
 }
 
+function SidebarDrawer({ open, onClose }: { open: boolean; onClose: () => void }) {
+  return (
+    <>
+      <button
+        type="button"
+        className={open ? "drawer-backdrop drawer-backdrop--open" : "drawer-backdrop"}
+        aria-label="Close menu"
+        onClick={onClose}
+      />
+      <aside className={open ? "sidebar-drawer sidebar-drawer--open" : "sidebar-drawer"} aria-hidden={!open}>
+        <div className="sidebar-drawer__header">
+          <h2>MENU</h2>
+          <button type="button" aria-label="Close menu" onClick={onClose}>
+            X
+          </button>
+        </div>
+        <nav aria-label="Landing menu">
+          {["LOGIN", "REGISTER", "DASHBOARD", "ANALYTICS", "SETTINGS", "SUPPORT"].map((item) => (
+            <button key={item} type="button">
+              {item}
+            </button>
+          ))}
+        </nav>
+      </aside>
+    </>
+  );
+}
+
 function LandingScreen({ onOpenAnalytics }: { onOpenAnalytics: (tab: Tab) => void }) {
-  const revealProgress = useScrollProgress();
-  const heroMapStyle = useMemo(
-    () => ({
-      transform: `perspective(1300px) rotateX(${18 - revealProgress * 11}deg) rotateZ(${
-        -2.4 + revealProgress * 1.8
-      }deg) scale(${0.88 + revealProgress * 0.05}) translateY(${revealProgress * 28}px)`,
-    }),
-    [revealProgress]
-  );
-  const panoramaStyle = useMemo(
-    () => ({
-      clipPath: `inset(${Math.max(0, 55 - revealProgress * 55)}% ${Math.max(
-        0,
-        7 - revealProgress * 7
-      )}% 0)`,
-      opacity: 0.22 + revealProgress * 0.78,
-      transform: `translateY(${64 - revealProgress * 64}px) scale(${0.94 + revealProgress * 0.06})`,
-    }),
-    [revealProgress]
-  );
+  const [menuOpen, setMenuOpen] = useState(false);
 
   return (
     <div className="app-landing">
-      <header className="topbar">
-        <a href="#landing" className="brand-lockup" aria-label="SkyMetrics home">
-          <span className="brand-mark" aria-hidden="true" />
-          <span>SkyMetrics</span>
-        </a>
-        <nav className="topbar-links" aria-label="Primary">
-          <a href="#dashboard-reveal">Dashboard</a>
-          <a href="#landing-footer">About</a>
-        </nav>
-      </header>
-
+      <SidebarDrawer open={menuOpen} onClose={() => setMenuOpen(false)} />
       <main>
         <section id="landing" className="hero">
-          <div className="hero-copy">
-            <p className="hero-eyebrow">Real-time airfare intelligence</p>
-            <h1>SkyMetrics</h1>
-            <p>
-              Fare-route CPI signals from live node selection, rendered as a national route network.
-            </p>
-          </div>
-
-          <div className="hero-map-shell" style={heroMapStyle}>
+          <img className="landing-logo-chip" src="/design-assets/skymetrics-logo.png" alt="SkyMetrics" />
+          <div className="hero-map-shell">
             <IndiaMapView />
           </div>
 
@@ -540,17 +362,32 @@ function LandingScreen({ onOpenAnalytics }: { onOpenAnalytics: (tab: Tab) => voi
           </a>
         </section>
 
+        <section className="landing-brand-panel" aria-label="SkyMetrics brand">
+          <img src="/design-assets/skymetrics-logo.png" alt="" />
+          <h1>SKYMETRICS</h1>
+          <p>When Airfare Changes, Data Should Know</p>
+        </section>
+
         <section id="dashboard-reveal" className="dashboard-reveal">
           <div className="panorama-wrap">
             <img
               src="/design-assets/desktop-5.png"
               alt=""
               className="panorama-image"
-              style={panoramaStyle}
               draggable={false}
             />
 
             <div className="dashboard-nav-block">
+              <button
+                type="button"
+                className="landing-menu-button"
+                aria-label="Open menu"
+                onClick={() => setMenuOpen(true)}
+              >
+                <span />
+                <span />
+                <span />
+              </button>
               <h2>Dashboard</h2>
               <DashboardCardCarousel onOpen={onOpenAnalytics} />
 
@@ -567,7 +404,7 @@ function LandingScreen({ onOpenAnalytics }: { onOpenAnalytics: (tab: Tab) => voi
 
         <footer id="landing-footer" className="landing-footer">
           <div className="landing-footer__brand">
-            <span className="brand-mark landing-footer__mark" aria-hidden="true" />
+            <img className="landing-footer__mark" src="/design-assets/skymetrics-logo.png" alt="" />
             <div>
               <h2>SkyMetrics</h2>
               <p>Real-Time Airfare Intelligence | From Fare Data to Economic Insight</p>

@@ -1,0 +1,374 @@
+- main [ref=e4]:
+  - generic [ref=e5]:
+    - region "Route CPI map" [ref=e7]:
+      - img [ref=e9]:
+        - generic [ref=e11] [cursor=pointer]
+        - generic [ref=e13] [cursor=pointer]
+        - generic [ref=e15] [cursor=pointer]
+        - generic [ref=e17] [cursor=pointer]
+        - generic [ref=e19] [cursor=pointer]
+        - generic [ref=e21] [cursor=pointer]
+        - button "Show routes from Adampur" [ref=e22]:
+          - generic [ref=e23] [cursor=pointer]
+        - button "Show routes from Agartala" [ref=e24]:
+          - generic [ref=e25] [cursor=pointer]
+        - button "Show routes from Agatti" [ref=e26]:
+          - generic [ref=e27] [cursor=pointer]
+        - button "Show routes from Agra" [ref=e28]:
+          - generic [ref=e29] [cursor=pointer]
+        - button "Show routes from Ahmedabad" [ref=e30]:
+          - generic [ref=e31] [cursor=pointer]
+          - generic: Ahmedabad
+        - button "Show routes from Aizawl (Lengpui)" [ref=e32]:
+          - generic [ref=e33] [cursor=pointer]
+        - button "Show routes from Ajmer (Kishangarh)" [ref=e34]:
+          - generic [ref=e35] [cursor=pointer]
+        - button "Show routes from Akola" [ref=e36]:
+          - generic [ref=e37] [cursor=pointer]
+        - button "Show routes from Aligarh" [ref=e38]:
+          - generic [ref=e39] [cursor=pointer]
+        - button "Show routes from Allahabad" [ref=e40]:
+          - generic [ref=e41] [cursor=pointer]
+        - button "Show routes from Along Airport" [ref=e42]:
+          - generic [ref=e43] [cursor=pointer]
+        - button "Show routes from Ambikapur" [ref=e44]:
+          - generic [ref=e45] [cursor=pointer]
+        - button "Show routes from Amravati" [ref=e46]:
+          - generic [ref=e47] [cursor=pointer]
+        - button "Show routes from Amritsar" [ref=e48]:
+          - generic [ref=e49] [cursor=pointer]
+        - button "Show routes from Aurangabad" [ref=e50]:
+          - generic [ref=e51] [cursor=pointer]
+        - button "Show routes from Azamgarh" [ref=e52]:
+          - generic [ref=e53] [cursor=pointer]
+        - button "Show routes from Balurghat" [ref=e54]:
+          - generic [ref=e55] [cursor=pointer]
+        - button "Show routes from Bareilly" [ref=e56]:
+          - generic [ref=e57] [cursor=pointer]
+        - button "Show routes from Belgaum" [ref=e58]:
+          - generic [ref=e59] [cursor=pointer]
+        - button "Show routes from Bellary" [ref=e60]:
+          - generic [ref=e61] [cursor=pointer]
+        - button "Show routes from Bengaluru" [ref=e62]:
+          - generic [ref=e63] [cursor=pointer]
+          - generic: Bengaluru
+        - button "Show routes from Bhatinda Air Force Station" [ref=e64]:
+          - generic [ref=e65] [cursor=pointer]
+        - button "Show routes from Bhavnagar" [ref=e66]:
+          - generic [ref=e67] [cursor=pointer]
+        - button "Show routes from Bhawanipatna" [ref=e68]:
+          - generic [ref=e69] [cursor=pointer]
+        - button "Show routes from Bhopal" [ref=e70]:
+          - generic [ref=e71] [cursor=pointer]
+        - button "Show routes from Bhubaneswar" [ref=e72]:
+          - generic [ref=e73] [cursor=pointer]
+        - button "Show routes from Bhuj" [ref=e74]:
+          - generic [ref=e75] [cursor=pointer]
+        - button "Show routes from Bhuntar" [ref=e76]:
+          - generic [ref=e77] [cursor=pointer]
+        - button "Show routes from Bidar" [ref=e78]:
+          - generic [ref=e79] [cursor=pointer]
+        - button "Show routes from Bikaner" [ref=e80]:
+          - generic [ref=e81] [cursor=pointer]
+        - button "Show routes from Bilaspur" [ref=e82]:
+          - generic [ref=e83] [cursor=pointer]
+        - button "Show routes from Calicut" [ref=e84]:
+          - generic [ref=e85] [cursor=pointer]
+        - button "Show routes from Chandigarh" [ref=e86]:
+          - generic [ref=e87] [cursor=pointer]
+        - button "Show routes from Chennai" [ref=e88]:
+          - generic [ref=e89] [cursor=pointer]
+          - generic: Chennai
+        - button "Show routes from Chipi" [ref=e90]:
+          - generic [ref=e91] [cursor=pointer]
+        - button "Show routes from Chitrakoot" [ref=e92]:
+          - generic [ref=e93] [cursor=pointer]
+        - button "Show routes from Coimbatore" [ref=e94]:
+          - generic [ref=e95] [cursor=pointer]
+        - button "Show routes from Cooch Behar" [ref=e96]:
+          - generic [ref=e97] [cursor=pointer]
+        - button "Show routes from Daman" [ref=e98]:
+          - generic [ref=e99] [cursor=pointer]
+        - button "Show routes from Daporijo" [ref=e100]:
+          - generic [ref=e101] [cursor=pointer]
+        - button "Show routes from Darbhanga" [ref=e102]:
+          - generic [ref=e103] [cursor=pointer]
+        - button "Show routes from Dehradun (Jauligrant)" [ref=e104]:
+          - generic [ref=e105] [cursor=pointer]
+        - button "Show routes from Delhi" [ref=e106]:
+          - generic [ref=e107] [cursor=pointer]
+          - generic: Delhi
+        - button "Show routes from Deoghar" [ref=e108]:
+          - generic [ref=e109] [cursor=pointer]
+        - button "Show routes from Dhanbad Airport" [ref=e110]:
+          - generic [ref=e111] [cursor=pointer]
+        - button "Show routes from Dibrugarh" [ref=e112]:
+          - generic [ref=e113] [cursor=pointer]
+        - button "Show routes from Dimapur" [ref=e114]:
+          - generic [ref=e115] [cursor=pointer]
+        - button "Show routes from Diu" [ref=e116]:
+          - generic [ref=e117] [cursor=pointer]
+        - button "Show routes from Durgapur" [ref=e118]:
+          - generic [ref=e119] [cursor=pointer]
+        - button "Show routes from Faizabad" [ref=e120]:
+          - generic [ref=e121] [cursor=pointer]
+        - button "Show routes from Gaya" [ref=e122]:
+          - generic [ref=e123] [cursor=pointer]
+        - button "Show routes from Goa" [ref=e124]:
+          - generic [ref=e125] [cursor=pointer]
+        - button "Show routes from Goa Mopa" [ref=e126]:
+          - generic [ref=e127] [cursor=pointer]
+        - button "Show routes from Gondia" [ref=e128]:
+          - generic [ref=e129] [cursor=pointer]
+        - button "Show routes from Gorakhpur" [ref=e130]:
+          - generic [ref=e131] [cursor=pointer]
+        - button "Show routes from Guna Airport" [ref=e132]:
+          - generic [ref=e133] [cursor=pointer]
+        - button "Show routes from Guwahati" [ref=e134]:
+          - generic [ref=e135] [cursor=pointer]
+        - button "Show routes from Gwalior" [ref=e136]:
+          - generic [ref=e137] [cursor=pointer]
+        - button "Show routes from Halwara" [ref=e138]:
+          - generic [ref=e139] [cursor=pointer]
+        - button "Show routes from Hisar" [ref=e140]:
+          - generic [ref=e141] [cursor=pointer]
+        - button "Show routes from Hollongi" [ref=e142]:
+          - generic [ref=e143] [cursor=pointer]
+        - button "Show routes from Hubballi" [ref=e144]:
+          - generic [ref=e145] [cursor=pointer]
+        - button "Show routes from Hyderabad" [ref=e146]:
+          - generic [ref=e147] [cursor=pointer]
+          - generic: Hyderabad
+        - button "Show routes from IAF Camp" [ref=e148]:
+          - generic [ref=e149] [cursor=pointer]
+        - button "Show routes from Imphal" [ref=e150]:
+          - generic [ref=e151] [cursor=pointer]
+        - button "Show routes from Indore" [ref=e152]:
+          - generic [ref=e153] [cursor=pointer]
+        - button "Show routes from Jabalpur" [ref=e154]:
+          - generic [ref=e155] [cursor=pointer]
+        - button "Show routes from Jagdalpur" [ref=e156]:
+          - generic [ref=e157] [cursor=pointer]
+        - button "Show routes from Jaipur" [ref=e158]:
+          - generic [ref=e159] [cursor=pointer]
+        - button "Show routes from Jaisalmer Airport" [ref=e160]:
+          - generic [ref=e161] [cursor=pointer]
+        - button "Show routes from Jalgaon" [ref=e162]:
+          - generic [ref=e163] [cursor=pointer]
+        - button "Show routes from Jammu" [ref=e164]:
+          - generic [ref=e165] [cursor=pointer]
+        - button "Show routes from Jamnagar" [ref=e166]:
+          - generic [ref=e167] [cursor=pointer]
+        - button "Show routes from Jamshedpur" [ref=e168]:
+          - generic [ref=e169] [cursor=pointer]
+        - button "Show routes from Jeypore" [ref=e170]:
+          - generic [ref=e171] [cursor=pointer]
+        - button "Show routes from Jharsuguda Airport" [ref=e172]:
+          - generic [ref=e173] [cursor=pointer]
+        - button "Show routes from Jodhpur" [ref=e174]:
+          - generic [ref=e175] [cursor=pointer]
+        - button "Show routes from Jorhat" [ref=e176]:
+          - generic [ref=e177] [cursor=pointer]
+        - button "Show routes from Jubbarhatti" [ref=e178]:
+          - generic [ref=e179] [cursor=pointer]
+        - button "Show routes from Kadapa" [ref=e180]:
+          - generic [ref=e181] [cursor=pointer]
+        - button "Show routes from Kailashahar" [ref=e182]:
+          - generic [ref=e183] [cursor=pointer]
+        - button "Show routes from Kakadi" [ref=e184]:
+          - generic [ref=e185] [cursor=pointer]
+        - button "Show routes from Kalaburagi" [ref=e186]:
+          - generic [ref=e187] [cursor=pointer]
+        - button "Show routes from Kandla" [ref=e188]:
+          - generic [ref=e189] [cursor=pointer]
+        - button "Show routes from Kangra" [ref=e190]:
+          - generic [ref=e191] [cursor=pointer]
+        - button "Show routes from Kannur" [ref=e192]:
+          - generic [ref=e193] [cursor=pointer]
+        - button "Show routes from Kanpur" [ref=e194]:
+          - generic [ref=e195] [cursor=pointer]
+        - button "Show routes from Keshod" [ref=e196]:
+          - generic [ref=e197] [cursor=pointer]
+        - button "Show routes from Khajuraho" [ref=e198]:
+          - generic [ref=e199] [cursor=pointer]
+        - button "Show routes from Khowai" [ref=e200]:
+          - generic [ref=e201] [cursor=pointer]
+        - button "Show routes from Kochi" [ref=e202]:
+          - generic [ref=e203] [cursor=pointer]
+        - button "Show routes from Kolhapur" [ref=e204]:
+          - generic [ref=e205] [cursor=pointer]
+        - button "Show routes from Kolkata" [ref=e206]:
+          - generic [ref=e207] [cursor=pointer]
+          - generic: Kolkata
+        - button "Show routes from Kota" [ref=e208]:
+          - generic [ref=e209] [cursor=pointer]
+        - button "Show routes from Kushinagar" [ref=e210]:
+          - generic [ref=e211] [cursor=pointer]
+        - button "Show routes from Latur" [ref=e212]:
+          - generic [ref=e213] [cursor=pointer]
+        - button "Show routes from Leh" [ref=e214]:
+          - generic [ref=e215] [cursor=pointer]
+        - button "Show routes from Lilabari" [ref=e216]:
+          - generic [ref=e217] [cursor=pointer]
+        - button "Show routes from Lucknow" [ref=e218]:
+          - generic [ref=e219] [cursor=pointer]
+        - button "Show routes from Ludhiana Airport" [ref=e220]:
+          - generic [ref=e221] [cursor=pointer]
+        - button "Show routes from Madhurapudi" [ref=e222]:
+          - generic [ref=e223] [cursor=pointer]
+        - button "Show routes from Madurai" [ref=e224]:
+          - generic [ref=e225] [cursor=pointer]
+        - button "Show routes from Malda" [ref=e226]:
+          - generic [ref=e227] [cursor=pointer]
+        - button "Show routes from Mangaluru" [ref=e228]:
+          - generic [ref=e229] [cursor=pointer]
+        - button "Show routes from Manik Bhandar" [ref=e230]:
+          - generic [ref=e231] [cursor=pointer]
+        - button "Show routes from Moradabad" [ref=e232]:
+          - generic [ref=e233] [cursor=pointer]
+        - button "Show routes from Mumbai" [ref=e234]:
+          - generic [ref=e235] [cursor=pointer]
+          - generic: Mumbai
+        - button "Show routes from Muzaffarpur" [ref=e236]:
+          - generic [ref=e237] [cursor=pointer]
+        - button "Show routes from Mysore" [ref=e238]:
+          - generic [ref=e239] [cursor=pointer]
+        - button "Show routes from Nagpur" [ref=e240]:
+          - generic [ref=e241] [cursor=pointer]
+        - button "Show routes from Nanded" [ref=e242]:
+          - generic [ref=e243] [cursor=pointer]
+        - button "Show routes from Nashik" [ref=e244]:
+          - generic [ref=e245] [cursor=pointer]
+        - button "Show routes from Navi Mumbai" [ref=e246]:
+          - generic [ref=e247] [cursor=pointer]
+        - button "Show routes from Neyveli" [ref=e248]:
+          - generic [ref=e249] [cursor=pointer]
+        - button "Show routes from Orvakal" [ref=e250]:
+          - generic [ref=e251] [cursor=pointer]
+        - button "Show routes from Pakyong" [ref=e252]:
+          - generic [ref=e253] [cursor=pointer]
+        - button "Show routes from Pantnagar" [ref=e254]:
+          - generic [ref=e255] [cursor=pointer]
+        - button "Show routes from Pasighat" [ref=e256]:
+          - generic [ref=e257] [cursor=pointer]
+        - button "Show routes from Pathankot" [ref=e258]:
+          - generic [ref=e259] [cursor=pointer]
+        - button "Show routes from Patna" [ref=e260]:
+          - generic [ref=e261] [cursor=pointer]
+        - button "Show routes from Porbandar" [ref=e262]:
+          - generic [ref=e263] [cursor=pointer]
+        - button "Show routes from Port Blair" [ref=e264]:
+          - generic [ref=e265] [cursor=pointer]
+        - button "Show routes from Puducherry (Pondicherry)" [ref=e266]:
+          - generic [ref=e267] [cursor=pointer]
+        - button "Show routes from Pune" [ref=e268]:
+          - generic [ref=e269] [cursor=pointer]
+          - generic: Pune
+        - button "Show routes from Puttaparthi" [ref=e270]:
+          - generic [ref=e271] [cursor=pointer]
+        - button "Show routes from Raipur" [ref=e272]:
+          - generic [ref=e273] [cursor=pointer]
+        - button "Show routes from Rajkot" [ref=e274]:
+          - generic [ref=e275] [cursor=pointer]
+        - button "Show routes from Rajkot" [ref=e276]:
+          - generic [ref=e277] [cursor=pointer]
+        - button "Show routes from Rajouri" [ref=e278]:
+          - generic [ref=e279] [cursor=pointer]
+        - button "Show routes from Ramagundam" [ref=e280]:
+          - generic [ref=e281] [cursor=pointer]
+        - button "Show routes from Ranchi" [ref=e282]:
+          - generic [ref=e283] [cursor=pointer]
+        - button "Show routes from Ratnagiri Airport" [ref=e284]:
+          - generic [ref=e285] [cursor=pointer]
+        - button "Show routes from Rewa" [ref=e286]:
+          - generic [ref=e287] [cursor=pointer]
+        - button "Show routes from Rourkela" [ref=e288]:
+          - generic [ref=e289] [cursor=pointer]
+        - button "Show routes from Rupsi" [ref=e290]:
+          - generic [ref=e291] [cursor=pointer]
+        - button "Show routes from Salem" [ref=e292]:
+          - generic [ref=e293] [cursor=pointer]
+        - button "Show routes from Satna Airport" [ref=e294]:
+          - generic [ref=e295] [cursor=pointer]
+        - button "Show routes from Sherpur Naqeebpur" [ref=e296]:
+          - generic [ref=e297] [cursor=pointer]
+        - button "Show routes from Shillong" [ref=e298]:
+          - generic [ref=e299] [cursor=pointer]
+        - button "Show routes from Shimoga" [ref=e300]:
+          - generic [ref=e301] [cursor=pointer]
+        - button "Show routes from Shravasti" [ref=e302]:
+          - generic [ref=e303] [cursor=pointer]
+        - button "Show routes from Silchar" [ref=e304]:
+          - generic [ref=e305] [cursor=pointer]
+        - button "Show routes from Siliguri" [ref=e306]:
+          - generic [ref=e307] [cursor=pointer]
+        - button "Show routes from Solapur" [ref=e308]:
+          - generic [ref=e309] [cursor=pointer]
+        - button "Show routes from Srinagar" [ref=e310]:
+          - generic [ref=e311] [cursor=pointer]
+        - button "Show routes from Surat" [ref=e312]:
+          - generic [ref=e313] [cursor=pointer]
+        - button "Show routes from Tezpur Airport" [ref=e314]:
+          - generic [ref=e315] [cursor=pointer]
+        - button "Show routes from Tezu" [ref=e316]:
+          - generic [ref=e317] [cursor=pointer]
+        - button "Show routes from Thanjavur" [ref=e318]:
+          - generic [ref=e319] [cursor=pointer]
+        - button "Show routes from Thiruvananthapuram" [ref=e320]:
+          - generic [ref=e321] [cursor=pointer]
+        - button "Show routes from Tiruchirappalli" [ref=e322]:
+          - generic [ref=e323] [cursor=pointer]
+        - button "Show routes from Tirupati" [ref=e324]:
+          - generic [ref=e325] [cursor=pointer]
+        - button "Show routes from Toranagallu" [ref=e326]:
+          - generic [ref=e327] [cursor=pointer]
+        - button "Show routes from Udaipur" [ref=e328]:
+          - generic [ref=e329] [cursor=pointer]
+        - button "Show routes from Vadodara" [ref=e330]:
+          - generic [ref=e331] [cursor=pointer]
+        - button "Show routes from Vagaikulam" [ref=e332]:
+          - generic [ref=e333] [cursor=pointer]
+        - button "Show routes from Varanasi" [ref=e334]:
+          - generic [ref=e335] [cursor=pointer]
+        - button "Show routes from Vijayawada" [ref=e336]:
+          - generic [ref=e337] [cursor=pointer]
+        - button "Show routes from Visakhapatnam" [ref=e338]:
+          - generic [ref=e339] [cursor=pointer]
+        - button "Show routes from Warangal" [ref=e340]:
+          - generic [ref=e341] [cursor=pointer]
+        - button "Show routes from Ziro" [ref=e342]:
+          - generic [ref=e343] [cursor=pointer]
+      - generic [ref=e344]:
+        - paragraph [ref=e345]: Selected node
+        - heading "Delhi" [level=2] [ref=e346]
+        - generic [ref=e347]:
+          - generic [ref=e348]: 6 routes
+          - generic [ref=e349]: 0 CPI directions
+        - alert [ref=e350]: "API unavailable: Failed to fetch. Showing preview routes."
+    - link "Reveal dashboard" [ref=e351] [cursor=pointer]:
+      - /url: "#dashboard-reveal"
+  - generic [ref=e355]:
+    - heading "Dashboard" [level=2] [ref=e356]
+    - tablist "Dashboard views" [ref=e357]:
+      - button "Previous dashboard card" [ref=e358] [cursor=pointer]: ‹
+      - generic [ref=e359]:
+        - tab "Elasticity" [ref=e360] [cursor=pointer]:
+          - generic [ref=e361]: Sensitivity
+          - text: Elasticity
+        - tab "Trends" [selected] [ref=e362] [cursor=pointer]:
+          - generic [ref=e363]: Index
+          - text: Trends
+        - tab "Heatmap" [ref=e364] [cursor=pointer]:
+          - generic [ref=e365]: Sectors
+          - text: Heatmap
+      - button "Next dashboard card" [ref=e366] [cursor=pointer]: ›
+    - generic "Data sources" [ref=e367]:
+      - generic [ref=e368]: Akasa Air
+      - generic [ref=e369]: mmt
+      - generic [ref=e370]: ixigo
+      - generic [ref=e371]: DGCA
+  - generic [ref=e372]:
+    - generic [ref=e375]:
+      - heading "SkyMetrics" [level=2] [ref=e376]
+      - paragraph [ref=e377]: Real-Time Airfare Intelligence | From Fare Data to Economic Insight
+    - paragraph [ref=e380]: When Airfare Changes, Data Should Know

@@ -1,5 +1,6 @@
 import { useFilters } from "../context/FilterContext";
 import { useFareRecords } from "../hooks/useFareRecords";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
 import ExportButton from "./ExportButton";
 
 function formatCurrency(value: number | null): string {
@@ -30,7 +31,7 @@ export default function RawListView() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <p className="text-sm text-secondary">Loading fare records...</p>;
+  if (loading && !data) return <AnalyticsLoadingSkeleton title="List view" variant="table" />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load fare records: {error}

@@ -1,0 +1,65 @@
+- main [ref=f6e4]:
+  - generic [ref=f6e5]:
+    - region "Route CPI map" [ref=f6e7]:
+      - img [ref=f6e10]:
+        - generic [ref=f6e13] [cursor=pointer]
+        - generic [ref=f6e15] [cursor=pointer]
+        - generic [ref=f6e17] [cursor=pointer]
+        - generic [ref=f6e19] [cursor=pointer]
+        - generic [ref=f6e21] [cursor=pointer]
+        - generic [ref=f6e23] [cursor=pointer]
+        - button "Show routes from Ahmedabad" [ref=f6e24] [cursor=pointer]:
+          - generic: Ahmedabad
+        - button "Show routes from Bengaluru" [ref=f6e27] [cursor=pointer]:
+          - generic: Bengaluru
+        - button "Show routes from Bhubaneswar" [ref=f6e30] [cursor=pointer]
+        - button "Show routes from Chennai" [ref=f6e33] [cursor=pointer]:
+          - generic: Chennai
+        - button "Show routes from Delhi" [ref=f6e36] [cursor=pointer]:
+          - generic: Delhi
+        - button "Show routes from Goa" [ref=f6e39] [cursor=pointer]
+        - button "Show routes from Guwahati" [ref=f6e42] [cursor=pointer]
+        - button "Show routes from Hyderabad" [ref=f6e45] [cursor=pointer]:
+          - generic: Hyderabad
+        - button "Show routes from Jaipur" [ref=f6e48] [cursor=pointer]
+        - button "Show routes from Kolkata" [ref=f6e51] [cursor=pointer]:
+          - generic: Kolkata
+        - button "Show routes from Lucknow" [ref=f6e54] [cursor=pointer]
+        - button "Show routes from Mumbai" [ref=f6e57] [cursor=pointer]:
+          - generic: Mumbai
+        - button "Show routes from Patna" [ref=f6e60] [cursor=pointer]
+        - button "Show routes from Pune" [ref=f6e63] [cursor=pointer]:
+          - generic: Pune
+      - generic [ref=f6e66]:
+        - paragraph [ref=f6e67]: Selected node
+        - heading "Delhi" [level=2] [ref=f6e68]
+        - generic [ref=f6e69]:
+          - generic [ref=f6e70]: Loading
+          - generic [ref=f6e71]: 0 CPI directions
+    - link "Reveal dashboard" [ref=f6e72] [cursor=pointer]:
+      - /url: "#dashboard-reveal"
+  - generic [ref=f6e76]:
+    - heading "Dashboard" [level=2] [ref=f6e77]
+    - tablist "Dashboard views" [ref=f6e78]:
+      - button "Previous dashboard card" [ref=f6e79] [cursor=pointer]: ‹
+      - generic [ref=f6e80]:
+        - tab "Elasticity" [ref=f6e81] [cursor=pointer]:
+          - generic [ref=f6e82]: Sensitivity
+          - text: Elasticity
+        - tab "Trends" [selected] [ref=f6e83] [cursor=pointer]:
+          - generic [ref=f6e84]: Index
+          - text: Trends
+        - tab "Heatmap" [ref=f6e85] [cursor=pointer]:
+          - generic [ref=f6e86]: Sectors
+          - text: Heatmap
+      - button "Next dashboard card" [ref=f6e87] [cursor=pointer]: ›
+    - generic "Data sources" [ref=f6e88]:
+      - generic [ref=f6e89]: Akasa Air
+      - generic [ref=f6e90]: mmt
+      - generic [ref=f6e91]: ixigo
+      - generic [ref=f6e92]: DGCA
+  - generic [ref=f6e93]:
+    - generic [ref=f6e96]:
+      - heading "SkyMetrics" [level=2] [ref=f6e97]
+      - paragraph [ref=f6e98]: Real-Time Airfare Intelligence | From Fare Data to Economic Insight
+    - paragraph [ref=f6e101]: When Airfare Changes, Data Should Know

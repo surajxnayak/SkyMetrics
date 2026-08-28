@@ -1,6 +1,7 @@
 import { CartesianGrid, Legend, Line, LineChart, ResponsiveContainer, Tooltip, XAxis, YAxis } from "recharts";
 import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
 import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
 
@@ -75,7 +76,7 @@ export default function LeadTimeElasticity() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <p className="text-sm text-secondary">Loading elasticity data...</p>;
+  if (loading && !data) return <AnalyticsLoadingSkeleton title="Lead-time elasticity" variant="chart" />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load elasticity data: {error}

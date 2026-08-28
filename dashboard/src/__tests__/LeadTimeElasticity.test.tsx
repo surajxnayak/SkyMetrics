@@ -62,6 +62,7 @@ describe("LeadTimeElasticity", () => {
       </FilterProvider>
     );
 
+    expect(screen.getByRole("status", { name: "Loading Lead-time elasticity" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText("Export CSV")).toBeInTheDocument());
   });
 

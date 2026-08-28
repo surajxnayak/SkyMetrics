@@ -1,5 +1,6 @@
 import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
 import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
 
@@ -65,7 +66,7 @@ export default function SectorHeatmap() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <p className="text-sm text-secondary">Loading heatmap data...</p>;
+  if (loading && !data) return <AnalyticsLoadingSkeleton title="Sector heatmap" variant="table" />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load heatmap data: {error}

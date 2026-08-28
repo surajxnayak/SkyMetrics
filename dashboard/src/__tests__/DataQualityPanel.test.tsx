@@ -85,6 +85,7 @@ describe("DataQualityPanel", () => {
       </FilterProvider>
     );
 
+    expect(screen.getByRole("status", { name: "Loading data quality" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/Coverage:/)).toBeInTheDocument());
   });
 });

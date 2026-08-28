@@ -1,0 +1,9 @@
+- generic [ref=f4e136]:
+  - button "FILTER" [ref=f4e138] [cursor=pointer]
+  - button "Back to SkyMetrics landing" [ref=f4e139] [cursor=pointer]:
+    - generic [ref=f4e140]: SkyMetrics
+  - button "Previous analytical view" [ref=f4e141] [cursor=pointer]: ‹
+  - button "Next analytical view" [ref=f4e142] [cursor=pointer]: ›
+  - main [ref=f4e143]:
+    - heading "TRENDS" [level=1] [ref=f4e144]
+    - paragraph [ref=f4e146]: Loading trend data...
