@@ -342,7 +342,14 @@ def _resolve_map_snapshot(
     with conn.cursor() as cur:
         cur.execute(query, params)
         row = cur.fetchone()
-    return row if row is not None else (snapshot_id, period)
+    if row is not None:
+        return row
+    # (None, None), not (snapshot_id, period): echoing back the caller's
+    # raw, unresolved request here would make a later demo-% check against
+    # resolved_snapshot_id see the caller's *requested* value even when
+    # nothing was actually found/excluded -- is_preview must only ever be
+    # true for a snapshot that was genuinely resolved from a real row.
+    return None, None
 
 
 def load_map_routes(
