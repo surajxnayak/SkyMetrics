@@ -1,3 +1,4 @@
+import os
 from decimal import Decimal
 
 import pytest
@@ -118,3 +119,23 @@ def test_map_origin_city_validator_rejects_malformed_city_code():
         _validate_map_origin_city("DELHI")
 
     assert exc.value.status_code == 422
+
+
+@pytest.mark.skipif(
+    "DATABASE_URL" not in os.environ, reason="DATABASE_URL not set in this environment"
+)
+def test_load_map_routes_never_serves_a_demo_snapshot():
+    # The shared dev database has illustrative/seeded snapshots (see
+    # db/seed_map_dummy.sql) used for local UI development, all named with a
+    # "demo-" prefix. This is the real regression test for the fix in
+    # _resolve_map_snapshot: those must never come back through the real API.
+    from api.db import get_connection
+
+    conn = get_connection()
+    for frequency in ("daily", "weekly", "monthly"):
+        result = load_map_routes(conn, frequency)
+        assert result["snapshot_id"] is None or not result["snapshot_id"].startswith("demo-")
+        for edge in result["edges"]:
+            for direction in (edge["city_a_to_b"], edge["city_b_to_a"]):
+                if direction is not None:
+                    assert not direction["snapshot_id"].startswith("demo-")

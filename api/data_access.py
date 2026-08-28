@@ -319,7 +319,15 @@ def _reverse_route(route: str) -> str:
 def _resolve_map_snapshot(
     conn, frequency: str, snapshot_id: str | None, period: str | None
 ) -> tuple[str | None, str | None]:
-    query = "SELECT snapshot_id, period FROM map_route_cpi_edges WHERE frequency = %s"
+    # Excludes snapshot_id LIKE 'demo-%' unconditionally, even if explicitly
+    # requested: this table can hold illustrative/seeded snapshots (see
+    # db/seed_map_dummy.sql) used for local UI development, and this is the
+    # one chokepoint that keeps them from ever being served through the real
+    # API as if they were a genuine computed snapshot.
+    query = (
+        "SELECT snapshot_id, period FROM map_route_cpi_edges "
+        "WHERE frequency = %s AND snapshot_id NOT LIKE 'demo-%%'"
+    )
     params: list = [frequency]
     if snapshot_id is not None:
         query += " AND snapshot_id = %s"
