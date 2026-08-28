@@ -7,10 +7,12 @@ import SectorHeatmap from "./components/SectorHeatmap";
 import LeadTimeElasticity from "./components/LeadTimeElasticity";
 import RawListView from "./components/RawListView";
 import AskApix from "./components/AskApix";
+import MapView from "./components/MapView";
 
-type Tab = "trend" | "heatmap" | "elasticity" | "list" | "ask";
+type Tab = "map" | "trend" | "heatmap" | "elasticity" | "list" | "ask";
 
 const TABS: { id: Tab; label: string; icon: string }[] = [
+  { id: "map", label: "Route Map", icon: "map" },
   { id: "trend", label: "Trend Analysis", icon: "show_chart" },
   { id: "heatmap", label: "Sector Heatmap", icon: "grid_view" },
   { id: "elasticity", label: "Elasticity", icon: "analytics" },
@@ -19,7 +21,7 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ];
 
 export default function App() {
-  const [tab, setTab] = useState<Tab>("trend");
+  const [tab, setTab] = useState<Tab>("map");
   const activeLabel = TABS.find((item) => item.id === tab)?.label ?? "";
 
   return (
@@ -75,6 +77,7 @@ export default function App() {
             </div>
             <main className="min-w-0 flex-1">
               <div role="tabpanel">
+                {tab === "map" && <MapView />}
                 {tab === "trend" && <TrendView />}
                 {tab === "heatmap" && <SectorHeatmap />}
                 {tab === "elasticity" && <LeadTimeElasticity />}
