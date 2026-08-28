@@ -80,9 +80,9 @@ export default function MapView() {
           ) : (
             <ComposableMap
               projection="geoMercator"
-              projectionConfig={{ center: [82.8, 22.9], scale: 950 }}
+              projectionConfig={{ center: [82.8, 23.2], scale: 1150 }}
               width={760}
-              height={620}
+              height={560}
               style={{ width: "100%", height: "auto", display: "block" }}
               role="img"
               aria-label="Map of India showing airport city nodes and route coverage"
