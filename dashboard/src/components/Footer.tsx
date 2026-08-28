@@ -27,35 +27,6 @@ export default function Footer() {
           </a>
         </div>
 
-        <form
-          className="flex flex-col gap-2"
-          onSubmit={(event) => event.preventDefault()}
-          aria-label="Newsletter signup (not yet connected)"
-        >
-          <h3 className="font-mono text-[11px] font-medium uppercase tracking-wide text-on-surface-variant">
-            Stay updated
-          </h3>
-          <div className="flex gap-2">
-            <label htmlFor="footer-email" className="sr-only">
-              Email address
-            </label>
-            <input
-              id="footer-email"
-              type="email"
-              placeholder="Enter email"
-              disabled
-              className="rounded-sm border border-outline-variant bg-inset px-3 py-1.5 text-sm text-primary outline-none placeholder:text-muted disabled:opacity-60"
-            />
-            <button
-              type="submit"
-              disabled
-              className="shrink-0 rounded-sm border border-outline-variant bg-surface-container-high px-3 py-1.5 text-sm text-secondary disabled:cursor-not-allowed"
-            >
-              Notify me
-            </button>
-          </div>
-          <p className="text-xs text-muted">Coming soon -- not connected yet.</p>
-        </form>
       </div>
 
       <p className="mx-auto mt-8 max-w-5xl border-t border-outline-variant pt-4 text-xs text-muted">

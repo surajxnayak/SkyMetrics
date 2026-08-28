@@ -36,7 +36,7 @@ export default function BrandStrip() {
   return (
     <div className="w-full border-y border-outline-variant bg-panel py-5">
       <p className="mb-4 text-center font-mono text-[11px] uppercase tracking-[0.14em] text-on-surface-variant">
-        Tracking fares across India&apos;s airline &amp; OTA landscape -- 11 sources evaluated, 1 live today
+        Tracking fares across India&apos;s airline &amp; OTA landscape
       </p>
       <div className="marquee-mask overflow-hidden">
         <div className="brand-marquee flex w-max items-center">
