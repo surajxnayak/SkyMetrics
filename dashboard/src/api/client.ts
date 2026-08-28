@@ -1,6 +1,21 @@
-import type { AskResponse, ChatTurn, FareRecord, FareRecordsResponse, IndexResponse, MetadataResponse } from "./types";
+import type {
+  AskResponse,
+  ChatTurn,
+  FareRecord,
+  FareRecordsResponse,
+  IndexResponse,
+  MapRoutesResponse,
+  MetadataResponse,
+} from "./types";
 
-const BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+const CONFIGURED_BASE_URL = import.meta.env.VITE_API_BASE_URL ?? "http://127.0.0.1:8000";
+// In dev, route through Vite's proxy (vite.config.ts) instead of hitting
+// localhost:8000 directly -- avoids CORS entirely rather than relying on
+// the backend's allow-list staying in sync with whatever port Vite picks.
+const USE_DEV_PROXY =
+  import.meta.env.DEV &&
+  /^https?:\/\/(127\.0\.0\.1|localhost):8000\/?$/.test(CONFIGURED_BASE_URL);
+const BASE_URL = USE_DEV_PROXY ? "" : CONFIGURED_BASE_URL.replace(/\/$/, "");
 const API_KEY = import.meta.env.VITE_API_KEY ?? "";
 
 export class ApiError extends Error {
@@ -128,4 +143,20 @@ export function getMetadata(): Promise<MetadataResponse> {
 
 export function askQuestion(question: string, history: ChatTurn[]): Promise<AskResponse> {
   return post<AskResponse>("/api/v1/ask", { question, history });
+}
+
+export function getMapRoutes(params: {
+  frequency: string;
+  routes?: string[];
+  originCity?: string;
+  period?: string;
+  snapshotId?: string;
+}): Promise<MapRoutesResponse> {
+  return get<MapRoutesResponse>("/api/v1/map/routes", {
+    frequency: params.frequency,
+    route: params.routes,
+    origin_city: params.originCity,
+    period: params.period,
+    snapshot_id: params.snapshotId,
+  });
 }
