@@ -22,7 +22,10 @@ from api.data_access import (
     load_weights_metadata,
 )
 
-GEMINI_MODEL = "gemini-2.0-flash"
+# gemini-2.0-flash was retired mid-project and broke this endpoint. Tried the
+# "-latest" alias first, but it was consistently overloaded (503s / 30-50s
+# hangs) -- pinning to a specific current model was faster and more reliable.
+GEMINI_MODEL = "gemini-3.6-flash"
 # ponytail: budgets N tool calls + 1 final-text round <= MAX_TOOL_ROUNDS, so this
 # allows at most 3 tool calls before a final answer is required. Raise if a
 # real question needs to call all 3 tools AND still get a final-text round.
