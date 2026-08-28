@@ -1,38 +1,37 @@
 # SkyMetrics
 
-Real-time Airfare Price Index (APIx) for India — Smart India Hackathon 2026
-submission (problem statement SIH26056, MoSPI/DIID).
+**A real-time Airfare Price Index (APIx) for Indian domestic air travel.**
 
-## Status
+SkyMetrics scrapes live fares directly from airline booking backends, cleans
+and de-duplicates them, and computes a published price index using four
+standard index-number formulas over real government-sourced route weights —
+served through an authenticated REST API and a React dashboard. Built for
+the Smart India Hackathon 2026 (problem statement SIH26056, MoSPI/DIID).
 
-**All 5 phases** (see `docs/superpowers/specs/`) are complete:
+## Features
 
-- **Phase 1** — a working, robots.txt-compliant scraper for Akasa Air across
-  3 city-pairs and 5 advance-purchase windows.
-- **Phase 2** — a cleaning pipeline: de-duplication and IQR-based outlier
-  flagging on raw fare quotes.
-- **Phase 3** — index construction: simple relative, Laspeyres, Paasche, and
-  Fisher formulas over real DGCA-weighted routes, with daily/weekly/monthly
-  aggregation and versioned snapshots (`index/build.py`).
-- **Phase 4** — a REST API (`api/`) serving the computed index, cleaned
-  fares, and methodology metadata, and a React + TypeScript dashboard
-  (`dashboard/`) covering all six PRD dashboard features: trend view,
-  sector heatmap, lead-time elasticity, drill-down filtering, CSV export,
-  and a data-quality panel.
+- **Compliance-first ingestion** — every fetch is gated by a live robots.txt
+  check and a per-domain rate limiter *before* it happens, not audited
+  afterward. A source that isn't verifiably compliant never enters the
+  pipeline.
+- **Fee-level fare decomposition** — each quote captures base fare, taxes,
+  UDF, and convenience fees as separate line items (not a blended total),
+  plus the actual flown routing when a metro-area search resolves to a
+  connection.
+- **Four index formulas** — simple relative, Laspeyres, Paasche, and Fisher,
+  computed over real DGCA passenger-traffic route weights, at daily, weekly,
+  and monthly granularity, with every snapshot versioned.
+- **Statistical cleaning** — de-duplication and IQR-based outlier flagging
+  run before any quote reaches the index calculation.
+- **Authenticated REST API** — read-only, API-key gated, rate-limited;
+  no computation happens at request time, only reads of pre-computed data.
+- **Analyst dashboard** — trend view, sector heatmap, lead-time elasticity,
+  a filterable raw-data drill-down with CSV export, and a data-quality panel.
+- **External validation** — the computed index is back-tested against a real
+  Government of India reference series (Ministry of Commerce's Service PPI)
+  — see `docs/validation-report.md`.
 
-- **Phase 5** — validation report, documentation, and automated tests. Back-
-  testing against a real government reference series (Ministry of Commerce's
-  Service PPI) is documented in
-  `docs/superpowers/specs/2026-08-26-phase5-dgca-backtest-design.md` and the
-  generated `docs/validation-report.md`; this README's `## Architecture` and
-  `## Methodology` sections are the documentation piece; 171 backend +
-  51 dashboard automated tests were built incrementally across every phase.
-
-Data storage moved from git-committed flat files to PostgreSQL, packaged
-with Docker Compose — see
-`docs/superpowers/specs/2026-08-26-postgres-docker-design.md`.
-
-## Architecture
+## System architecture
 
 ```
 Akasa Air
@@ -53,18 +52,47 @@ index/build.py      ----> PostgreSQL: index_points
                           dashboard/ (React + TypeScript, consumes the REST API)
 ```
 
-| Directory   | Responsibility                                                  |
-|-------------|------------------------------------------------------------------|
-| `scraper/`  | Akasa Air scraper + compliance guard (robots.txt, rate limiting) |
-| `pipeline/` | Cleaning: de-duplication, IQR outlier flagging                   |
-| `index/`    | Index construction: formulas, weights, build, back-test          |
-| `api/`      | FastAPI REST layer + Postgres data access                        |
-| `dashboard/` | React + TypeScript dashboard                                     |
-| `db/`       | Postgres schema + migration scripts                              |
-| `config/`   | Source compliance audit, route weights, basket + reference-series data |
-| `docs/`     | Specs, plans, validation report                                   |
+| Directory    | Responsibility                                                          |
+|--------------|--------------------------------------------------------------------------|
+| `scraper/`   | Akasa Air scraper + compliance guard (robots.txt, rate limiting)         |
+| `pipeline/`  | Cleaning: de-duplication, IQR outlier flagging                           |
+| `index/`     | Index construction: formulas, weights, build, back-test                  |
+| `api/`       | FastAPI REST layer + Postgres data access                                |
+| `dashboard/` | React + TypeScript dashboard                                             |
+| `db/`        | Postgres schema + migration scripts                                      |
+| `config/`    | Source compliance audit, route weights, basket + reference-series data   |
+| `docs/`      | Design specs, implementation plans, validation report                    |
 
-## Methodology
+Nothing is computed at request time: the scraper, cleaner, and index builder
+each write their output straight into PostgreSQL, and the API only ever
+reads what's already there.
+
+## Tech stack
+
+| Layer      | Technology                                                        |
+|------------|---------------------------------------------------------------------|
+| Backend    | Python 3.11+, FastAPI, Uvicorn, psycopg 3                          |
+| Database   | PostgreSQL (tested against [Neon](https://neon.tech) serverless)    |
+| Frontend   | React 18, TypeScript, Vite, Tailwind CSS, Recharts                  |
+| Testing    | pytest (backend, against a real Postgres instance), Vitest + Testing Library (frontend), ruff (lint) |
+| Infra/CI   | GitHub Actions — test/lint on push, a daily cron for the live scrape |
+| Packaging  | Docker + Docker Compose                                             |
+
+## API
+
+All routes are under `/api/v1` and require an `X-API-Key` header matching a
+key in `SKYMETRICS_API_KEYS`, plus a per-key rate limit of 60 requests/60s.
+
+| Method | Path             | Returns                                                        |
+|--------|------------------|------------------------------------------------------------------|
+| GET    | `/index`         | A computed index snapshot for a frequency (`daily`/`weekly`/`monthly`), optionally filtered by comparison ID or date range |
+| GET    | `/fares`         | Cleaned fare records, filterable by route, source, carrier, advance window, fare class, date range |
+| GET    | `/fare-records`  | The same fare data shaped for tabular drill-down, with a mean total fare across the filtered set |
+| GET    | `/metadata`      | Route weights, formula descriptions, and available index snapshots |
+
+Interactive docs (Swagger UI) are served at `/docs` when the API is running.
+
+## Index methodology
 
 SkyMetrics computes four index formulas over the same underlying fare data
 (`index/formulas.py`), each a different way of aggregating route-level price relatives
@@ -99,7 +127,7 @@ For empirical proof these formulas track real-world airfare inflation, see
 `docs/validation-report.md`, which back-tests the computed index against the Ministry of
 Commerce's Service PPI (Air Passenger) reference series.
 
-## Why only one live source right now
+## Data sources & compliance
 
 All 11 airline/OTA sources named in the problem statement were live-checked
 for robots.txt and access-control compliance before any scraper was written.
@@ -110,10 +138,18 @@ for how each was verified. This project does not circumvent robots.txt, ToS,
 or anti-bot protections; a blocked source stays blocked until it's genuinely
 compliant.
 
-## Setup
+The Akasa scraper itself covers 3 city-pairs (DEL-BOM, DEL-BLR, BOM-BLR)
+across 5 advance-purchase windows, and is origin/destination-agnostic —
+adding a route is a `config/basket.json` change, not a code change.
 
-Requires Python 3.11+ and a PostgreSQL database (a free-tier
+## Getting started
+
+### Prerequisites
+
+Python 3.11+ and a PostgreSQL database (a free-tier
 [Neon](https://neon.tech) instance works well — see `.env.example`).
+
+### Setup
 
 ```bash
 pip install -r requirements.txt -r requirements-dev.txt
@@ -122,7 +158,7 @@ export $(cat .env | xargs)
 python3 -m db.apply_schema   # one-time: creates fare_quotes and index_points
 ```
 
-## Running the scraper
+### Running the scraper
 
 ```bash
 python -m scraper.run
@@ -131,7 +167,7 @@ python -m scraper.run
 Writes raw fare quotes to `data/raw/<source>/<run_id>.jsonl` (gitignored,
 ephemeral — only used as an intermediate before cleaning).
 
-## Cleaning and index construction
+### Cleaning and index construction
 
 ```bash
 python3 -c "from pipeline.clean import clean_run_to_db; from api.db import get_connection; clean_run_to_db('<run_id>', conn=get_connection())"
@@ -143,7 +179,7 @@ Postgres (`fare_quotes` and `index_points` tables) — no local flat files are
 produced by this path. The daily GitHub Actions cron
 (`.github/workflows/daily-scrape.yml`) runs this same sequence automatically.
 
-## Running the API
+### Running the API
 
 Requires `SKYMETRICS_API_KEYS` (a comma-separated list of valid keys) and
 `DATABASE_URL` to be set before starting.
@@ -157,7 +193,7 @@ uvicorn api.main:app --reload
 Interactive docs at `http://127.0.0.1:8000/docs`. All `/api/v1/*` endpoints
 require an `X-API-Key` header matching one of the configured keys.
 
-## Running the dashboard
+### Running the dashboard
 
 ```bash
 cd dashboard
@@ -174,7 +210,7 @@ demo of non-sensitive, already-computed fare statistics (see
 `docs/superpowers/specs/2026-08-25-phase4b-dashboard-design.md`'s non-goals
 for the reasoning), not something to do for a real secret.
 
-## Running with Docker
+### Running with Docker
 
 Requires Docker and Docker Compose (both included in Docker Desktop).
 
@@ -185,7 +221,7 @@ docker compose up --build
 
 API at `http://localhost:8000`, dashboard at `http://localhost:5173`. Both
 containers connect to the same Postgres database specified in
-`DATABASE_URL` — this project no longer stores durable data in
+`DATABASE_URL` — this project does not store durable data in
 git-committed flat files (see
 `docs/superpowers/specs/2026-08-26-postgres-docker-design.md`).
 
