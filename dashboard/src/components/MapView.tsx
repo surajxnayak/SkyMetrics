@@ -92,12 +92,10 @@ export default function MapView() {
 
       <div className="relative h-[75vh] min-h-[520px] w-full overflow-hidden bg-page">
         {usingPreview && (
-          <div className="pointer-events-none absolute inset-x-0 top-0 z-10 flex justify-center p-3">
-            <span className="flex items-center gap-2 rounded-full border border-warning/40 bg-panel/95 px-3 py-1 font-mono text-[11px] uppercase tracking-wide text-warning">
-              <span className="material-symbols-outlined text-[14px]" aria-hidden="true">
-                info
-              </span>
-              Preview data -- illustrative, not yet live
+          <div className="pointer-events-none absolute right-4 top-4 z-10">
+            <span className="flex items-center gap-1.5 rounded-full border border-warning/40 bg-panel/90 px-2 py-0.5 font-mono text-[9px] uppercase tracking-wide text-warning">
+              <span className="inline-block h-1.5 w-1.5 rounded-full bg-warning" />
+              Preview
             </span>
           </div>
         )}

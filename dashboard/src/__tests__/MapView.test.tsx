@@ -148,7 +148,7 @@ describe("MapView", () => {
     renderMapView();
 
     await waitFor(() =>
-      expect(screen.getByText("Preview data -- illustrative, not yet live")).toBeInTheDocument()
+      expect(screen.getByText("Preview")).toBeInTheDocument()
     );
 
     await userEvent.click(screen.getByText("Mumbai"));
@@ -167,7 +167,7 @@ describe("MapView", () => {
     renderMapView();
 
     await waitFor(() => expect(screen.getByText("Selected city")).toBeInTheDocument());
-    expect(screen.queryByText("Preview data -- illustrative, not yet live")).not.toBeInTheDocument();
+    expect(screen.queryByText("Preview")).not.toBeInTheDocument();
   });
 
   it("shows 'no route coverage' for a city with no connected edges", async () => {
