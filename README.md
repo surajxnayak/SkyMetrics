@@ -5,7 +5,7 @@ submission (problem statement SIH26056, MoSPI/DIID).
 
 ## Status
 
-**Phases 1-4** (of 5 — see `docs/superpowers/specs/`) are complete:
+**All 5 phases** (see `docs/superpowers/specs/`) are complete:
 
 - **Phase 1** — a working, robots.txt-compliant scraper for Akasa Air across
   3 city-pairs and 5 advance-purchase windows.
@@ -20,11 +20,13 @@ submission (problem statement SIH26056, MoSPI/DIID).
   sector heatmap, lead-time elasticity, drill-down filtering, CSV export,
   and a data-quality panel.
 
-Back-testing against a real government reference series (Ministry of
-Commerce's Service PPI) is also complete — see
-`docs/superpowers/specs/2026-08-26-phase5-dgca-backtest-design.md` and the
-generated `docs/validation-report.md`. Documentation and automated-test
-hardening (the rest of Phase 5) are next.
+- **Phase 5** — validation report, documentation, and automated tests. Back-
+  testing against a real government reference series (Ministry of Commerce's
+  Service PPI) is documented in
+  `docs/superpowers/specs/2026-08-26-phase5-dgca-backtest-design.md` and the
+  generated `docs/validation-report.md`; this README's `## Architecture` and
+  `## Methodology` sections are the documentation piece; 171 backend +
+  51 dashboard automated tests were built incrementally across every phase.
 
 Data storage moved from git-committed flat files to PostgreSQL, packaged
 with Docker Compose — see
