@@ -1,4 +1,5 @@
 import os
+import uuid
 from unittest.mock import MagicMock
 
 import pytest
@@ -108,11 +109,25 @@ def test_tool_get_fare_records_rejects_an_invalid_route():
     assert "XXX-YYY" in result["error"]
 
 
-def test_tool_get_index_returns_real_snapshot_data(conn=None):
+def test_tool_get_index_returns_real_snapshot_data():
+    # Self-contained: inserts its own index_points row and rolls back,
+    # rather than depending on the shared dev DB already having real daily
+    # snapshot data -- CI's fresh Postgres container doesn't, so relying on
+    # ambient state here passed locally and failed in CI.
     from api.db import get_connection
 
     real_conn = get_connection()
     try:
+        with real_conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO index_points
+                    (comparison_id, frequency, period, base_period, routes, simple_relative)
+                VALUES (%s, 'daily', '2026-08-27', '2026-08-26', ARRAY['DEL-BOM'], 100.0)
+                """,
+                (uuid.uuid4().hex,),
+            )
+
         result = _tool_get_index({"frequency": "daily"}, real_conn)
         assert "error" not in result
         assert "series" in result
@@ -122,14 +137,31 @@ def test_tool_get_index_returns_real_snapshot_data(conn=None):
 
 
 def test_tool_get_fare_records_returns_real_fare_data_for_a_valid_route():
+    # Self-contained for the same reason as the index test above: without
+    # its own inserted row, this passed locally against the shared dev DB's
+    # real DEL-BOM data but would have silently passed in CI too on an
+    # empty result ({"records": []} still satisfies "records" in result) --
+    # not actually verifying "real fare data" as the test name claims.
     from api.db import get_connection
 
     real_conn = get_connection()
     try:
+        with real_conn.cursor() as cur:
+            cur.execute(
+                """
+                INSERT INTO fare_quotes
+                    (quote_id, origin, destination, carrier, source, travel_date, collected_at,
+                     advance_window, status, run_id, is_outlier, source_quote_ids, total_fare)
+                VALUES ('test-ask-quote-1', 'DEL', 'BOM', 'QP', 'akasaair', '2026-09-01',
+                        '2026-08-27T10:00:00+00:00', 'T+1', 'available', 'run-test-ask',
+                        false, ARRAY['test-ask-quote-1'], 7000)
+                """
+            )
+
         result = _tool_get_fare_records({"route": ["DEL-BOM"]}, real_conn)
         assert "error" not in result
-        assert "mean_total_fare" in result
-        assert "records" in result
+        assert result["mean_total_fare"] is not None
+        assert len(result["records"]) > 0
     finally:
         real_conn.rollback()
         real_conn.close()
