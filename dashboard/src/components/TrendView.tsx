@@ -85,7 +85,7 @@ export default function TrendView() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <LoadingSpinner label="Loading trend data..." />;
+  if (loading && !data) return <LoadingSpinner label="Loading trend data..." center />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load trend data: {error}

@@ -31,7 +31,7 @@ export default function RawListView() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <LoadingSpinner label="Loading fare records..." />;
+  if (loading && !data) return <LoadingSpinner label="Loading fare records..." center />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load fare records: {error}

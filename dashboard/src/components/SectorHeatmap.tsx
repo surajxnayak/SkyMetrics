@@ -66,7 +66,7 @@ export default function SectorHeatmap() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <LoadingSpinner label="Loading heatmap data..." />;
+  if (loading && !data) return <LoadingSpinner label="Loading heatmap data..." center />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load heatmap data: {error}

@@ -185,7 +185,15 @@ class Frequency(str, Enum):
 
 class SourceName(str, Enum):
     AKASA_AIR = "akasaair"
+    HISTORICAL_PUBLIC_AIRFARE_2022 = "historical_public_airfare_2022"
+    GOIBIBO_HISTORICAL_2023 = "goibibo_historical_2023"
 
 
 class CarrierCode(str, Enum):
     AKASA_AIR = "QP"
+    INDIGO = "6E"
+    AIR_INDIA = "AI"
+    GO_FIRST = "G8"
+    AIRASIA_INDIA = "I5"
+    SPICEJET = "SG"
+    VISTARA = "UK"

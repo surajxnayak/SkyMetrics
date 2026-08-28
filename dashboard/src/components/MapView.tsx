@@ -8,6 +8,10 @@ import type { MapDirection, MapEdge } from "../api/types";
 import LoadingSpinner from "./LoadingSpinner";
 
 const GEO_URL = "/maps/india-states-simplified.geojson";
+// Natural Earth 1:110m countries, via the world-atlas npm package (public
+// domain) -- a faint backdrop of the rest of the world so India doesn't
+// float in an empty void, purely decorative (no data attached to it).
+const WORLD_GEO_URL = "/maps/world-countries-110m.json";
 
 interface AirportCity {
   city_code: string;
@@ -113,6 +117,25 @@ export default function MapView() {
             role="img"
             aria-label="Map of India showing airport city nodes and route coverage"
           >
+            <Geographies geography={WORLD_GEO_URL}>
+              {({ geographies }) =>
+                geographies.map((geo) => (
+                  <Geography
+                    key={geo.rsmKey}
+                    geography={geo}
+                    fill="var(--color-surface-container-low)"
+                    stroke="var(--color-line)"
+                    strokeWidth={0.4}
+                    style={{
+                      default: { outline: "none" },
+                      hover: { outline: "none" },
+                      pressed: { outline: "none" },
+                    }}
+                  />
+                ))
+              }
+            </Geographies>
+
             <Geographies geography={GEO_URL}>
               {({ geographies }) =>
                 geographies.map((geo) => (
