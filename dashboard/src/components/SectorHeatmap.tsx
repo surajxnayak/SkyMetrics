@@ -42,16 +42,15 @@ export function aggregate(records: FareRecord[], drilldown: DrilldownFilters): C
 }
 
 function colorFor(value: number, min: number, max: number): string {
-  if (max === min) return "hsl(48, 78%, 32%)";
+  if (max === min) return "hsl(142, 72%, 32%)";
   const ratio = (value - min) / (max - min);
-  // A dark traffic-light scale keeps the fare intensity readable while
-  // making low, middle, and high values immediately distinguishable.
   const clampedRatio = Math.max(0, Math.min(1, ratio));
-  const hue = clampedRatio <= 0.5
-    ? 142 - clampedRatio * 188
-    : 48 - (clampedRatio - 0.5) * 96;
-  const lightness = Math.round(30 + clampedRatio * 7);
-  return `hsl(${Math.round(hue)}, 72%, ${lightness}%)`;
+  // Keep the heatmap binary: lower values are green and higher values red.
+  // Vary lightness within each family without introducing yellow cells.
+  const isHigh = clampedRatio >= 0.5;
+  const familyRatio = isHigh ? (clampedRatio - 0.5) * 2 : clampedRatio * 2;
+  const lightness = Math.round(28 + familyRatio * 9);
+  return `hsl(${isHigh ? 0 : 142}, 72%, ${lightness}%)`;
 }
 
 export default function SectorHeatmap() {

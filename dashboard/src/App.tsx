@@ -61,11 +61,13 @@ export default function App() {
         </aside>
 
         <div className="ml-14 flex min-h-screen min-w-0 flex-1 flex-col">
-          <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center border-b border-outline-variant bg-surface-container px-4">
-            <h1 className="font-mono text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
-              {activeLabel}
-            </h1>
-          </header>
+          {tab !== "map" && (
+            <header className="sticky top-0 z-30 flex h-12 shrink-0 items-center border-b border-outline-variant bg-surface-container px-4">
+              <h1 className="font-mono text-xs font-semibold uppercase tracking-wide text-on-surface-variant">
+                {activeLabel}
+              </h1>
+            </header>
+          )}
 
           <div role="tabpanel" className="min-w-0 flex-1">
             {tab === "map" ? (
