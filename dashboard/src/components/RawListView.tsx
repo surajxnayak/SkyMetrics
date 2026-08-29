@@ -1,7 +1,7 @@
 import { useFilters } from "../context/FilterContext";
 import { useFareRecords } from "../hooks/useFareRecords";
 import ExportButton from "./ExportButton";
-import LoadingSpinner from "./LoadingSpinner";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
 
 function formatCurrency(value: number | null): string {
   if (value === null) return "-";
@@ -31,7 +31,7 @@ export default function RawListView() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <LoadingSpinner label="Loading fare records..." center />;
+  if (loading && !data) return <AnalyticsLoadingSkeleton title="List view" variant="table" />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load fare records: {error}

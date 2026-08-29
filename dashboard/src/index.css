@@ -50,6 +50,136 @@ body {
   vertical-align: middle;
 }
 
+.map-route-edge {
+  transition: stroke-width 180ms ease, stroke-opacity 180ms ease, opacity 180ms ease;
+}
+
+.map-node,
+.map-node-glow {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition: r 180ms ease, opacity 180ms ease, transform 180ms ease;
+}
+
+.map-node:hover {
+  transform: scale(1.18);
+}
+
+.map-node-tooltip {
+  pointer-events: none;
+  animation: map-node-tooltip-pop 220ms ease-out both;
+}
+
+.map-node-tooltip-icon {
+  fill: var(--color-accent);
+  font-size: 13px;
+}
+
+.map-node-tooltip-title,
+.map-node-tooltip-copy {
+  dominant-baseline: middle;
+  font-family: var(--font-sans);
+}
+
+.map-node-tooltip-title {
+  fill: var(--color-primary);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.map-node-tooltip-copy {
+  fill: var(--color-secondary);
+  font-family: var(--font-mono);
+  font-size: 7px;
+}
+
+@keyframes map-node-tooltip-pop {
+  from { opacity: 0; transform: translateY(4px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.view-loading-skeleton {
+  min-height: 360px;
+  border: 1px solid var(--color-outline-variant);
+  border-radius: 4px;
+  background: var(--color-surface-container-low);
+  padding: 16px;
+  overflow: hidden;
+}
+
+.view-loading-skeleton__header,
+.view-loading-skeleton__footer,
+.view-loading-skeleton__table div,
+.quality-loading-skeleton__rows {
+  display: flex;
+  gap: 10px;
+}
+
+.view-loading-skeleton__header span:first-child { width: 28%; }
+.view-loading-skeleton__header span:nth-child(2) { width: 12%; }
+.view-loading-skeleton__header span:last-child { width: 18%; margin-left: auto; }
+.view-loading-skeleton__header span,
+.view-loading-skeleton__footer span,
+.view-loading-skeleton__table span,
+.quality-loading-skeleton__rows span {
+  display: block;
+  height: 12px;
+  border-radius: 3px;
+  background: var(--color-surface-container-highest);
+  background-image: linear-gradient(90deg, transparent, rgb(167 139 250 / 0.16), transparent);
+  background-size: 220% 100%;
+  animation: skeleton-shimmer 1.4s ease-in-out infinite;
+}
+
+.view-loading-skeleton__chart {
+  position: relative;
+  height: 250px;
+  margin-top: 24px;
+  border-bottom: 1px solid var(--color-outline-variant);
+  background: repeating-linear-gradient(to bottom, transparent 0, transparent 48px, rgb(58 42 92 / 0.45) 49px, transparent 50px);
+}
+
+.view-loading-skeleton__chart span {
+  position: absolute;
+  bottom: 0;
+  width: 18%;
+  border-radius: 3px 3px 0 0;
+  background: var(--color-accent-muted);
+  animation: skeleton-chart-pulse 1.4s ease-in-out infinite;
+}
+.view-loading-skeleton__chart span:nth-child(1) { left: 4%; height: 42%; }
+.view-loading-skeleton__chart span:nth-child(2) { left: 23%; height: 66%; animation-delay: 80ms; }
+.view-loading-skeleton__chart span:nth-child(3) { left: 42%; height: 51%; animation-delay: 160ms; }
+.view-loading-skeleton__chart span:nth-child(4) { left: 61%; height: 78%; animation-delay: 240ms; }
+.view-loading-skeleton__chart span:nth-child(5) { left: 80%; height: 60%; animation-delay: 320ms; }
+
+.view-loading-skeleton__table { margin-top: 24px; }
+.view-loading-skeleton__table div { margin-bottom: 14px; }
+.view-loading-skeleton__table span { flex: 1; height: 22px; }
+.view-loading-skeleton__table span:first-child { flex: 1.5; }
+.view-loading-skeleton__footer { margin-top: 24px; }
+.view-loading-skeleton__footer span:first-child { width: 20%; }
+.view-loading-skeleton__footer span:last-child { width: 12%; }
+.quality-loading-skeleton__rows { flex-direction: column; margin-top: 42px; }
+.quality-loading-skeleton__rows span { width: 100%; height: 28px; }
+
+@keyframes skeleton-shimmer {
+  0% { background-position: 200% 0; }
+  100% { background-position: -20% 0; }
+}
+@keyframes skeleton-chart-pulse {
+  0%, 100% { opacity: 0.45; transform: scaleY(0.94); transform-origin: bottom; }
+  50% { opacity: 0.9; transform: scaleY(1); transform-origin: bottom; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view-loading-skeleton__header span,
+  .view-loading-skeleton__footer span,
+  .view-loading-skeleton__table span,
+  .quality-loading-skeleton__rows span,
+  .view-loading-skeleton__chart span { animation: none; }
+}
+
 @keyframes brand-marquee-scroll {
   0% { transform: translateX(0); }
   100% { transform: translateX(-50%); }

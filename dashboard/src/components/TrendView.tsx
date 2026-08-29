@@ -3,7 +3,7 @@ import type { FareRecord } from "../api/types";
 import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
 import ExportButton from "./ExportButton";
-import LoadingSpinner from "./LoadingSpinner";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
 
 const TOOLTIP_STYLE = { backgroundColor: "#1c2025", border: "1px solid #3c494c", borderRadius: 4 };
 const TOOLTIP_LABEL_STYLE = { color: "#e5e7eb" };
@@ -85,7 +85,7 @@ export default function TrendView() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <LoadingSpinner label="Loading trend data..." center />;
+  if (loading && !data) return <AnalyticsLoadingSkeleton title="Trend view" variant="chart" />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load trend data: {error}

@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { getFares } from "../api/client";
 import type { FareRecord } from "../api/types";
+import { cacheFareData, clearFareDataCache } from "../dataQualityCache";
 
 interface UseFaresResult {
   data: FareRecord[] | null;
@@ -42,6 +43,7 @@ export function useFares(
     let cancelled = false;
     setLoading(true);
     setError(null);
+    clearFareDataCache();
     getFares({
       routes: routes.length > 0 ? routes : undefined,
       origin: origin || undefined,
@@ -54,7 +56,12 @@ export function useFares(
       end: end || undefined,
     })
       .then((result) => {
-        if (!cancelled) setData(result);
+        if (!cancelled) {
+          setData(result);
+          cacheFareData(result);
+          window.dispatchEvent(new Event("skymetrics:data-received"));
+          window.dispatchEvent(new Event("skymetrics:fare-data-received"));
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
