@@ -80,22 +80,40 @@ vi.mock("../api/client", () => ({
   askQuestion: vi.fn().mockResolvedValue({ answer: "", tool_calls: [] }),
 }));
 
-describe("App", () => {
-  it("renders the persistent left nav and defaults to the map tab -- no redirect", async () => {
+async function renderApp() {
+  render(<App />);
+  await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+  await waitFor(() =>
+    expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
+  );
+}
+
+describe("App login gate", () => {
+  it("shows a login screen before the app, with no real validation", async () => {
     render(<App />);
 
-    expect(screen.getByText("SkyMetrics")).toBeInTheDocument();
+    expect(screen.getByText("Sign in to view the airfare index")).toBeInTheDocument();
+    expect(screen.queryByText("See India's airfares move in real time")).not.toBeInTheDocument();
+
+    // No credentials required -- it's a UI-only gate, not real auth.
+    await userEvent.click(screen.getByRole("button", { name: "Sign in" }));
+
     await waitFor(() =>
       expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
     );
+  });
+});
+
+describe("App", () => {
+  it("renders the persistent left nav and defaults to the map tab -- no redirect", async () => {
+    await renderApp();
+
+    expect(screen.getByText("SkyMetrics")).toBeInTheDocument();
     expect(screen.getByRole("tab", { name: "Route Map" })).toHaveAttribute("aria-selected", "true");
   });
 
   it("switches to the trend tab when clicked, same shell, no page change", async () => {
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
-    );
+    await renderApp();
 
     await userEvent.click(screen.getByText("Trend Analysis"));
 
@@ -104,10 +122,7 @@ describe("App", () => {
   });
 
   it("switches to the heatmap tab when clicked", async () => {
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
-    );
+    await renderApp();
 
     await userEvent.click(screen.getByText("Sector Heatmap"));
 
@@ -115,10 +130,7 @@ describe("App", () => {
   });
 
   it("switches to the elasticity tab when clicked", async () => {
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
-    );
+    await renderApp();
 
     await userEvent.click(screen.getByText("Elasticity"));
 
@@ -126,10 +138,7 @@ describe("App", () => {
   });
 
   it("switches to the list tab when clicked", async () => {
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
-    );
+    await renderApp();
 
     await userEvent.click(screen.getByText("Data Drill-down"));
 
@@ -137,10 +146,7 @@ describe("App", () => {
   });
 
   it("uses the correct ARIA tab pattern", async () => {
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
-    );
+    await renderApp();
 
     expect(screen.getByRole("tablist")).toBeInTheDocument();
     const mapTab = screen.getByRole("tab", { name: "Route Map" });
@@ -155,10 +161,7 @@ describe("App", () => {
   });
 
   it("keeps the floating Ask APIx widget available on every tab", async () => {
-    render(<App />);
-    await waitFor(() =>
-      expect(screen.getByText("See India's airfares move in real time")).toBeInTheDocument()
-    );
+    await renderApp();
 
     await userEvent.click(screen.getByRole("button", { name: "Open Ask APIx chat" }));
     await waitFor(() => expect(screen.getByText("Ask APIx")).toBeInTheDocument());

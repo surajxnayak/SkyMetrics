@@ -8,6 +8,7 @@ import LeadTimeElasticity from "./components/LeadTimeElasticity";
 import RawListView from "./components/RawListView";
 import HomeView from "./components/HomeView";
 import AskApixWidget from "./components/AskApixWidget";
+import Login from "./components/Login";
 
 type Tab = "map" | "trend" | "heatmap" | "elasticity" | "list";
 
@@ -20,8 +21,13 @@ const TABS: { id: Tab; label: string; icon: string }[] = [
 ];
 
 export default function App() {
+  const [authed, setAuthed] = useState(false);
   const [tab, setTab] = useState<Tab>("map");
   const activeLabel = TABS.find((item) => item.id === tab)?.label ?? "";
+
+  if (!authed) {
+    return <Login onContinue={() => setAuthed(true)} />;
+  }
 
   return (
     <FilterProvider>
