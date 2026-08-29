@@ -2,7 +2,7 @@ import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
 import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
-import LoadingSpinner from "./LoadingSpinner";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
 
 // `type`, not `interface` -- interfaces don't get an implicit index
 // signature, which breaks ExportButton's generic constraint.
@@ -42,16 +42,16 @@ export function aggregate(records: FareRecord[], drilldown: DrilldownFilters): C
 }
 
 function colorFor(value: number, min: number, max: number): string {
-  if (max === min) return "#241a3d";
+  if (max === min) return "hsl(48, 78%, 32%)";
   const ratio = (value - min) / (max - min);
-  // Violet intensity scale, lightness 28%-48%: high enough above the page
-  // background (#0a0e14) to stay visually distinct from empty/no-data
-  // cells, low enough that text-primary (#e5e7eb) rendered on top still
-  // meets WCAG AA (4.5:1) even at the brightest (highest-fare) end --
-  // verified via code-quality review after the original 20%-65% range
-  // failed both checks.
-  const lightness = Math.round(28 + ratio * 20);
-  return `hsl(258, 60%, ${lightness}%)`;
+  // A dark traffic-light scale keeps the fare intensity readable while
+  // making low, middle, and high values immediately distinguishable.
+  const clampedRatio = Math.max(0, Math.min(1, ratio));
+  const hue = clampedRatio <= 0.5
+    ? 142 - clampedRatio * 188
+    : 48 - (clampedRatio - 0.5) * 96;
+  const lightness = Math.round(30 + clampedRatio * 7);
+  return `hsl(${Math.round(hue)}, 72%, ${lightness}%)`;
 }
 
 export default function SectorHeatmap() {
@@ -66,7 +66,7 @@ export default function SectorHeatmap() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <LoadingSpinner label="Loading heatmap data..." center />;
+  if (loading && !data) return <AnalyticsLoadingSkeleton title="Sector heatmap" variant="table" />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load heatmap data: {error}

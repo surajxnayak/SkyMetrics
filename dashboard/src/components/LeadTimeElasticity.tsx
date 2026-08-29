@@ -3,7 +3,7 @@ import { useFilters } from "../context/FilterContext";
 import { useFares } from "../hooks/useFares";
 import ExportButton from "./ExportButton";
 import type { FareRecord } from "../api/types";
-import LoadingSpinner from "./LoadingSpinner";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
 
 const WINDOW_ORDER = ["T+45", "T+30", "T+15", "T+7", "T+1"];
 const TOOLTIP_STYLE = { backgroundColor: "#1c2025", border: "1px solid #3c494c", borderRadius: 4 };
@@ -77,7 +77,7 @@ export default function LeadTimeElasticity() {
     end: filters.endDate,
   });
 
-  if (loading && !data) return <LoadingSpinner label="Loading elasticity data..." center />;
+  if (loading && !data) return <AnalyticsLoadingSkeleton title="Lead-time elasticity" variant="chart" />;
   if (error && !data) return (
     <p role="alert" className="text-sm text-error">
       Failed to load elasticity data: {error}

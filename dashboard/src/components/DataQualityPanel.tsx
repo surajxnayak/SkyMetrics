@@ -1,9 +1,11 @@
+import { useEffect, useState } from "react";
+import { getCachedFareData } from "../dataQualityCache";
 import { useFares } from "../hooks/useFares";
 import { useMetadata } from "../hooks/useMetadata";
 import type { FareRecord } from "../api/types";
 import { useFilters } from "../context/FilterContext";
 import { ADVANCE_WINDOWS } from "../config/filters";
-import LoadingSpinner from "./LoadingSpinner";
+import AnalyticsLoadingSkeleton from "./AnalyticsLoadingSkeleton";
 
 export interface DataQualityStats {
   coveragePercent: number;
@@ -47,6 +49,7 @@ export function computeStats(records: FareRecord[], routes: string[]): DataQuali
 
 export default function DataQualityPanel() {
   const { appliedFilters: filters } = useFilters();
+  const [cachedRecords, setCachedRecords] = useState(getCachedFareData);
   const fares = useFares({
     routes: filters.selectedRoutes,
     sources: filters.sources,
@@ -57,27 +60,35 @@ export default function DataQualityPanel() {
     end: filters.endDate,
   });
   const metadata = useMetadata();
+  useEffect(() => {
+    const updateCache = () => setCachedRecords(getCachedFareData());
+    window.addEventListener("skymetrics:fare-data-received", updateCache);
+    return () => window.removeEventListener("skymetrics:fare-data-received", updateCache);
+  }, []);
 
-  if ((fares.loading && !fares.data) || metadata.loading) {
-    return <LoadingSpinner label="Loading data quality..." />;
+  const records = cachedRecords ?? fares.data;
+  const needsMetadata = filters.selectedRoutes.length === 0;
+
+  if ((fares.loading && !records) || (needsMetadata && metadata.loading)) {
+    return <AnalyticsLoadingSkeleton title="data quality" variant="quality" />;
   }
-  if (fares.error && !fares.data) return (
+  if (fares.error && !records) return (
     <p role="alert" className="text-sm text-error">
       Failed to load data quality: {fares.error}
     </p>
   );
-  if (metadata.error) return (
+  if (needsMetadata && metadata.error) return (
     <p role="alert" className="text-sm text-error">
       Failed to load data quality: {metadata.error}
     </p>
   );
-  if (!metadata.data) return <p className="text-sm text-secondary">No data quality information available yet.</p>;
-  if (!fares.data) return <p className="text-sm text-secondary">No data quality information available yet.</p>;
+  if (needsMetadata && !metadata.data) return <p className="text-sm text-secondary">No data quality information available yet.</p>;
+  if (!records) return <p className="text-sm text-secondary">No data quality information available yet.</p>;
 
   const routes = filters.selectedRoutes.length > 0
     ? filters.selectedRoutes
-    : Object.keys(metadata.data.weights.weights);
-  const stats = computeStats(fares.data, routes);
+    : Object.keys(metadata.data?.weights.weights ?? {});
+  const stats = computeStats(records, routes);
 
   return (
     <div>

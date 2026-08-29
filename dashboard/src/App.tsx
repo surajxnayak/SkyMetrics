@@ -71,14 +71,9 @@ export default function App() {
             {tab === "map" ? (
               <HomeView />
             ) : (
-              <div className="flex min-w-0 flex-1 gap-4 p-4">
-                <div className="w-72 shrink-0 rounded-sm border border-outline-variant bg-panel p-4">
-                  <Sidebar />
-                  <div className="mt-6 border-t border-outline-variant pt-6">
-                    <DataQualityPanel />
-                  </div>
-                </div>
-                <main className="min-w-0 flex-1">
+              <div className="min-w-0 flex-1">
+                <Sidebar />
+                <main className="min-w-0 p-4">
                   {tab === "trend" && <TrendView />}
                   {tab === "heatmap" && <SectorHeatmap />}
                   {tab === "elasticity" && <LeadTimeElasticity />}
@@ -90,7 +85,31 @@ export default function App() {
         </div>
 
         <AskApixWidget />
+        <DataQualityWidget />
       </div>
     </FilterProvider>
+  );
+}
+
+function DataQualityWidget() {
+  const [open, setOpen] = useState(false);
+
+  return (
+    <div className="fixed bottom-6 left-20 z-50 flex flex-col items-start gap-3">
+      {open && (
+        <div role="dialog" aria-label="Data quality" className="max-h-[70vh] w-[min(24rem,calc(100vw-6rem))] overflow-y-auto rounded-sm border border-outline-variant bg-panel p-4 shadow-2xl">
+          <div className="mb-3 flex items-center justify-between gap-4">
+            <h2 className="text-sm font-semibold text-primary">Data quality</h2>
+            <button type="button" onClick={() => setOpen(false)} aria-label="Close data quality" className="text-secondary hover:text-primary">
+              <span aria-hidden="true" className="material-symbols-outlined text-[20px]">close</span>
+            </button>
+          </div>
+          <DataQualityPanel />
+        </div>
+      )}
+      <button type="button" onClick={() => setOpen((value) => !value)} aria-expanded={open} aria-label={open ? "Close data quality" : "Open data quality"} title="Data quality" className="flex h-12 w-12 items-center justify-center rounded-full border border-outline-variant bg-surface-container-high text-warning shadow-lg hover:border-warning">
+        <span aria-hidden="true" className="material-symbols-outlined text-[25px]">priority_high</span>
+      </button>
+    </div>
   );
 }

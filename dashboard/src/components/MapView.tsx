@@ -1,11 +1,10 @@
-import { useMemo, useState } from "react";
-import { ComposableMap, Geographies, Geography, Line, Marker } from "react-simple-maps";
+import { useEffect, useMemo, useState } from "react";
+import { ComposableMap, Geographies, Geography, Marker } from "react-simple-maps";
 import { scaleThreshold } from "d3-scale";
 import { useFilters } from "../context/FilterContext";
 import { useMapRoutes } from "../hooks/useMapRoutes";
 import airportCitiesConfig from "../config/airportCities.json";
 import type { MapDirection, MapEdge } from "../api/types";
-import LoadingSpinner from "./LoadingSpinner";
 
 const GEO_URL = "/maps/india-states-simplified.geojson";
 // Natural Earth 1:110m countries, via the world-atlas npm package (public
@@ -21,11 +20,7 @@ interface AirportCity {
   airport_codes: string[];
 }
 
-// The set of major metros shown labeled and clickable, sized by real
-// traffic role (Delhi is the biggest hub in our route basket). Every other
-// real airport in the config (145 of them) still renders as a small,
-// unlabeled, non-interactive glow dot below -- real geography used purely
-// for visual texture, not standing in for fare/CPI data anywhere.
+// Major metros stay labeled; every airport node remains interactive.
 const DISPLAY_CITY_CODES = [
   "DEL", "BOM", "BLR", "MAA", "HYD", "CCU", "AMD", "PNQ",
   "GOI", "COK", "JAI", "LKO", "PAT", "GAU", "IXC", "IDR",
@@ -36,9 +31,8 @@ const MID_CODES = new Set(["BOM", "BLR", "CCU", "HYD"]);
 const ALL_CITIES: AirportCity[] = (airportCitiesConfig as { cities: AirportCity[] }).cities;
 const DISPLAY_SET = new Set(DISPLAY_CITY_CODES);
 const CITY_NODES: AirportCity[] = ALL_CITIES.filter((city) => DISPLAY_SET.has(city.city_code));
-const BACKGROUND_NODES: AirportCity[] = ALL_CITIES.filter((city) => !DISPLAY_SET.has(city.city_code));
 
-const CITY_BY_CODE = new Map(CITY_NODES.map((city) => [city.city_code, city]));
+const CITY_BY_CODE = new Map(ALL_CITIES.map((city) => [city.city_code, city]));
 
 // CPI < 98: fares cheaper than base period. 98-102: roughly flat.
 // > 102: fares pricier than base period. Reuses the app's existing
@@ -59,9 +53,33 @@ function otherCity(edge: MapEdge, cityCode: string): string {
 
 function nodeRadius(code: string, isSelected: boolean): number {
   if (isSelected) return 9;
+  if (!DISPLAY_SET.has(code)) return 2.2;
   if (code === HUB_CODE) return 8;
   if (MID_CODES.has(code)) return 6;
   return 4.5;
+}
+
+function projectPoint(longitude: number, latitude: number): [number, number] {
+  const centerLongitude = 82.8;
+  const centerLatitude = 23.2;
+  const scale = 1500;
+  const radians = Math.PI / 180;
+  const mercatorY = (value: number) => Math.log(Math.tan(Math.PI / 4 + (value * radians) / 2));
+  const x = 450 + (longitude - centerLongitude) * radians * scale;
+  const y = 400 - (mercatorY(latitude) - mercatorY(centerLatitude)) * scale;
+  return [x, y];
+}
+
+function curvedEdgePath(cityA: AirportCity, cityB: AirportCity): string {
+  const [x1, y1] = projectPoint(cityA.longitude, cityA.latitude);
+  const [x2, y2] = projectPoint(cityB.longitude, cityB.latitude);
+  const dx = x2 - x1;
+  const dy = y2 - y1;
+  const distance = Math.sqrt(dx * dx + dy * dy) || 1;
+  const bend = Math.min(34, Math.max(12, distance * 0.16));
+  const controlX = (x1 + x2) / 2 - (dy / distance) * bend;
+  const controlY = (y1 + y2) / 2 + (dx / distance) * bend;
+  return `M ${x1.toFixed(1)} ${y1.toFixed(1)} Q ${controlX.toFixed(1)} ${controlY.toFixed(1)} ${x2.toFixed(1)} ${y2.toFixed(1)}`;
 }
 
 export default function MapView() {
@@ -76,11 +94,24 @@ export default function MapView() {
   const usingPreview = realIsEmpty && (preview.data?.edges.length ?? 0) > 0;
 
   const data = usingPreview ? preview.data : real.data;
-  const loading = real.loading || (realIsEmpty && preview.loading);
   const error = real.error;
   const [selectedCity, setSelectedCity] = useState<string | null>(null);
+  const [hoveredCity, setHoveredCity] = useState<string | null>(null);
+  const [revealedCity, setRevealedCity] = useState<string | null>(null);
 
-  const edges = data?.edges ?? [];
+  useEffect(() => {
+    if (!hoveredCity) {
+      setRevealedCity(null);
+      return undefined;
+    }
+    const timer = window.setTimeout(() => setRevealedCity(hoveredCity), 420);
+    return () => window.clearTimeout(timer);
+  }, [hoveredCity]);
+
+  const edges = (data?.edges ?? []).filter((edge) => {
+    const direction = edge.city_a_to_b ?? edge.city_b_to_a;
+    return direction !== null && Number.isFinite(direction.cpi);
+  });
   const connectedEdges = useMemo(
     () => (selectedCity ? edges.filter((edge) => edge.city_a === selectedCity || edge.city_b === selectedCity) : []),
     [edges, selectedCity]
@@ -103,12 +134,7 @@ export default function MapView() {
             </span>
           </div>
         )}
-        {loading && !data ? (
-          <div className="flex h-full items-center justify-center">
-            <LoadingSpinner label="Loading map..." />
-          </div>
-        ) : (
-          <ComposableMap
+        <ComposableMap
             projection="geoMercator"
             projectionConfig={{ center: [82.8, 23.2], scale: 1500 }}
             width={900}
@@ -155,13 +181,6 @@ export default function MapView() {
               }
             </Geographies>
 
-            {BACKGROUND_NODES.map((city) => (
-              <Marker key={city.city_code} coordinates={[city.longitude, city.latitude]}>
-                <circle r={5} fill="var(--color-accent)" opacity={0.18} style={{ filter: "blur(3px)" }} />
-                <circle r={1.3} fill="var(--color-accent-hover)" opacity={0.75} />
-              </Marker>
-            ))}
-
             {edges.map((edge) => {
               const cityA = CITY_BY_CODE.get(edge.city_a);
               const cityB = CITY_BY_CODE.get(edge.city_b);
@@ -171,53 +190,65 @@ export default function MapView() {
               const isSelected =
                 selectedCity === null || selectedCity === edge.city_a || selectedCity === edge.city_b;
               return (
-                <Line
+                <path
                   key={edge.edge_key}
-                  from={[cityA.longitude, cityA.latitude]}
-                  to={[cityB.longitude, cityB.latitude]}
+                  d={curvedEdgePath(cityA, cityB)}
                   stroke={cpiColor(direction.cpi)}
                   strokeWidth={isSelected ? 2 : 1}
                   strokeOpacity={isSelected ? 0.9 : 0.25}
                   strokeLinecap="round"
+                  fill="none"
+                  className="map-route-edge"
                 />
               );
             })}
 
-            {CITY_NODES.map((city) => {
+            {ALL_CITIES.map((city) => {
               const isSelected = selectedCity === city.city_code;
-              const r = nodeRadius(city.city_code, isSelected);
+              const isHovered = hoveredCity === city.city_code;
+              const r = nodeRadius(city.city_code, isSelected || isHovered);
+              const isNamed = DISPLAY_SET.has(city.city_code);
               return (
                 <Marker
                   key={city.city_code}
                   coordinates={[city.longitude, city.latitude]}
                   onClick={() => setSelectedCity(isSelected ? null : city.city_code)}
+                  onMouseEnter={() => setHoveredCity(city.city_code)}
+                  onMouseLeave={() => setHoveredCity(null)}
                 >
                   <circle
                     r={r * 2.4}
                     fill={isSelected ? "var(--color-accent-hover)" : "var(--color-accent)"}
                     opacity={0.35}
                     style={{ filter: "blur(6px)" }}
-                    className="cursor-pointer"
+                    className="map-node-glow cursor-pointer"
                   />
                   <circle
                     r={r}
                     fill={isSelected ? "var(--color-accent-hover)" : "var(--color-accent)"}
                     stroke="var(--color-page)"
                     strokeWidth={1.5}
-                    className="cursor-pointer"
+                    className="map-node cursor-pointer"
                   />
-                  <text
+                  {isNamed && <text
                     textAnchor="middle"
                     y={-(r + 8)}
                     className="pointer-events-none select-none fill-primary font-mono text-[10px] uppercase tracking-wide"
                   >
                     {city.city_name}
-                  </text>
+                  </text>}
+                  {revealedCity === city.city_code && (
+                    <g className="map-node-tooltip" transform={`translate(${r + 12}, ${-(r + 17)})`}>
+                      <rect width="132" height="38" rx="4" fill="var(--color-panel)" stroke="var(--color-accent)" strokeWidth="0.8" />
+                      <text x="9" y="15" className="map-node-tooltip-icon material-symbols-outlined">flight</text>
+                      <text x="27" y="14" className="map-node-tooltip-title">{city.city_name}</text>
+                      <text x="27" y="28" className="map-node-tooltip-copy">{city.airport_codes.join(" / ")} airport</text>
+                    </g>
+                  )}
                 </Marker>
               );
             })}
           </ComposableMap>
-        )}
 
         <div className="pointer-events-none absolute left-4 top-4 flex flex-col gap-1.5 rounded-sm border border-outline-variant bg-panel/90 p-3 font-mono text-[11px] text-on-surface-variant">
           <span className="flex items-center gap-1.5">

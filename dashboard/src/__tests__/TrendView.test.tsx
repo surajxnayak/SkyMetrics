@@ -52,7 +52,7 @@ describe("TrendView", () => {
       </FilterProvider>
     );
 
-    expect(screen.getByText("Loading trend data...")).toBeInTheDocument();
+    expect(screen.getByRole("status", { name: "Loading Trend view" })).toBeInTheDocument();
     await waitFor(() => expect(screen.getByText(/Routes: DEL-BOM, DEL-BLR/)).toBeInTheDocument());
   });
 

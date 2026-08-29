@@ -48,7 +48,10 @@ export function useFareRecords(
       end: end || undefined,
     })
       .then((result) => {
-        if (!cancelled) setData(result);
+        if (!cancelled) {
+          setData(result);
+          window.dispatchEvent(new Event("skymetrics:data-received"));
+        }
       })
       .catch((err) => {
         if (!cancelled) setError(err instanceof Error ? err.message : String(err));
