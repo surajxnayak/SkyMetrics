@@ -36,7 +36,10 @@ EDGE_PAIRS = [
 ]
 # Deliberately span the CPI legend so the dummy dashboard snapshot exercises
 # the green, yellow, and red edge styles.
-EDGE_CPI = [96.8, 99.6, 101.4, 97.2, 103.4, 100.2, 96.5, 101.2, 104.4, 99.1, 102.0, 97.8, 100.5, 103.1, 98.6]
+EDGE_CPI = [
+    96.8, 99.6, 101.4, 97.2, 103.4, 100.2, 96.5, 101.2,
+    104.4, 99.1, 102.0, 97.8, 100.5, 103.1, 98.6,
+]
 
 
 def load_env() -> None:
@@ -47,7 +50,8 @@ def load_env() -> None:
 
 
 def build_payload() -> dict:
-    cities = json.loads((DASHBOARD / "src/config/airportCities.json").read_text(encoding="utf-8"))["cities"]
+    cities_path = DASHBOARD / "src/config/airportCities.json"
+    cities = json.loads(cities_path.read_text(encoding="utf-8"))["cities"]
     by_code = {city["city_code"]: city for city in cities}
     nodes = [by_code[code] for code in DISPLAY_CODES]
     edges = []
@@ -67,7 +71,10 @@ def build_payload() -> dict:
         "frequency": "daily",
         "period": PERIOD,
         "base_period": BASE_PERIOD,
-        "source": "MoSPI CPI, May 2026 provisional, Annexure III urban/state indices; route values are deterministic dashboard dummy data.",
+        "source": (
+            "MoSPI CPI, May 2026 provisional, Annexure III urban/state indices; "
+            "route values are deterministic dashboard dummy data."
+        ),
         "nodes": nodes,
         "edges": edges,
     }
@@ -102,10 +109,14 @@ def main() -> None:
                      edge["destination_city_code"],
                      f"{edge['origin_city_code']}-{edge['destination_city_code']}", edge["cpi"],
                      edge["quote_count"], edge["available_count"], edge["no_flight_count"],
-                     edge["source_count"], json.dumps({"dummy": True, "reference": "MoSPI May 2026 urban CPI"}),
+                     edge["source_count"],
+                     json.dumps({"dummy": True, "reference": "MoSPI May 2026 urban CPI"}),
                      datetime.now(timezone.utc)),
                 )
-    print(f"Seeded {len(payload['nodes'])} nodes and {len(payload['edges'])} map edges into {SNAPSHOT_ID}")
+    print(
+        f"Seeded {len(payload['nodes'])} nodes and "
+        f"{len(payload['edges'])} map edges into {SNAPSHOT_ID}"
+    )
 
 
 if __name__ == "__main__":
